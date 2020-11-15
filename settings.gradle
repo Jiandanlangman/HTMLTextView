@@ -1,0 +1,3 @@
+include ':htmltextview'
+include ':app'
+rootProject.name = "HTMLTextView"
