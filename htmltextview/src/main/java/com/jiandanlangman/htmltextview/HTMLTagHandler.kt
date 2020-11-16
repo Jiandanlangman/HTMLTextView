@@ -18,6 +18,8 @@ internal class HTMLTagHandler(private val target: HTMLTextView) : Html.TagHandle
 
         private val tagHandlers = HashMap<String, TagHandler>()
 
+        private var imageGetter:ImageGetter ?= null
+
         init {
             registerTagHandler("a", ATagHandler())
             registerTagHandler("img", ImgTagHandler())
@@ -26,6 +28,12 @@ internal class HTMLTagHandler(private val target: HTMLTextView) : Html.TagHandle
         internal fun registerTagHandler(tag: String, handler: TagHandler) {
             tagHandlers[tag] = handler
         }
+
+        internal fun setImageGetter(imageGetter: ImageGetter?) {
+            this.imageGetter = imageGetter
+        }
+
+        internal fun getImageGetter() = imageGetter
 
         private fun getTagHandler(tag: String) = tagHandlers[tag]
 
@@ -64,11 +72,7 @@ internal class HTMLTagHandler(private val target: HTMLTextView) : Html.TagHandle
                 val key = atts.getQName(i).toLowerCase(Locale.ENGLISH)
                 attrs[key] = atts.getValue(key)
             }
-            (attrs.remove(com.jiandanlangman.htmltextview.Attributes.STYLE.value) ?: "").split(";").forEach {
-                val keyValue = it.split(":")
-                styles[keyValue[0].toLowerCase(Locale.ENGLISH)] = if (keyValue.size > 1) keyValue[1] else ""
-            }
-            tagRecorderList.add(TagRecorder(attrs, styles, originalOutput!!.length))
+            tagRecorderList.add(TagRecorder(attrs, Style.from(attrs.remove(Attribute.STYLE.value)?: ""), originalOutput!!.length))
         } ?: originalContentHandler?.startElement(uri, localName, qName, atts)
     }
 
@@ -76,7 +80,7 @@ internal class HTMLTagHandler(private val target: HTMLTextView) : Html.TagHandle
         val tag = localName.toLowerCase(Locale.ENGLISH)
         getTagHandler(tag)?.let {
             val tagRecorder = tagRecorderList.removeLast()
-            it.handleTag(target, tag, originalOutput!!, tagRecorder.start, tagRecorder.attrs, tagRecorder.styles)
+            it.handleTag(target, tag, originalOutput!!, tagRecorder.start, tagRecorder.attrs, tagRecorder.style)
         } ?: originalContentHandler?.endElement(uri, localName, qName)
     }
 
@@ -98,6 +102,6 @@ internal class HTMLTagHandler(private val target: HTMLTextView) : Html.TagHandle
 
     override fun skippedEntity(name: String?) = originalContentHandler?.skippedEntity(name) ?: Unit
 
-    private class TagRecorder(val attrs:Map<String, String>, val styles:Map<String,String>, val start:Int)
+    private class TagRecorder(val attrs:Map<String, String>, val style:Style, val start:Int)
 
 }
