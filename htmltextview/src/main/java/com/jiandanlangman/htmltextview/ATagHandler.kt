@@ -21,6 +21,9 @@ class ATagHandler : TagHandler {
 
         private val density = target.resources.displayMetrics.density
         private val action = attrs[Attribute.ACTION.value] ?: ""
+        private val paddingLeft = if(style.paddingLeft != 0) style.paddingLeft * density else style.padding * density
+        private val paddingRight = if(style.paddingRight != 0) style.paddingRight * density else style.padding * density
+        private val paddingTop = if(style.paddingTop != 0) style.paddingTop * density else style.padding * density
 
         private val color: Int = try {
             Color.parseColor(style.color)
@@ -65,7 +68,10 @@ class ATagHandler : TagHandler {
             return paint!!
         }
 
-        override fun getSize(paint: Paint, text: CharSequence?, start: Int, end: Int, fm: Paint.FontMetricsInt?) = text?.let { getTextPaint(paint).measureText(text, start, end).toInt() } ?: 0
+        override fun getSize(paint: Paint, text: CharSequence?, start: Int, end: Int, fm: Paint.FontMetricsInt?) : Int {
+            val width = text?.let { getTextPaint(paint).measureText(text, start, end) } ?: 0f
+            return (width + paddingLeft + paddingRight).toInt()
+        }
 
         override fun draw(canvas: Canvas, text: CharSequence?, start: Int, end: Int, x: Float, top: Int, y: Int, bottom: Int, paint: Paint) {
             text?.let {
@@ -75,6 +81,7 @@ class ATagHandler : TagHandler {
                 bounds.right = bounds.left + size
                 bounds.bottom = (bounds.top + textSize).toInt()
                 canvas.save()
+                canvas.translate(paddingLeft, paddingTop)
                 if (canvasScale != 1f)
                     canvas.scale(canvasScale, canvasScale, x + size / 2, y.toFloat() - textSize / 2)
                 val textPaint = getTextPaint(paint)

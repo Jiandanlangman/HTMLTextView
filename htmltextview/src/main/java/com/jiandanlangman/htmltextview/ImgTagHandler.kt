@@ -1,5 +1,6 @@
 package com.jiandanlangman.htmltextview
 
+import android.animation.ValueAnimator
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.drawable.Drawable
@@ -8,6 +9,7 @@ import android.text.Spannable
 import android.text.style.DynamicDrawableSpan
 import android.util.Log
 import android.view.View
+import androidx.core.animation.doOnEnd
 
 class ImgTagHandler : TagHandler {
 
@@ -22,15 +24,18 @@ class ImgTagHandler : TagHandler {
         private val src = attrs[Attribute.SRC.value] ?: ""
         private val width = style.width * density
         private val height = style.height * density
-        private val padding = style.padding * density
-        private val paddingLeft = style.paddingLeft * density
-        private val paddingRight = style.paddingRight * density
-        private val paddingTop = style.paddingTop * density
-        private val paddingBottom = style.paddingBottom * density
+        private val paddingLeft = if(style.paddingLeft != 0) style.paddingLeft * density else style.padding * density
+        private val paddingRight = if(style.paddingRight != 0) style.paddingRight * density else style.padding * density
+        private val paddingTop = if(style.paddingTop != 0) style.paddingTop * density else style.padding * density
+        private val paddingBottom = if(style.paddingBottom != 0) style.paddingBottom * density else style.paddingBottom * density
+
         private val bounds = Bounds()
 
         private var scaleX = 1f
         private var scaleY = 1f
+        private var canvasScale = 1f
+
+        private var scaleAnimator: ValueAnimator? = null
 
         private var drawable: Drawable? = null
 
@@ -40,8 +45,8 @@ class ImgTagHandler : TagHandler {
                     drawable = d
                     if (d != null) {
                         d.setBounds(0, 0, d.intrinsicWidth, d.intrinsicHeight)
-                        scaleX = (width - (if (paddingLeft != 0f) paddingLeft else padding) - (if (paddingRight != 0f) paddingRight else padding)) / d.intrinsicWidth
-                        scaleY = (height - (if (paddingTop != 0f) paddingTop else padding) - (if (paddingBottom != 0f) paddingBottom else padding)) / d.intrinsicHeight
+                        scaleX = (width - paddingLeft - paddingRight)/ d.intrinsicWidth
+                        scaleY = (height -paddingTop - paddingBottom) / d.intrinsicHeight
                         d.callback = this
                     }
                 }
@@ -58,6 +63,8 @@ class ImgTagHandler : TagHandler {
             if (drawable == null)
                 return
             canvas.save()
+            if (canvasScale != 1f)
+                canvas.scale(canvasScale, canvasScale, x + width / 2, y.toFloat() - height / 2)
             canvas.translate(paddingLeft, paddingTop)
             canvas.translate(x, (target.textSize - height) / 2 + (bottom - y) / 5f * 4f)
             canvas.scale(scaleX, scaleY)
@@ -75,12 +82,19 @@ class ImgTagHandler : TagHandler {
         override fun getAction() = ""
 
         override fun onPressed() {
-
+            when (style.pressed) {
+                Style.Pressed.SCALE -> playScaleAnimator(1f, .88f)
+                Style.Pressed.NONE -> { }
+            }
         }
 
         override fun onUnPressed() {
-
+            when (style.pressed) {
+                Style.Pressed.SCALE -> playScaleAnimator(.88f, 1f)
+                Style.Pressed.NONE -> { }
+            }
         }
+
 
         override fun invalidateDrawable(who: Drawable) {
             if (target.isShown) {
@@ -103,6 +117,21 @@ class ImgTagHandler : TagHandler {
 
         override fun onViewDetachedFromWindow(v: View?) {
             drawable?.callback = null
+        }
+
+
+        private fun playScaleAnimator(from: Float, to: Float) {
+            scaleAnimator?.cancel()
+            scaleAnimator = ValueAnimator.ofFloat(from, to)
+            scaleAnimator!!.let {
+                it.duration = 64
+                it.addUpdateListener { _ ->
+                    canvasScale = it.animatedValue as Float
+                    target.postInvalidate(bounds.left, bounds.top, bounds.right, bounds.bottom)
+                }
+                it.doOnEnd { scaleAnimator = null }
+                it.start()
+            }
         }
 
 
