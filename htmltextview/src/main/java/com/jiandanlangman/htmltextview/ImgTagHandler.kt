@@ -3,11 +3,11 @@ package com.jiandanlangman.htmltextview
 import android.animation.ValueAnimator
 import android.graphics.Canvas
 import android.graphics.Paint
+import android.graphics.Rect
 import android.graphics.drawable.Drawable
 import android.text.Editable
 import android.text.Spannable
 import android.text.style.DynamicDrawableSpan
-import android.util.Log
 import android.view.View
 import androidx.core.animation.doOnEnd
 
@@ -31,7 +31,7 @@ class ImgTagHandler : TagHandler {
         private val paddingTop = if (style.padding.top < 0) 0f else style.padding.top * density
         private val paddingBottom = if (style.padding.bottom < 0) 0f else style.padding.bottom * density
 
-        private val bounds = Bounds()
+        private val invalidateRect = Rect()
 
         private var scaleX = 1f
         private var scaleY = 1f
@@ -58,10 +58,10 @@ class ImgTagHandler : TagHandler {
         override fun getDrawable() = drawable
 
         override fun draw(canvas: Canvas, text: CharSequence?, start: Int, end: Int, x: Float, top: Int, y: Int, bottom: Int, paint: Paint) {
-            bounds.left = x.toInt()
-            bounds.right = (x + width).toInt()
-            bounds.top = top
-            bounds.bottom = (top + height).toInt()
+            invalidateRect.left = x.toInt()
+            invalidateRect.right = (x + width).toInt()
+            invalidateRect.top = top
+            invalidateRect.bottom = (top + height).toInt()
             if (drawable == null)
                 return
             canvas.save()
@@ -102,7 +102,7 @@ class ImgTagHandler : TagHandler {
 
         override fun invalidateDrawable(who: Drawable) {
             if (target.isShown)
-                target.postInvalidate(bounds.left, bounds.top, bounds.right, bounds.bottom)
+                target.postInvalidate(invalidateRect.left, invalidateRect.top, invalidateRect.right, invalidateRect.bottom)
         }
 
         override fun scheduleDrawable(who: Drawable, what: Runnable, `when`: Long) {
@@ -129,7 +129,7 @@ class ImgTagHandler : TagHandler {
                 it.duration = 64
                 it.addUpdateListener { _ ->
                     canvasScale = it.animatedValue as Float
-                    target.postInvalidate(bounds.left, bounds.top, bounds.right, bounds.bottom)
+                    target.postInvalidate(invalidateRect.left, invalidateRect.top, invalidateRect.right, invalidateRect.bottom)
                 }
                 it.doOnEnd { scaleAnimator = null }
                 it.start()

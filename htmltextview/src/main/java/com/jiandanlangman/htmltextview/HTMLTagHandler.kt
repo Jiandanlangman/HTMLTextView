@@ -75,7 +75,7 @@ internal class HTMLTagHandler(private val target: HTMLTextView) : Html.TagHandle
                 val key = atts.getQName(i).toLowerCase(Locale.ENGLISH)
                 attrs[key] = atts.getValue(key)
             }
-            tagRecorderList.add(TagRecorder(attrs, Style.from(attrs.remove(Attribute.STYLE.value)?: ""), originalOutput!!.length))
+            tagRecorderList.add(TagRecorder(attrs, Style.from(attrs.remove(Attribute.STYLE.value)?: "", attrs.remove(Attribute.BACKGROUND.value)?: ""), originalOutput!!.length))
         } ?: originalContentHandler?.startElement(uri, localName, qName, atts)
     }
 

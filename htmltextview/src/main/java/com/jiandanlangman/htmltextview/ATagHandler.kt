@@ -4,6 +4,7 @@ import android.animation.ValueAnimator
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Rect
 import android.text.Editable
 import android.text.Spannable
 import android.text.TextPaint
@@ -40,7 +41,7 @@ class ATagHandler : TagHandler {
 
         private val drawAlignCenterOffsetY = (target.lineSpacingMultiplier - 1) * textSize
 
-        private val bounds = Bounds()
+        private val invalidateRect = Rect()
 
         private var canvasScale = 1f
 
@@ -76,10 +77,10 @@ class ATagHandler : TagHandler {
         override fun draw(canvas: Canvas, text: CharSequence?, start: Int, end: Int, x: Float, top: Int, y: Int, bottom: Int, paint: Paint) {
             text?.let {
                 val size = getSize(paint, text, start, end, paint.fontMetricsInt)
-                bounds.left = x.toInt()
-                bounds.top = y
-                bounds.right = bounds.left + size
-                bounds.bottom = (bounds.top + textSize).toInt()
+                invalidateRect.left = x.toInt()
+                invalidateRect.top = y
+                invalidateRect.right = invalidateRect.left + size
+                invalidateRect.bottom = (invalidateRect.top + textSize).toInt()
                 canvas.save()
                 canvas.translate(paddingLeft, paddingTop)
                 if (canvasScale != 1f)
@@ -121,7 +122,7 @@ class ATagHandler : TagHandler {
                 it.duration = 64
                 it.addUpdateListener { _ ->
                     canvasScale = it.animatedValue as Float
-                    target.postInvalidate(bounds.left, bounds.top, bounds.right, bounds.bottom)
+                    target.postInvalidate(invalidateRect.left, invalidateRect.top, invalidateRect.right, invalidateRect.bottom)
                 }
                 it.doOnEnd { scaleAnimator = null }
                 it.start()

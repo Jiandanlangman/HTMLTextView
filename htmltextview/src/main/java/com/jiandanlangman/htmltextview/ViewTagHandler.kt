@@ -2,6 +2,7 @@ package com.jiandanlangman.htmltextview
 
 import android.annotation.SuppressLint
 import android.graphics.Color
+import android.graphics.drawable.Drawable
 import android.text.Editable
 import android.text.Spannable
 import android.util.TypedValue
@@ -28,11 +29,21 @@ class ViewTagHandler : TagHandler {
             if (style.padding.bottom >= 0) (style.padding.bottom * density).toInt() else target.paddingBottom
         )
         target.paint.isFakeBoldText = style.fontWeight == Style.FontWeight.BOLD
+        style.createBackgroundDrawable(target)?.let {
+            if (it is Drawable)
+                target.background = it
+            else {
+                HTMLTagHandler.getImageGetter()?.getImageDrawable(it.toString(), "") { d ->
+                    d.let { target.background = d }
+                }
+            }
+        }
         target.updateLayoutParams<ViewGroup.LayoutParams> {
             if (style.width > 0)
                 width = (style.width * density + .5f).toInt()
             if (style.height > 0)
                 height = (style.height * density + .5f).toInt()
+            setMargin(this, style, density)
         }
         val action = attrs[Attribute.ACTION.value] ?: ""
         if (action.isNotEmpty()) {
@@ -44,7 +55,7 @@ class ViewTagHandler : TagHandler {
                         if (pressedTarget && style.pressed == Style.Pressed.SCALE)
                             playScaleAnimator(target, .88f)
                     }
-                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> if(pressedTarget) {
+                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> if (pressedTarget) {
                         if (style.pressed == Style.Pressed.SCALE)
                             playScaleAnimator(target, 1f)
                         if (event.action == MotionEvent.ACTION_UP)
@@ -59,6 +70,26 @@ class ViewTagHandler : TagHandler {
     private fun playScaleAnimator(target: HTMLTextView, to: Float) {
         target.animate().cancel()
         target.animate().scaleX(to).scaleY(to).setDuration(64).start()
+    }
+
+    private fun setMargin(params: ViewGroup.LayoutParams, style: Style, density: Float) {
+        val clazz = params::class.java
+        fun set(name: String, value: Int) {
+            try {
+                val field = clazz.getField(name)
+                field.set(params, value)
+            } catch (ignore: Throwable) {
+
+            }
+        }
+        if (style.margin.left >= 0)
+            set("leftMargin", (style.margin.left * density).toInt())
+        if (style.margin.right >= 0)
+            set("rightMargin", (style.margin.right * density).toInt())
+        if (style.margin.top >= 0)
+            set("topMargin", (style.margin.top * density).toInt())
+        if (style.margin.left >= 0)
+            set("bottomMargin", (style.margin.bottom * density).toInt())
     }
 
 }
