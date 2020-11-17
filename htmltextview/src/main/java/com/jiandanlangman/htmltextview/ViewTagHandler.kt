@@ -38,13 +38,13 @@ class ViewTagHandler : TagHandler {
                 }
             }
         }
-        target.updateLayoutParams<ViewGroup.LayoutParams> {
-            if (style.width > 0)
-                width = (style.width * density + .5f).toInt()
-            if (style.height > 0)
-                height = (style.height * density + .5f).toInt()
-            setMargin(this, style, density)
-        }
+//        target.updateLayoutParams<ViewGroup.LayoutParams> {
+//            if (style.width > 0)
+//                width = (style.width * density + .5f).toInt()
+//            if (style.height > 0)
+//                height = (style.height * density + .5f).toInt()
+//            setMargin(this, style, density)
+//        }
         val action = attrs[Attribute.ACTION.value] ?: ""
         if (action.isNotEmpty()) {
             var pressedTarget = false
