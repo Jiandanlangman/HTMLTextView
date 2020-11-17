@@ -1,4 +1,4 @@
-package com.jiandanlangman.htmltextview
+package com.jiandanlangman.htmltextview.demo
 
 import android.annotation.SuppressLint
 import android.app.Activity

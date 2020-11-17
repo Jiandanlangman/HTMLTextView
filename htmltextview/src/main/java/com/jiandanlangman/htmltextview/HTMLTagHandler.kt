@@ -67,7 +67,6 @@ internal class HTMLTagHandler(private val target: HTMLTextView) : Html.TagHandle
     override fun startElement(uri: String, localName: String, qName: String, atts: Attributes) {
         getTagHandler(localName.toLowerCase(Locale.ENGLISH))?.let {
             val attrs = HashMap<String, String>()
-            val styles = HashMap<String, String>()
             for(i in 0 until atts.length) {
                 val key = atts.getQName(i).toLowerCase(Locale.ENGLISH)
                 attrs[key] = atts.getValue(key)

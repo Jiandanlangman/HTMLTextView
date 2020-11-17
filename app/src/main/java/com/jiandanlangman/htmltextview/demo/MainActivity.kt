@@ -4,13 +4,9 @@ import android.annotation.SuppressLint
 import android.graphics.drawable.Drawable
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.os.SystemClock
 import android.widget.TextView
-import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.core.content.ContextCompat
 import com.jiandanlangman.htmltextview.HTMLTextView
 import com.jiandanlangman.htmltextview.ImageGetter
-import com.jiandanlangman.htmltextview.ImageLoader
 
 class MainActivity : AppCompatActivity() {
     @SuppressLint("SetTextI18n")
@@ -19,7 +15,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         val textView = findViewById<TextView>(R.id.textView)
         HTMLTextView.setImageGetter(object : ImageGetter {
-            override fun getImageDrawable(src: String, callback: (result: Drawable?) -> Unit) {
+            override fun getImageDrawable(src: String, type:String, callback: (result: Drawable?) -> Unit) {
                 ImageLoader.loadAnimatedWebp(this@MainActivity, "https://asset.liaoke.tv/assets/api/user/rich/level_1.webp") {
                     callback.invoke(it)
                     it?.loopCount = -1

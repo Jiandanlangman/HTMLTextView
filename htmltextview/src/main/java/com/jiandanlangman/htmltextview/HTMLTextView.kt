@@ -4,7 +4,6 @@ import android.content.Context
 import android.os.Build
 import android.text.Html
 import android.util.AttributeSet
-import android.util.Log
 import androidx.appcompat.widget.AppCompatTextView
 
 class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) : AppCompatTextView(context, attrs, defStyleAttr) {
@@ -31,7 +30,7 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
     }
 
     internal fun onAction(action:String) {
-        Log.d("HTMLTextView", "action:$action")
+
     }
 
 }

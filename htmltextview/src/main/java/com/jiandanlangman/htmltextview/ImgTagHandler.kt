@@ -20,14 +20,16 @@ class ImgTagHandler : TagHandler {
 
     private class ImgSpan(val target: HTMLTextView, attrs: Map<String, String>, private val style: Style) : DynamicDrawableSpan(ALIGN_BOTTOM), ActionSpan, Drawable.Callback, View.OnAttachStateChangeListener {
 
+        private val action = attrs[Attribute.ACTION.value] ?: ""
+        private val srcType = attrs[Attribute.SRC_TYPE.value] ?: Attribute.SrcType.IMAGE_PNG.value
         private val density = target.resources.displayMetrics.density
         private val src = attrs[Attribute.SRC.value] ?: ""
         private val width = style.width * density
         private val height = style.height * density
-        private val paddingLeft = if(style.paddingLeft != 0) style.paddingLeft * density else style.padding * density
-        private val paddingRight = if(style.paddingRight != 0) style.paddingRight * density else style.padding * density
-        private val paddingTop = if(style.paddingTop != 0) style.paddingTop * density else style.padding * density
-        private val paddingBottom = if(style.paddingBottom != 0) style.paddingBottom * density else style.paddingBottom * density
+        private val paddingLeft = if (style.paddingLeft != 0) style.paddingLeft * density else style.padding * density
+        private val paddingRight = if (style.paddingRight != 0) style.paddingRight * density else style.padding * density
+        private val paddingTop = if (style.paddingTop != 0) style.paddingTop * density else style.padding * density
+        private val paddingBottom = if (style.paddingBottom != 0) style.paddingBottom * density else style.paddingBottom * density
 
         private val bounds = Bounds()
 
@@ -41,12 +43,12 @@ class ImgTagHandler : TagHandler {
 
         init {
             HTMLTagHandler.getImageGetter()?.let {
-                it.getImageDrawable(src) { d ->
+                it.getImageDrawable(src, srcType) { d ->
                     drawable = d
                     if (d != null) {
                         d.setBounds(0, 0, d.intrinsicWidth, d.intrinsicHeight)
-                        scaleX = (width - paddingLeft - paddingRight)/ d.intrinsicWidth
-                        scaleY = (height -paddingTop - paddingBottom) / d.intrinsicHeight
+                        scaleX = (width - paddingLeft - paddingRight) / d.intrinsicWidth
+                        scaleY = (height - paddingTop - paddingBottom) / d.intrinsicHeight
                         d.callback = this
                     }
                 }
@@ -79,19 +81,21 @@ class ImgTagHandler : TagHandler {
             return width.toInt()
         }
 
-        override fun getAction() = ""
+        override fun getAction() = action
 
         override fun onPressed() {
             when (style.pressed) {
                 Style.Pressed.SCALE -> playScaleAnimator(1f, .88f)
-                Style.Pressed.NONE -> { }
+                Style.Pressed.NONE -> {
+                }
             }
         }
 
         override fun onUnPressed() {
             when (style.pressed) {
                 Style.Pressed.SCALE -> playScaleAnimator(.88f, 1f)
-                Style.Pressed.NONE -> { }
+                Style.Pressed.NONE -> {
+                }
             }
         }
 
