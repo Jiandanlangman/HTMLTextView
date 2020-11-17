@@ -21,22 +21,22 @@ class ATagHandler : TagHandler {
 
         private val density = target.resources.displayMetrics.density
         private val action = attrs[Attribute.ACTION.value] ?: ""
-        private val paddingLeft = if(style.paddingLeft != 0) style.paddingLeft * density else style.padding * density
-        private val paddingRight = if(style.paddingRight != 0) style.paddingRight * density else style.padding * density
-        private val paddingTop = if(style.paddingTop != 0) style.paddingTop * density else style.padding * density
+        private val paddingLeft = if (style.padding.left < 0) 0f else style.padding.left * density
+        private val paddingRight = if (style.padding.right < 0) 0f else style.padding.right * density
+        private val paddingTop = if (style.padding.top < 0) 0f else style.padding.top * density
 
         private val color: Int = try {
             Color.parseColor(style.color)
         } catch (ignore: Throwable) {
             target.textColors.defaultColor
         }
-        private val isFakeBoldText: Boolean = when(style.fontWeight) {
+        private val isFakeBoldText: Boolean = when (style.fontWeight) {
             Style.FontWeight.NORMAL -> false
             Style.FontWeight.BOLD -> true
             else -> target.paint.isFakeBoldText
         }
 
-        private val textSize: Float = if(style.fontSize >= 0) style.fontSize.toFloat() else target.textSize / density
+        private val textSize: Float = if (style.fontSize >= 0) style.fontSize.toFloat() else target.textSize / density
 
         private val drawAlignCenterOffsetY = (target.lineSpacingMultiplier - 1) * textSize
 
@@ -55,9 +55,9 @@ class ATagHandler : TagHandler {
                     it.color = color
                     it.isFakeBoldText = isFakeBoldText
                     it.textSize = textSize * it.density
-                    when(style.textDecoration) {
-                       Style.TextDecoration.UNDERLINE -> it.isUnderlineText = true
-                        Style.TextDecoration.LINE_THROUGH -> it.flags =  it.flags or Paint.STRIKE_THRU_TEXT_FLAG
+                    when (style.textDecoration) {
+                        Style.TextDecoration.UNDERLINE -> it.isUnderlineText = true
+                        Style.TextDecoration.LINE_THROUGH -> it.flags = it.flags or Paint.STRIKE_THRU_TEXT_FLAG
                         else -> {
                             it.isUnderlineText = false
                             it.flags = it.flags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
@@ -68,7 +68,7 @@ class ATagHandler : TagHandler {
             return paint!!
         }
 
-        override fun getSize(paint: Paint, text: CharSequence?, start: Int, end: Int, fm: Paint.FontMetricsInt?) : Int {
+        override fun getSize(paint: Paint, text: CharSequence?, start: Int, end: Int, fm: Paint.FontMetricsInt?): Int {
             val width = text?.let { getTextPaint(paint).measureText(text, start, end) } ?: 0f
             return (width + paddingLeft + paddingRight).toInt()
         }
@@ -100,15 +100,17 @@ class ATagHandler : TagHandler {
 
         override fun onPressed() {
             when (style.pressed) {
-               Style.Pressed.SCALE -> playScaleAnimator(1f, .88f)
-                Style.Pressed.NONE -> { }
+                Style.Pressed.SCALE -> playScaleAnimator(1f, .88f)
+                Style.Pressed.NONE -> {
+                }
             }
         }
 
         override fun onUnPressed() {
             when (style.pressed) {
                 Style.Pressed.SCALE -> playScaleAnimator(.88f, 1f)
-                Style.Pressed.NONE -> { }
+                Style.Pressed.NONE -> {
+                }
             }
         }
 

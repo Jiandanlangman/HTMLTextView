@@ -21,8 +21,12 @@ internal class HTMLTagHandler(private val target: HTMLTextView) : Html.TagHandle
         private var imageGetter:ImageGetter ?= null
 
         init {
-            registerTagHandler("a", ATagHandler())
+            val aTagHandler = ATagHandler()
+            registerTagHandler("a", aTagHandler)
+            registerTagHandler("span", aTagHandler)
+            registerTagHandler("font", aTagHandler)
             registerTagHandler("img", ImgTagHandler())
+            registerTagHandler("view", ViewTagHandler())
         }
 
         internal fun registerTagHandler(tag: String, handler: TagHandler) {

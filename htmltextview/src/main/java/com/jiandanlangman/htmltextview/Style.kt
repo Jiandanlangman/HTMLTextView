@@ -7,11 +7,7 @@ data class Style(
     val height: Int = 0,
     val color: String = "",
     val fontSize: Int = -1,
-    val padding: Int = 0,
-    val paddingLeft: Int = 0,
-    val paddingRight: Int = 0,
-    val paddingTop: Int = 0,
-    val paddingBottom: Int = 0,
+    val padding : Bounds =  Bounds(-1, -1, -1, -1),
     val textAlign: TextAlign = TextAlign.BASELINE,
     val textDecoration: TextDecoration = TextDecoration.NONE,
     val fontWeight: FontWeight = FontWeight.NATIVE,
@@ -31,8 +27,8 @@ data class Style(
         private const val KEY_PADDING_RIGHT = "padding-right"           //右内边距
         private const val KEY_PADDING_TOP = "padding-top"               //上内边距
         private const val KEY_PADDING_BOTTOM = "padding-bottom"         //下内边距
-        private const val KEY_TEXT_ALIGN = "text-align"                 //文字对齐方式
-        private const val KEY_TEXT_DECORATION = "text-decoration"       //文字修饰
+        private const val KEY_TEXT_ALIGN = "text-align"                 //文字对齐方式，View暂不支持
+        private const val KEY_TEXT_DECORATION = "text-decoration"       //文字修饰，View暂不支持
         private const val KEY_FONT_WEIGHT = "font-weight"               //字重
         private const val KEY_PRESSED = "pressed"                       //按下后的视觉反馈
 
@@ -43,16 +39,31 @@ data class Style(
                 val keyValue = it.split(":")
                 keyValue[0] to if (keyValue.size > 1) keyValue[1] else ""
             }.toMap()
+            val paddingBounds = Bounds()
+            val padding = tryCatchInvoke({ (map[KEY_PADDING] ?: "-1").toInt() }, -1)
+            val paddingLeft = run {
+                val tmp = tryCatchInvoke({ (map[KEY_PADDING_LEFT] ?: "-1").toInt() }, -1)
+                if(tmp != -1) tmp else padding
+            }
+            val paddingTop = run {
+                val tmp = tryCatchInvoke({ (map[KEY_PADDING_TOP] ?: "-1").toInt() }, -1)
+                if(tmp != -1) tmp else padding
+            }
+            val paddingRight = run {
+                val tmp = tryCatchInvoke({ (map[KEY_PADDING_RIGHT] ?: "-1").toInt() }, -1)
+                if(tmp != -1) tmp else padding
+            }
+            val paddingBottom = run {
+                val tmp = tryCatchInvoke({ (map[KEY_PADDING_BOTTOM] ?: "-1").toInt() }, -1)
+                 if(tmp != -1) tmp else padding
+            }
+            paddingBounds.set(paddingLeft, paddingTop, paddingRight, paddingBottom)
             return Style(
                 tryCatchInvoke({ (map[KEY_WIDTH] ?: "0").toInt() }, 0),
                 tryCatchInvoke({ (map[KEY_HEIGHT] ?: "0").toInt() }, 0),
                 map[KEY_COLOR] ?: "",
                 tryCatchInvoke({ (map[KEY_FONT_SIZE] ?: "-1").toInt() }, -1),
-                tryCatchInvoke({ (map[KEY_PADDING] ?: "0").toInt() }, 0),
-                tryCatchInvoke({ (map[KEY_PADDING_LEFT] ?: "0").toInt() }, 0),
-                tryCatchInvoke({ (map[KEY_PADDING_RIGHT] ?: "0").toInt() }, 0),
-                tryCatchInvoke({ (map[KEY_PADDING_TOP] ?: "0").toInt() }, 0),
-                tryCatchInvoke({ (map[KEY_PADDING_BOTTOM] ?: "0").toInt() }, 0),
+                paddingBounds,
                 tryCatchInvoke({
                     val value = map[KEY_TEXT_ALIGN] ?: ""
                     TextAlign.values().firstOrNull { it.value == value } ?: TextAlign.BASELINE
@@ -84,7 +95,7 @@ data class Style(
 
     enum class TextAlign(val value: String) {
         BASELINE("baseline"),                       //默认值，基线对齐
-        CENTER("center")                            //垂直居中对齐
+        CENTER("center"),                            //垂直居中对齐
 
 
     }

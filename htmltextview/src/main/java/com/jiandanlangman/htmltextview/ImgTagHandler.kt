@@ -26,10 +26,10 @@ class ImgTagHandler : TagHandler {
         private val src = attrs[Attribute.SRC.value] ?: ""
         private val width = style.width * density
         private val height = style.height * density
-        private val paddingLeft = if (style.paddingLeft != 0) style.paddingLeft * density else style.padding * density
-        private val paddingRight = if (style.paddingRight != 0) style.paddingRight * density else style.padding * density
-        private val paddingTop = if (style.paddingTop != 0) style.paddingTop * density else style.padding * density
-        private val paddingBottom = if (style.paddingBottom != 0) style.paddingBottom * density else style.paddingBottom * density
+        private val paddingLeft = if (style.padding.left < 0) 0f else style.padding.left * density
+        private val paddingRight = if (style.padding.right < 0) 0f else style.padding.right * density
+        private val paddingTop = if (style.padding.top < 0) 0f else style.padding.top * density
+        private val paddingBottom = if (style.padding.bottom < 0) 0f else style.padding.bottom * density
 
         private val bounds = Bounds()
 
@@ -101,10 +101,8 @@ class ImgTagHandler : TagHandler {
 
 
         override fun invalidateDrawable(who: Drawable) {
-            if (target.isShown) {
+            if (target.isShown)
                 target.postInvalidate(bounds.left, bounds.top, bounds.right, bounds.bottom)
-                Log.d("ImgTagHandler", "invalidateDrawable${who.state}")
-            }
         }
 
         override fun scheduleDrawable(who: Drawable, what: Runnable, `when`: Long) {

@@ -24,6 +24,6 @@ class MainActivity : AppCompatActivity() {
             }
 
         })
-        textView.text = "你好<img src=\"\" style=\"width:44;height:12;padding-left:8;padding-right:8;pressed:scale\" /><span>你好呀<a action=\"你好\" style=\"color:#FFFF00;font-weight:bold;text-align:center;pressed:scale;padding-left:8;padding-right:8\">我是超链接</a>哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈</span>"
+        textView.text = "你好<img src=\"\" style=\"width:44;height:12;padding-left:8;padding-right:8;pressed:scale\" />你好呀<a action=\"你好\" style=\"color:#FFFF00;font-weight:bold;text-align:center;pressed:scale;padding-left:8;padding-right:8\">我是超链接</a>哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈<view action=\"123\" style=\"font-size:20;pressed:scale\"/>"
     }
 }
