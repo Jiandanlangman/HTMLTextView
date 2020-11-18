@@ -2,6 +2,7 @@ package com.jiandanlangman.htmltextview
 
 import android.graphics.Rect
 import java.util.*
+import kotlin.collections.ArrayList
 
 data class Style(
     val width: Int = 0,
@@ -11,7 +12,7 @@ data class Style(
     val padding: Rect = Rect(),
     val margin:Rect = Rect(),
     val textAlign: TextAlign = TextAlign.BASELINE,
-    val textDecoration: TextDecoration = TextDecoration.NONE,
+    val textDecoration: Array<TextDecoration> = emptyArray(),
     val fontWeight: FontWeight = FontWeight.NATIVE,
     val pressed: Pressed = Pressed.NONE,
     val lineHeight:Float = -1f
@@ -85,6 +86,13 @@ data class Style(
                 if (tmp != -1) tmp else margin
             }
             marginRect.set(marginLeft, marginTop, marginRight, marginBottom)
+
+            val tdList = ArrayList<TextDecoration>()
+            (map[KEY_TEXT_DECORATION] ?: "").split(",").forEach {
+                val td = TextDecoration.values().firstOrNull { e -> e.value == it }
+                if(td != null)
+                    tdList.add(td)
+            }
             return Style(
                 Util.tryCatchInvoke({ (map[KEY_WIDTH] ?: "0").toInt() }, 0),
                 Util.tryCatchInvoke({ (map[KEY_HEIGHT] ?: "0").toInt() }, 0),
@@ -96,10 +104,7 @@ data class Style(
                     val value = map[KEY_TEXT_ALIGN] ?: ""
                     TextAlign.values().firstOrNull { it.value == value } ?: TextAlign.BASELINE
                 }, TextAlign.BASELINE),
-                Util.tryCatchInvoke({
-                    val value = map[KEY_TEXT_DECORATION] ?: ""
-                    TextDecoration.values().firstOrNull { it.value == value } ?: TextDecoration.NONE
-                }, TextDecoration.NONE),
+                tdList.toTypedArray(),
                 Util.tryCatchInvoke({
                     val value = map[KEY_FONT_WEIGHT] ?: ""
                     FontWeight.values().firstOrNull { it.value == value } ?: FontWeight.NATIVE
@@ -110,7 +115,9 @@ data class Style(
                 }, Pressed.NONE),
                 Util.tryCatchInvoke({(map[KEY_LINE_HEIGHT] ?: "-1").toFloat()   }, -1f)
             )
+
         }
+
 
 
     }

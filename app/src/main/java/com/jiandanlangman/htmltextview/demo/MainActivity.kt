@@ -7,6 +7,7 @@ import android.graphics.drawable.Drawable
 import android.graphics.drawable.NinePatchDrawable
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.TextView
@@ -50,7 +51,6 @@ class MainActivity : AppCompatActivity() {
             }
 
         }
-//        val textView = findViewById<TextView>(R.id.textView)
         HTMLTextView.setImageGetter(imageGetter)
         val recyclerView = findViewById<RecyclerView>(R.id.recyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
@@ -59,9 +59,9 @@ class MainActivity : AppCompatActivity() {
 
     private inner class ViewHolder(itemView:HTMLTextView):RecyclerView.ViewHolder(itemView) {
         init {
-//            itemView.setLineSpacing(1.3f, 1.3f)
-//            itemView.lineSpacingMultiplier
-//            itemView.gravity = Gravity.CENTER_VERTICAL
+            itemView.setOnClickListener { v, action ->
+                Log.d("MainActivity", "onClick:$action")
+            }
         }
     }
 

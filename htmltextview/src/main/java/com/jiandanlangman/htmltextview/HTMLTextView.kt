@@ -5,7 +5,6 @@ import android.graphics.Color
 import android.os.Build
 import android.text.Html
 import android.util.AttributeSet
-import android.util.Log
 import androidx.appcompat.widget.AppCompatTextView
 
 class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) : AppCompatTextView(context, attrs, defStyleAttr) {
@@ -19,10 +18,11 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
     }
 
     private var sourceText: CharSequence = ""
+    private var onClickListener: ((HTMLTextView, String) -> Unit)? = null
 
     init {
         movementMethod = LinkMovementMethod.getInstance()
-        highlightColor = Color.TRANSPARENT
+        super.setHighlightColor(Color.TRANSPARENT)
     }
 
 
@@ -32,10 +32,21 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
         super.setText(spannedText, type)
     }
 
+    @Deprecated("")
+    override fun setOnClickListener(l: OnClickListener?) {
 
-    internal fun onAction(action: String) {
-        Log.d("HTMLTextView", "action:$action")
     }
+
+    @Deprecated("")
+    override fun setHighlightColor(color: Int) {
+
+    }
+
+    fun setOnClickListener(onClickListener: ((v: HTMLTextView, action: String) -> Unit)?) {
+        this.onClickListener = onClickListener
+    }
+
+    internal fun onAction(action: String) = onClickListener?.invoke(this, action)
 
 
 }

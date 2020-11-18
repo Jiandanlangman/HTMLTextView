@@ -25,8 +25,8 @@ class ATagHandler : TagHandler {
             else -> target.paint.isFakeBoldText
         }
         val textSize: Float = if (style.fontSize >= 0) style.fontSize * density else target.textSize
-        val isUnderlineText = style.textDecoration == Style.TextDecoration.UNDERLINE
-        val isLineThrough = !isUnderlineText && style.textDecoration == Style.TextDecoration.LINE_THROUGH
+        val isUnderlineText = style.textDecoration.contains(Style.TextDecoration.UNDERLINE)
+        val isLineThrough = style.textDecoration.contains(Style.TextDecoration.LINE_THROUGH)
         val pressed = style.pressed
         val span = if (textSize == target.textSize && style.padding.left < 0 && style.padding.top < 0 && style.padding.right < 0 && style.padding.bottom < 0 && pressed == Style.Pressed.NONE)
             ASpan(action, color, isFakeBoldText, isUnderlineText, isLineThrough)

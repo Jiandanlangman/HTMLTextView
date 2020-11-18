@@ -2,6 +2,7 @@ package com.jiandanlangman.htmltextview
 
 import android.annotation.SuppressLint
 import android.graphics.Color
+import android.graphics.Paint
 import android.text.Editable
 import android.text.Spannable
 import android.text.style.ClickableSpan
@@ -33,6 +34,11 @@ internal class BaseTagHandler : TagHandler {
         background.getDrawable(target) { it?.let { target.background = it } }
         if (style.lineHeight >= 0)
             target.setLineSpacing(target.lineSpacingExtra, style.lineHeight)
+        if (style.textDecoration.isNotEmpty()) {
+            val paint = target.paint
+            paint.isUnderlineText = style.textDecoration.contains(Style.TextDecoration.UNDERLINE)
+            paint.flags = if (style.textDecoration.contains(Style.TextDecoration.LINE_THROUGH)) paint.flags or Paint.STRIKE_THRU_TEXT_FLAG else paint.flags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
+        }
         val action = attrs[Attribute.ACTION.value] ?: ""
         if (action.isNotEmpty()) {
             var pressedTarget = false
@@ -54,7 +60,7 @@ internal class BaseTagHandler : TagHandler {
                 return@setOnTouchListener false
             }
         }
-        fun updateLayoutParams(v:View) {
+        fun updateLayoutParams(v: View) {
             try {
                 v.updateLayoutParams<ViewGroup.LayoutParams> {
                     if (style.width > 0)
@@ -63,7 +69,7 @@ internal class BaseTagHandler : TagHandler {
                         height = (style.height * density + .5f).toInt()
                     setMargin(this, style, density)
                 }
-            } catch (ignore:Throwable) {
+            } catch (ignore: Throwable) {
                 target.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
                     override fun onViewAttachedToWindow(v: View) {
                         updateLayoutParams(v)
