@@ -11,7 +11,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.updateLayoutParams
 
-class BaseTagHandler : TagHandler {
+internal class BaseTagHandler : TagHandler {
 
     @SuppressLint("Range", "ClickableViewAccessibility")
     override fun handleTag(target: HTMLTextView, tag: String, output: Editable, start: Int, attrs: Map<String, String>, style: Style, background: Background) {
