@@ -1,10 +1,7 @@
 package com.jiandanlangman.htmltextview
 
-import android.graphics.Color
 import android.graphics.Rect
-import android.graphics.drawable.GradientDrawable
 import java.util.*
-import kotlin.collections.ArrayList
 
 data class Style(
     val width: Int = 0,
@@ -17,72 +14,8 @@ data class Style(
     val textDecoration: TextDecoration = TextDecoration.NONE,
     val fontWeight: FontWeight = FontWeight.NATIVE,
     val pressed: Pressed = Pressed.NONE,
-    val lineHeight:Float = -1f,
-    private val background: String = ""
+    val lineHeight:Float = -1f
 ) {
-
-    fun createBackgroundDrawable(target: HTMLTextView): Any? {
-        if (background.isEmpty())
-            return null
-        val bgAttrs = background.split(";").map {
-            val sp = it.split(":")
-            sp[0] to if (sp.size > 1) sp[1] else ""
-        }.toMap()
-        val d = bgAttrs["drawable"]
-        if (!d.isNullOrEmpty())
-            return d
-        val drawable = GradientDrawable()
-        val density = target.resources.displayMetrics.density
-        val stroke = Util.tryCatchInvoke({ Color.parseColor(bgAttrs["stroke"]) }, 0)
-        val strokeWidth = (Util.tryCatchInvoke({ (bgAttrs["stroke-width"] ?: "0").toInt() }, 0) * density).toInt()
-        val strokeDash = Util.tryCatchInvoke({ (bgAttrs["stroke-dash"] ?: "0").toInt() }, 0) * density
-        val strokeGap = Util.tryCatchInvoke({ (bgAttrs["stroke-gap"] ?: "0").toInt() }, 0) * density
-        drawable.setStroke(strokeWidth, stroke, strokeDash, strokeGap)
-        drawable.cornerRadius = Util.tryCatchInvoke({ (bgAttrs["radius"] ?: "0").toInt() }, 0) * density
-        val gradient = bgAttrs["gradient"]
-        val hasGradient = if (!gradient.isNullOrEmpty()) {
-            when (gradient) {
-                "linear" -> {
-                    drawable.gradientType = GradientDrawable.LINEAR_GRADIENT
-                    val angle = Util.tryCatchInvoke({ (bgAttrs["gradient-angle"] ?: "0").toInt() }, 0)
-                    drawable.orientation = when {
-                        angle < 45 -> GradientDrawable.Orientation.LEFT_RIGHT
-                        angle < 90 -> GradientDrawable.Orientation.TL_BR
-                        angle < 135 -> GradientDrawable.Orientation.TOP_BOTTOM
-                        angle < 180 -> GradientDrawable.Orientation.TR_BL
-                        angle < 225 -> GradientDrawable.Orientation.RIGHT_LEFT
-                        angle < 270 -> GradientDrawable.Orientation.BR_TL
-                        angle < 315 -> GradientDrawable.Orientation.BOTTOM_TOP
-                        angle < 360 -> GradientDrawable.Orientation.BL_TR
-                        else -> GradientDrawable.Orientation.LEFT_RIGHT
-                    }
-                    true
-                }
-                "sweep" -> {
-                    drawable.gradientType = GradientDrawable.SWEEP_GRADIENT
-                    true
-                }
-                "radial" -> {
-                    drawable.gradientType = GradientDrawable.RADIAL_GRADIENT
-                    drawable.gradientRadius = Util.tryCatchInvoke({ (bgAttrs["gradient-radius"] ?: "0").toFloat() }, 0f)
-                    true
-                }
-                else -> false
-            }
-        } else
-            false
-        if (hasGradient) {
-            val colorList = ArrayList<Int>()
-            colorList.addAll((bgAttrs["gradient-colors"] ?: "0").split(",").map { Util.tryCatchInvoke({ Color.parseColor(it) }, 0) }.toList())
-            if (colorList.size < 2)
-                for (i in 0 until 2 - colorList.size)
-                    colorList.add(0)
-            drawable.colors = colorList.toIntArray()
-        } else
-            drawable.setColor(Util.tryCatchInvoke({ Color.parseColor(bgAttrs["fill"]) }, 0))
-        drawable.setBounds(0, 0, drawable.intrinsicWidth, drawable.intrinsicHeight)
-        return drawable
-    }
 
     companion object {
 
@@ -108,7 +41,7 @@ data class Style(
 
         private val locale = Locale.ENGLISH
 
-        fun from(style: String, background: String): Style {
+        fun from(style: String): Style {
             val map = style.toLowerCase(locale).split(";").map {
                 val keyValue = it.split(":")
                 keyValue[0] to if (keyValue.size > 1) keyValue[1] else ""
@@ -175,8 +108,7 @@ data class Style(
                     val value = map[KEY_PRESSED] ?: ""
                     Pressed.values().firstOrNull { it.value == value } ?: Pressed.NONE
                 }, Pressed.NONE),
-                Util.tryCatchInvoke({(map[KEY_LINE_HEIGHT] ?: "-1").toFloat()   }, -1f),
-                background
+                Util.tryCatchInvoke({(map[KEY_LINE_HEIGHT] ?: "-1").toFloat()   }, -1f)
             )
         }
 

@@ -71,24 +71,20 @@ internal class HTMLTagHandler(private val target: HTMLTextView) : Html.TagHandle
     override fun startElement(uri: String, localName: String, qName: String, atts: Attributes) {
 
         getTagHandler(localName.toLowerCase(Locale.ENGLISH))?.let {
-//            if(localName == "view")
-//                originalContentHandler?.startElement(uri, localName, qName, atts)
             val attrs = HashMap<String, String>()
             for(i in 0 until atts.length) {
                 val key = atts.getQName(i).toLowerCase(Locale.ENGLISH)
                 attrs[key] = atts.getValue(key)
             }
-            tagRecorderList.add(TagRecorder(attrs, Style.from(attrs.remove(Attribute.STYLE.value)?: "", attrs.remove(Attribute.BACKGROUND.value)?: ""), originalOutput!!.length))
+            tagRecorderList.add(TagRecorder(attrs, Style.from(attrs.remove(Attribute.STYLE.value)?: ""), Background.from(attrs.remove(Attribute.BACKGROUND.value)?: ""), originalOutput!!.length))
         } ?: originalContentHandler?.startElement(uri, localName, qName, atts)
     }
 
     override fun endElement(uri: String, localName: String, qName: String) {
         val tag = localName.toLowerCase(Locale.ENGLISH)
         getTagHandler(tag)?.let {
-//            if(localName == "view")
-//                originalContentHandler?.endElement(uri, localName, qName)
             val tagRecorder = tagRecorderList.removeLast()
-            it.handleTag(target, tag, originalOutput!!, tagRecorder.start, tagRecorder.attrs, tagRecorder.style)
+            it.handleTag(target, tag, originalOutput!!, tagRecorder.start, tagRecorder.attrs, tagRecorder.style, tagRecorder.background)
         } ?: originalContentHandler?.endElement(uri, localName, qName)
     }
 
@@ -110,6 +106,6 @@ internal class HTMLTagHandler(private val target: HTMLTextView) : Html.TagHandle
 
     override fun skippedEntity(name: String?) = originalContentHandler?.skippedEntity(name) ?: Unit
 
-    private class TagRecorder(val attrs:Map<String, String>, val style:Style, val start:Int)
+    private class TagRecorder(val attrs:Map<String, String>, val style:Style, val background: Background, val start:Int)
 
 }

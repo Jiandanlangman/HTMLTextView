@@ -15,7 +15,7 @@ import androidx.core.animation.doOnEnd
 class ATagHandler : TagHandler {
 
     @SuppressLint("Range")
-    override fun handleTag(target: HTMLTextView, tag: String, output: Editable, start: Int, attrs: Map<String, String>, style: Style) {
+    override fun handleTag(target: HTMLTextView, tag: String, output: Editable, start: Int, attrs: Map<String, String>, style: Style, background: Background) {
         val density = target.resources.displayMetrics.density
         val action = attrs[Attribute.ACTION.value] ?: ""
         val color = Util.tryCatchInvoke({ Color.parseColor(style.color) }, target.textColors.defaultColor)

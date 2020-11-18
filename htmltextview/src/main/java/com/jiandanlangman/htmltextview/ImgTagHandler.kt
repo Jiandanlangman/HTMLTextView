@@ -13,7 +13,7 @@ import androidx.core.animation.doOnEnd
 
 class ImgTagHandler : TagHandler {
 
-    override fun handleTag(target: HTMLTextView, tag: String, output: Editable, start: Int, attrs: Map<String, String>, style: Style) {
+    override fun handleTag(target: HTMLTextView, tag: String, output: Editable, start: Int, attrs: Map<String, String>, style: Style, background: Background) {
         output.append("\u200B")
         output.setSpan(ImgSpan(target, attrs, style), start, output.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
     }

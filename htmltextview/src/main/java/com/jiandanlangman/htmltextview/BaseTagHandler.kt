@@ -2,7 +2,6 @@ package com.jiandanlangman.htmltextview
 
 import android.annotation.SuppressLint
 import android.graphics.Color
-import android.graphics.drawable.Drawable
 import android.text.Editable
 import android.text.Spannable
 import android.text.style.ClickableSpan
@@ -15,7 +14,7 @@ import androidx.core.view.updateLayoutParams
 class BaseTagHandler : TagHandler {
 
     @SuppressLint("Range", "ClickableViewAccessibility")
-    override fun handleTag(target: HTMLTextView, tag: String, output: Editable, start: Int, attrs: Map<String, String>, style: Style) {
+    override fun handleTag(target: HTMLTextView, tag: String, output: Editable, start: Int, attrs: Map<String, String>, style: Style, background: Background) {
         val density = target.context.resources.displayMetrics.density
         if (style.fontSize >= 0)
             target.setTextSize(TypedValue.COMPLEX_UNIT_DIP, style.fontSize.toFloat())
@@ -31,15 +30,7 @@ class BaseTagHandler : TagHandler {
             if (style.padding.bottom >= 0) (style.padding.bottom * density).toInt() else target.paddingBottom
         )
         target.paint.isFakeBoldText = style.fontWeight == Style.FontWeight.BOLD
-        style.createBackgroundDrawable(target)?.let {
-            if (it is Drawable)
-                target.background = it
-            else {
-                HTMLTagHandler.getImageGetter()?.getImageDrawable(it.toString(), "") { d ->
-                    d.let { target.background = d }
-                }
-            }
-        }
+        background.getDrawable(target) { it?.let { target.background = it } }
         if (style.lineHeight >= 0)
             target.setLineSpacing(target.lineSpacingExtra, style.lineHeight)
         val action = attrs[Attribute.ACTION.value] ?: ""
