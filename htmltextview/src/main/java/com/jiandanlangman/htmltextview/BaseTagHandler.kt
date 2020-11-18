@@ -8,10 +8,11 @@ import android.text.Spannable
 import android.text.style.ClickableSpan
 import android.util.TypedValue
 import android.view.MotionEvent
+import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.updateLayoutParams
 
-class ViewTagHandler : TagHandler {
+class BaseTagHandler : TagHandler {
 
     @SuppressLint("Range", "ClickableViewAccessibility")
     override fun handleTag(target: HTMLTextView, tag: String, output: Editable, start: Int, attrs: Map<String, String>, style: Style) {
@@ -39,13 +40,8 @@ class ViewTagHandler : TagHandler {
                 }
             }
         }
-//        target.updateLayoutParams<ViewGroup.LayoutParams> {
-//            if (style.width > 0)
-//                width = (style.width * density + .5f).toInt()
-//            if (style.height > 0)
-//                height = (style.height * density + .5f).toInt()
-//            setMargin(this, style, density)
-//        }
+        if (style.lineHeight >= 0)
+            target.setLineSpacing(target.lineSpacingExtra, style.lineHeight)
         val action = attrs[Attribute.ACTION.value] ?: ""
         if (action.isNotEmpty()) {
             var pressedTarget = false
@@ -67,6 +63,28 @@ class ViewTagHandler : TagHandler {
                 return@setOnTouchListener false
             }
         }
+        fun updateLayoutParams(v:View) {
+            try {
+                v.updateLayoutParams<ViewGroup.LayoutParams> {
+                    if (style.width > 0)
+                        width = (style.width * density + .5f).toInt()
+                    if (style.height > 0)
+                        height = (style.height * density + .5f).toInt()
+                    setMargin(this, style, density)
+                }
+            } catch (ignore:Throwable) {
+                target.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
+                    override fun onViewAttachedToWindow(v: View) {
+                        updateLayoutParams(v)
+                        v.removeOnAttachStateChangeListener(this)
+                    }
+
+                    override fun onViewDetachedFromWindow(v: View) = v.removeOnAttachStateChangeListener(this)
+
+                })
+            }
+        }
+        updateLayoutParams(target)
     }
 
     private fun playScaleAnimator(target: HTMLTextView, to: Float) {

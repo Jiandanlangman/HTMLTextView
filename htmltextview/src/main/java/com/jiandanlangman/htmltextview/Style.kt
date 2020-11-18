@@ -17,6 +17,7 @@ data class Style(
     val textDecoration: TextDecoration = TextDecoration.NONE,
     val fontWeight: FontWeight = FontWeight.NATIVE,
     val pressed: Pressed = Pressed.NONE,
+    val lineHeight:Float = -1f,
     private val background: String = ""
 ) {
 
@@ -32,18 +33,18 @@ data class Style(
             return d
         val drawable = GradientDrawable()
         val density = target.resources.displayMetrics.density
-        val stroke = tryCatchInvoke({ Color.parseColor(bgAttrs["stroke"]) }, 0)
-        val strokeWidth = (tryCatchInvoke({ (bgAttrs["stroke-width"] ?: "0").toInt() }, 0) * density).toInt()
-        val strokeDash = tryCatchInvoke({ (bgAttrs["stroke-dash"] ?: "0").toInt() }, 0) * density
-        val strokeGap = tryCatchInvoke({ (bgAttrs["stroke-gap"] ?: "0").toInt() }, 0) * density
+        val stroke = Util.tryCatchInvoke({ Color.parseColor(bgAttrs["stroke"]) }, 0)
+        val strokeWidth = (Util.tryCatchInvoke({ (bgAttrs["stroke-width"] ?: "0").toInt() }, 0) * density).toInt()
+        val strokeDash = Util.tryCatchInvoke({ (bgAttrs["stroke-dash"] ?: "0").toInt() }, 0) * density
+        val strokeGap = Util.tryCatchInvoke({ (bgAttrs["stroke-gap"] ?: "0").toInt() }, 0) * density
         drawable.setStroke(strokeWidth, stroke, strokeDash, strokeGap)
-        drawable.cornerRadius = tryCatchInvoke({ (bgAttrs["radius"] ?: "0").toInt() }, 0) * density
+        drawable.cornerRadius = Util.tryCatchInvoke({ (bgAttrs["radius"] ?: "0").toInt() }, 0) * density
         val gradient = bgAttrs["gradient"]
         val hasGradient = if (!gradient.isNullOrEmpty()) {
             when (gradient) {
                 "linear" -> {
                     drawable.gradientType = GradientDrawable.LINEAR_GRADIENT
-                    val angle = tryCatchInvoke({ (bgAttrs["gradient-angle"] ?: "0").toInt() }, 0)
+                    val angle = Util.tryCatchInvoke({ (bgAttrs["gradient-angle"] ?: "0").toInt() }, 0)
                     drawable.orientation = when {
                         angle < 45 -> GradientDrawable.Orientation.LEFT_RIGHT
                         angle < 90 -> GradientDrawable.Orientation.TL_BR
@@ -63,7 +64,7 @@ data class Style(
                 }
                 "radial" -> {
                     drawable.gradientType = GradientDrawable.RADIAL_GRADIENT
-                    drawable.gradientRadius = tryCatchInvoke({ (bgAttrs["gradient-radius"] ?: "0").toFloat() }, 0f)
+                    drawable.gradientRadius = Util.tryCatchInvoke({ (bgAttrs["gradient-radius"] ?: "0").toFloat() }, 0f)
                     true
                 }
                 else -> false
@@ -72,13 +73,13 @@ data class Style(
             false
         if (hasGradient) {
             val colorList = ArrayList<Int>()
-            colorList.addAll((bgAttrs["gradient-colors"] ?: "0").split(",").map { tryCatchInvoke({ Color.parseColor(it) }, 0) }.toList())
+            colorList.addAll((bgAttrs["gradient-colors"] ?: "0").split(",").map { Util.tryCatchInvoke({ Color.parseColor(it) }, 0) }.toList())
             if (colorList.size < 2)
                 for (i in 0 until 2 - colorList.size)
                     colorList.add(0)
             drawable.colors = colorList.toIntArray()
         } else
-            drawable.setColor(tryCatchInvoke({ Color.parseColor(bgAttrs["fill"]) }, 0))
+            drawable.setColor(Util.tryCatchInvoke({ Color.parseColor(bgAttrs["fill"]) }, 0))
         drawable.setBounds(0, 0, drawable.intrinsicWidth, drawable.intrinsicHeight)
         return drawable
     }
@@ -95,14 +96,15 @@ data class Style(
         private const val KEY_PADDING_TOP = "padding-top"               //上内边距
         private const val KEY_PADDING_BOTTOM = "padding-bottom"         //下内边距
         private const val KEY_MARGIN = "margin"                         //外边距，仅支持View且必须要Target的LayoutParams支持margin属性
-        private const val KEY_MARGIN_LEFT = "margin-left"                    //左外边距，仅支持View且必须要Target的LayoutParams支持margin属性
-        private const val KEY_MARGIN_RIGHT = "margin-right"                   //上外边距，仅支持View且必须要Target的LayoutParams支持margin属性
-        private const val KEY_MARGIN_TOP = "margin-top"                     //右外边距，仅支持View且必须要Target的LayoutParams支持margin属性
-        private const val KEY_MARGIN_BOTTOM = "margin-bottom"                  //下外边距，仅支持View且必须要Target的LayoutParams支持margin属性
+        private const val KEY_MARGIN_LEFT = "margin-left"               //左外边距，仅支持View且必须要Target的LayoutParams支持margin属性
+        private const val KEY_MARGIN_RIGHT = "margin-right"             //上外边距，仅支持View且必须要Target的LayoutParams支持margin属性
+        private const val KEY_MARGIN_TOP = "margin-top"                 //右外边距，仅支持View且必须要Target的LayoutParams支持margin属性
+        private const val KEY_MARGIN_BOTTOM = "margin-bottom"           //下外边距，仅支持View且必须要Target的LayoutParams支持margin属性
         private const val KEY_TEXT_ALIGN = "text-align"                 //文字对齐方式，View暂不支持
         private const val KEY_TEXT_DECORATION = "text-decoration"       //文字修饰，View暂不支持
         private const val KEY_FONT_WEIGHT = "font-weight"               //字重
         private const val KEY_PRESSED = "pressed"                       //按下后的视觉反馈
+        private const val KEY_LINE_HEIGHT = "line-height"               //行间距
 
         private val locale = Locale.ENGLISH
 
@@ -113,77 +115,71 @@ data class Style(
             }.toMap()
 
             val paddingRect = Rect()
-            val padding = tryCatchInvoke({ (map[KEY_PADDING] ?: "-1").toInt() }, -1)
+            val padding = Util.tryCatchInvoke({ (map[KEY_PADDING] ?: "-1").toInt() }, -1)
             val paddingLeft = run {
-                val tmp = tryCatchInvoke({ (map[KEY_PADDING_LEFT] ?: "-1").toInt() }, -1)
+                val tmp = Util.tryCatchInvoke({ (map[KEY_PADDING_LEFT] ?: "-1").toInt() }, -1)
                 if (tmp != -1) tmp else padding
             }
             val paddingTop = run {
-                val tmp = tryCatchInvoke({ (map[KEY_PADDING_TOP] ?: "-1").toInt() }, -1)
+                val tmp = Util.tryCatchInvoke({ (map[KEY_PADDING_TOP] ?: "-1").toInt() }, -1)
                 if (tmp != -1) tmp else padding
             }
             val paddingRight = run {
-                val tmp = tryCatchInvoke({ (map[KEY_PADDING_RIGHT] ?: "-1").toInt() }, -1)
+                val tmp = Util.tryCatchInvoke({ (map[KEY_PADDING_RIGHT] ?: "-1").toInt() }, -1)
                 if (tmp != -1) tmp else padding
             }
             val paddingBottom = run {
-                val tmp = tryCatchInvoke({ (map[KEY_PADDING_BOTTOM] ?: "-1").toInt() }, -1)
+                val tmp = Util.tryCatchInvoke({ (map[KEY_PADDING_BOTTOM] ?: "-1").toInt() }, -1)
                 if (tmp != -1) tmp else padding
             }
             paddingRect.set(paddingLeft, paddingTop, paddingRight, paddingBottom)
             val marginRect = Rect()
-            val margin = tryCatchInvoke({ (map[KEY_MARGIN] ?: "-1").toInt() }, -1)
+            val margin = Util.tryCatchInvoke({ (map[KEY_MARGIN] ?: "-1").toInt() }, -1)
             val marginLeft = run {
-                val tmp = tryCatchInvoke({ (map[KEY_MARGIN_LEFT] ?: "-1").toInt() }, -1)
+                val tmp = Util.tryCatchInvoke({ (map[KEY_MARGIN_LEFT] ?: "-1").toInt() }, -1)
                 if (tmp != -1) tmp else margin
             }
             val marginTop = run {
-                val tmp = tryCatchInvoke({ (map[KEY_MARGIN_TOP] ?: "-1").toInt() }, -1)
+                val tmp = Util.tryCatchInvoke({ (map[KEY_MARGIN_TOP] ?: "-1").toInt() }, -1)
                 if (tmp != -1) tmp else margin
             }
             val marginRight = run {
-                val tmp = tryCatchInvoke({ (map[KEY_MARGIN_RIGHT] ?: "-1").toInt() }, -1)
+                val tmp = Util.tryCatchInvoke({ (map[KEY_MARGIN_RIGHT] ?: "-1").toInt() }, -1)
                 if (tmp != -1) tmp else margin
             }
             val marginBottom = run {
-                val tmp = tryCatchInvoke({ (map[KEY_MARGIN_BOTTOM] ?: "-1").toInt() }, -1)
+                val tmp = Util.tryCatchInvoke({ (map[KEY_MARGIN_BOTTOM] ?: "-1").toInt() }, -1)
                 if (tmp != -1) tmp else margin
             }
             marginRect.set(marginLeft, marginTop, marginRight, marginBottom)
             return Style(
-                tryCatchInvoke({ (map[KEY_WIDTH] ?: "0").toInt() }, 0),
-                tryCatchInvoke({ (map[KEY_HEIGHT] ?: "0").toInt() }, 0),
+                Util.tryCatchInvoke({ (map[KEY_WIDTH] ?: "0").toInt() }, 0),
+                Util.tryCatchInvoke({ (map[KEY_HEIGHT] ?: "0").toInt() }, 0),
                 map[KEY_COLOR] ?: "",
-                tryCatchInvoke({ (map[KEY_FONT_SIZE] ?: "-1").toInt() }, -1),
+                Util.tryCatchInvoke({ (map[KEY_FONT_SIZE] ?: "-1").toInt() }, -1),
                 paddingRect,
                 marginRect,
-                tryCatchInvoke({
+                Util.tryCatchInvoke({
                     val value = map[KEY_TEXT_ALIGN] ?: ""
                     TextAlign.values().firstOrNull { it.value == value } ?: TextAlign.BASELINE
                 }, TextAlign.BASELINE),
-                tryCatchInvoke({
+                Util.tryCatchInvoke({
                     val value = map[KEY_TEXT_DECORATION] ?: ""
                     TextDecoration.values().firstOrNull { it.value == value } ?: TextDecoration.NONE
                 }, TextDecoration.NONE),
-                tryCatchInvoke({
+                Util.tryCatchInvoke({
                     val value = map[KEY_FONT_WEIGHT] ?: ""
                     FontWeight.values().firstOrNull { it.value == value } ?: FontWeight.NATIVE
                 }, FontWeight.NATIVE),
-                tryCatchInvoke({
+                Util.tryCatchInvoke({
                     val value = map[KEY_PRESSED] ?: ""
                     Pressed.values().firstOrNull { it.value == value } ?: Pressed.NONE
                 }, Pressed.NONE),
+                Util.tryCatchInvoke({(map[KEY_LINE_HEIGHT] ?: "-1").toFloat()   }, -1f),
                 background
             )
         }
 
-        private fun <T> tryCatchInvoke(runnable: () -> T, errorReturn: T): T {
-            return try {
-                runnable.invoke()
-            } catch (ignore: Throwable) {
-                errorReturn
-            }
-        }
 
     }
 

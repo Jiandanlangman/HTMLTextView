@@ -19,7 +19,7 @@ import java.io.FileOutputStream
 
 class MainActivity : AppCompatActivity() {
 
-    val text = "<img src=\"\" style=\"width:28;height:12;pressed:scale\" action=\"图标1\" /><img action=\"图标2\" src=\"\" style=\"width:28;height:12;pressed:scale\" /><img action=\"图标3\" src=\"\" style=\"width:28;height:12;pressed:scale\" />你好呀<a action=\"你好\" style=\"color:#FF0000;font-weight:bold;text-align:center;pressed:scale;width:28;height:12\">我是超链接</a>哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈<view background=\"stroke:#FF4D81;stroke-width:2;stroke-dash:4;stroke-gap:2;file:#99000000;radius:8;gradient:linear;gradient-colors:#FF0000,#00FF00,#0000FF;gradient-angle:135;drawable:xxx.9.png\" action=\"我是View本身\" style=\"pressed:scale;margin:16;padding:16\"/>"
+    val text = "<base background=\"stroke:#FF4D81;stroke-width:2;stroke-dash:4;stroke-gap:2;file:#99000000;radius:8;gradient:linear;gradient-colors:#FF0000,#00FF00,#0000FF;gradient-angle:135;drawable:xxx.9.png\" action=\"我是View本身\" style=\"pressed:scale;margin:16;padding:16;line-height:1.3\"/><img src=\"\" style=\"width:28;height:12;pressed:scale\" action=\"图标1\" /><img action=\"图标2\" src=\"\" style=\"width:28;height:12;pressed:scale\" /><img action=\"图标3\" src=\"\" style=\"width:28;height:12;pressed:scale\" />你好呀<a action=\"你好\" style=\"color:#FF0000;font-weight:bold;text-align:center;pressed:scale;width:28;height:12\">我是超链接</a>哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈"
 
 
 
@@ -59,7 +59,8 @@ class MainActivity : AppCompatActivity() {
 
     private inner class ViewHolder(itemView:HTMLTextView):RecyclerView.ViewHolder(itemView) {
         init {
-            itemView.setLineSpacing(1.3f, 1.3f)
+//            itemView.setLineSpacing(1.3f, 1.3f)
+//            itemView.lineSpacingMultiplier
 //            itemView.gravity = Gravity.CENTER_VERTICAL
         }
     }

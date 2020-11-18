@@ -26,7 +26,7 @@ internal class HTMLTagHandler(private val target: HTMLTextView) : Html.TagHandle
             registerTagHandler("span", aTagHandler)
             registerTagHandler("font", aTagHandler)
             registerTagHandler("img", ImgTagHandler())
-            registerTagHandler("view", ViewTagHandler())
+            registerTagHandler("base", BaseTagHandler())
         }
 
         internal fun registerTagHandler(tag: String, handler: TagHandler) {
@@ -69,7 +69,10 @@ internal class HTMLTagHandler(private val target: HTMLTextView) : Html.TagHandle
     }
 
     override fun startElement(uri: String, localName: String, qName: String, atts: Attributes) {
+
         getTagHandler(localName.toLowerCase(Locale.ENGLISH))?.let {
+//            if(localName == "view")
+//                originalContentHandler?.startElement(uri, localName, qName, atts)
             val attrs = HashMap<String, String>()
             for(i in 0 until atts.length) {
                 val key = atts.getQName(i).toLowerCase(Locale.ENGLISH)
@@ -82,6 +85,8 @@ internal class HTMLTagHandler(private val target: HTMLTextView) : Html.TagHandle
     override fun endElement(uri: String, localName: String, qName: String) {
         val tag = localName.toLowerCase(Locale.ENGLISH)
         getTagHandler(tag)?.let {
+//            if(localName == "view")
+//                originalContentHandler?.endElement(uri, localName, qName)
             val tagRecorder = tagRecorderList.removeLast()
             it.handleTag(target, tag, originalOutput!!, tagRecorder.start, tagRecorder.attrs, tagRecorder.style)
         } ?: originalContentHandler?.endElement(uri, localName, qName)
