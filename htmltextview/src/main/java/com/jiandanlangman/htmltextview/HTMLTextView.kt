@@ -1,6 +1,7 @@
 package com.jiandanlangman.htmltextview
 
 import android.content.Context
+import android.graphics.Color
 import android.os.Build
 import android.text.Html
 import android.util.AttributeSet
@@ -21,6 +22,7 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
 
     init {
         movementMethod = LinkMovementMethod.getInstance()
+        highlightColor = Color.TRANSPARENT
     }
 
 

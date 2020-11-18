@@ -5,6 +5,7 @@ import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.text.Editable
 import android.text.Spannable
+import android.text.style.ClickableSpan
 import android.util.TypedValue
 import android.view.MotionEvent
 import android.view.ViewGroup
@@ -51,7 +52,8 @@ class ViewTagHandler : TagHandler {
             target.setOnTouchListener { _, event ->
                 when (event.action) {
                     MotionEvent.ACTION_DOWN -> {
-                        pressedTarget = LinkMovementMethod.getEventActionSpan(target, target.text as Spannable, event).isEmpty()
+                        pressedTarget = LinkMovementMethod.getEventActionSpan(target, target.text as Spannable, event, ActionSpan::class.java)?.isEmpty() ?: true
+                        pressedTarget = pressedTarget && LinkMovementMethod.getEventActionSpan(target, target.text as Spannable, event, ClickableSpan::class.java)?.isEmpty() ?: true
                         if (pressedTarget && style.pressed == Style.Pressed.SCALE)
                             playScaleAnimator(target, .88f)
                     }

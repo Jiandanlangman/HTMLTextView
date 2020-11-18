@@ -30,6 +30,7 @@ class ImgTagHandler : TagHandler {
         private val paddingRight = if (style.padding.right < 0) 0f else style.padding.right * density
         private val paddingTop = if (style.padding.top < 0) 0f else style.padding.top * density
         private val paddingBottom = if (style.padding.bottom < 0) 0f else style.padding.bottom * density
+        private val drawAlignCenterOffsetY = (target.lineSpacingMultiplier - 1) * target.textSize
 
         private val invalidateRect = Rect()
 
@@ -68,7 +69,8 @@ class ImgTagHandler : TagHandler {
             if (canvasScale != 1f)
                 canvas.scale(canvasScale, canvasScale, x + width / 2, y.toFloat() - height / 2)
             canvas.translate(paddingLeft, paddingTop)
-            canvas.translate(x, (target.textSize - height) / 2 + (bottom - y) / 5f * 4f)
+            canvas.translate(x, (target.textSize - height) / 2 + (bottom - y) / 4f * 3f)
+            canvas.translate(0f, -drawAlignCenterOffsetY)
             canvas.scale(scaleX, scaleY)
             drawable!!.draw(canvas)
             canvas.restore()
@@ -84,19 +86,19 @@ class ImgTagHandler : TagHandler {
         override fun getAction() = action
 
         override fun onPressed() {
-            when (style.pressed) {
-                Style.Pressed.SCALE -> playScaleAnimator(1f, .88f)
-                Style.Pressed.NONE -> {
+            if (action.isNotEmpty())
+                when (style.pressed) {
+                    Style.Pressed.SCALE -> playScaleAnimator(1f, .88f)
+                    Style.Pressed.NONE -> Unit
                 }
-            }
         }
 
         override fun onUnPressed() {
-            when (style.pressed) {
-                Style.Pressed.SCALE -> playScaleAnimator(.88f, 1f)
-                Style.Pressed.NONE -> {
+            if (action.isNotEmpty())
+                when (style.pressed) {
+                    Style.Pressed.SCALE -> playScaleAnimator(.88f, 1f)
+                    Style.Pressed.NONE -> Unit
                 }
-            }
         }
 
 

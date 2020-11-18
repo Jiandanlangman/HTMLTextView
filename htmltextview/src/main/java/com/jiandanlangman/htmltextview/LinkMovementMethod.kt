@@ -17,7 +17,7 @@ internal class LinkMovementMethod : android.text.method.LinkMovementMethod() {
 
         fun getInstance() = INSTANCE
 
-        fun getEventActionSpan(widget: TextView, spannable: Spannable, event: MotionEvent) : Array<ActionSpan> {
+        fun <T> getEventActionSpan(widget: TextView, spannable: Spannable, event: MotionEvent, clazz: Class<T>): Array<T>? {
             var x = event.x
             var y = event.y
             x -= widget.totalPaddingLeft
@@ -32,8 +32,8 @@ internal class LinkMovementMethod : android.text.method.LinkMovementMethod() {
             touchedLineBounds.right = layout.getLineWidth(line) + touchedLineBounds.left
             touchedLineBounds.bottom = layout.getLineBottom(line).toFloat()
             if (touchedLineBounds.contains(x, y))
-                return spannable.getSpans(off, off, ActionSpan::class.java)
-            return arrayOf()
+                return spannable.getSpans(off, off, clazz)
+            return null
         }
 
     }
@@ -42,11 +42,10 @@ internal class LinkMovementMethod : android.text.method.LinkMovementMethod() {
     private val pressedSpans = HashMap<TextView, ArrayList<ActionSpan>>()
 
     override fun onTouchEvent(widget: TextView, buffer: Spannable, event: MotionEvent): Boolean {
-        Log.d("HTMLTextView", "LinkMovementMethod")
-        if(event.action == MotionEvent.ACTION_UP || event.action == MotionEvent.ACTION_CANCEL)
-            pressedSpans.remove(widget)?.forEach { sp ->  sp.onUnPressed() }
+        if (event.action == MotionEvent.ACTION_UP || event.action == MotionEvent.ACTION_CANCEL)
+            pressedSpans.remove(widget)?.forEach { sp -> sp.onUnPressed() }
         if (event.action == MotionEvent.ACTION_DOWN || event.action == MotionEvent.ACTION_UP) {
-            val actionSpans = getEventActionSpan(widget, buffer, event)
+            val actionSpans = getEventActionSpan(widget, buffer, event, ActionSpan::class.java)
             if (!actionSpans.isNullOrEmpty()) {
                 if (event.action == MotionEvent.ACTION_DOWN) {
                     val spans = ArrayList<ActionSpan>()
@@ -56,7 +55,11 @@ internal class LinkMovementMethod : android.text.method.LinkMovementMethod() {
                     }
                     pressedSpans[widget] = spans
                 } else
-                    actionSpans.forEach { (widget as? HTMLTextView)?.onAction(it.getAction()) }
+                    actionSpans.forEach {
+                        val action = it.getAction()
+                        if (action.isNotEmpty())
+                            (widget as? HTMLTextView)?.onAction(action)
+                    }
             }
         }
         return super.onTouchEvent(widget, buffer, event)
