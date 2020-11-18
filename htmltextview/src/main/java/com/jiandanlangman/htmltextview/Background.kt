@@ -30,6 +30,7 @@ class Background private constructor(private val background: String) {
             background.isEmpty() -> callback.invoke(null)
             drawable != null -> callback.invoke(drawable)
             else -> createDrawable(target) {
+                it?.setBounds(0, 0, it.intrinsicWidth, it.intrinsicWidth)
                 drawable = it
                 callback.invoke(it)
             }

@@ -32,6 +32,11 @@ internal class BaseTagHandler : TagHandler {
         )
         target.paint.isFakeBoldText = style.fontWeight == Style.FontWeight.BOLD
         background.getDrawable(target) { it?.let { target.background = it } }
+        val drawable = Drawable.from(attrs[Attribute.DRAWABLE.value] ?: "")
+        val drawablePadding = drawable.getDrawPadding(target)
+        if (drawablePadding >= 0)
+            target.compoundDrawablePadding = drawablePadding
+        drawable.getDrawables{ it?.let { target.setCompoundDrawables(it.left, it.top, it.right, it.bottom) } }
         if (style.lineHeight >= 0)
             target.setLineSpacing(target.lineSpacingExtra, style.lineHeight)
         if (style.textDecoration.isNotEmpty()) {

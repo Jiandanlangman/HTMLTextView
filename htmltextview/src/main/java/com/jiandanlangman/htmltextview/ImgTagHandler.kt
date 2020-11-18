@@ -11,7 +11,7 @@ import android.text.style.DynamicDrawableSpan
 import android.view.View
 import androidx.core.animation.doOnEnd
 
-internal class ImgTagHandler : TagHandler {
+class ImgTagHandler : TagHandler {
 
     override fun handleTag(target: HTMLTextView, tag: String, output: Editable, start: Int, attrs: Map<String, String>, style: Style, background: Background) {
         output.append("\u200B")
