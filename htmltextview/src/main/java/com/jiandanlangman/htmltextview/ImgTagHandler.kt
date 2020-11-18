@@ -2,6 +2,7 @@ package com.jiandanlangman.htmltextview
 
 import android.animation.ValueAnimator
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.drawable.Drawable
@@ -61,8 +62,8 @@ class ImgTagHandler : TagHandler {
         override fun draw(canvas: Canvas, text: CharSequence?, start: Int, end: Int, x: Float, top: Int, y: Int, bottom: Int, paint: Paint) {
             invalidateRect.left = x.toInt()
             invalidateRect.right = (x + width).toInt()
-            invalidateRect.top = top
-            invalidateRect.bottom = (top + height).toInt()
+            invalidateRect.top = (top + (target.textSize - height) / 2 + (bottom - y) / 4f * 3f  -drawAlignCenterOffsetY).toInt()
+            invalidateRect.bottom = (invalidateRect.top + height).toInt()
             if (drawable == null)
                 return
             canvas.save()
@@ -74,8 +75,6 @@ class ImgTagHandler : TagHandler {
             canvas.scale(scaleX, scaleY)
             drawable!!.draw(canvas)
             canvas.restore()
-            canvas.save()
-
         }
 
 

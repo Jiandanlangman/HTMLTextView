@@ -75,9 +75,9 @@ class ATagHandler : TagHandler {
         override fun draw(canvas: Canvas, text: CharSequence?, start: Int, end: Int, x: Float, top: Int, y: Int, bottom: Int, paint: Paint) {
             text?.let {
                 val textPaint = getTextPaint(paint)
-                val fontMetricsInt = textPaint.fontMetricsInt
+                val fontMetricsInt = textPaint.fontMetrics
                 val offsetY = (y + fontMetricsInt.ascent + y + fontMetricsInt.descent) / 2f - (top + bottom) / 2f + drawAlignCenterOffsetY - (padding.top - padding.bottom)
-                val size = getSize(paint, text, start, end, fontMetricsInt)
+                val size = getSize(paint, text, start, end, textPaint.fontMetricsInt)
                 invalidateRect.left = x.toInt()
                 invalidateRect.top = (y - padding.top   - offsetY - textSize ) .toInt()
                 invalidateRect.right = invalidateRect.left + size
