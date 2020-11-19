@@ -11,7 +11,7 @@ data class Style(
     val fontSize: Int = -1,
     val padding: Rect = Rect(),
     val margin:Rect = Rect(),
-    val textAlign: TextAlign = TextAlign.BASELINE,
+    val textAlign: TextAlign = TextAlign.CENTER,
     val textDecoration: Array<TextDecoration> = emptyArray(),
     val fontWeight: FontWeight = FontWeight.NATIVE,
     val pressed: Pressed = Pressed.NONE,
@@ -102,8 +102,8 @@ data class Style(
                 marginRect,
                 Util.tryCatchInvoke({
                     val value = map[KEY_TEXT_ALIGN] ?: ""
-                    TextAlign.values().firstOrNull { it.value == value } ?: TextAlign.BASELINE
-                }, TextAlign.BASELINE),
+                    TextAlign.values().firstOrNull { it.value == value } ?: TextAlign.CENTER
+                }, TextAlign.CENTER),
                 tdList.toTypedArray(),
                 Util.tryCatchInvoke({
                     val value = map[KEY_FONT_WEIGHT] ?: ""
@@ -123,8 +123,9 @@ data class Style(
     }
 
     enum class TextAlign(val value: String) {
-        BASELINE("baseline"),                       //默认值，基线对齐
-        CENTER("center"),                            //垂直居中对齐
+        CENTER("center"),                            //默认值，垂直居中对齐
+        TOP("top"),                                  //顶对齐
+        BOTTOM("bottom")                             //底对齐
 
 
     }

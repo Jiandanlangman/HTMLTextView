@@ -36,7 +36,7 @@ class ImgTagHandler : TagHandler {
             if (style.margin.right < 0) 0 else Util.dpToPx(style.margin.right, density),
             if (style.margin.bottom < 0) 0 else Util.dpToPx(style.margin.bottom, density)
         )
-        private val drawAlignCenterOffsetY = (target.lineSpacingMultiplier - 1) * target.textSize //TODO 一行文字时对齐会有问题
+        private val drawAlignCenterOffsetY = (target.lineSpacingMultiplier - 1) * target.textSize
 
         private val invalidateRect = Rect()
 
@@ -70,7 +70,7 @@ class ImgTagHandler : TagHandler {
             }
             background.getDrawable(target) {
                 backgroundDrawable = it
-                target.invalidate()
+                it?.let { target.invalidate() }
             }
         }
 
@@ -88,7 +88,8 @@ class ImgTagHandler : TagHandler {
                 canvas.scale(canvasScale, canvasScale, x + width / 2f, y.toFloat() - height / 2f)
             canvas.translate((padding.left + margin.left).toFloat(), -((padding.top - padding.bottom) + (margin.top - margin.bottom)).toFloat())
             canvas.translate(x, (target.textSize - height) / 2f + (bottom - y) / 4f * 3f)
-            canvas.translate(0f, -drawAlignCenterOffsetY)
+            if (target.lineCount > 1) //TODO 判断是否是最后一行
+                canvas.translate(0f, -drawAlignCenterOffsetY)
             backgroundDrawable?.let {
                 it.setBounds(invalidateRect.left, invalidateRect.top, invalidateRect.right, invalidateRect.bottom)
                 it.draw(canvas)

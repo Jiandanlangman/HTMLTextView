@@ -37,6 +37,8 @@ class Background private constructor(private val background: String) {
         }
     }
 
+    fun isNotBackground() = background.isEmpty()
+
     private fun createDrawable(target: HTMLTextView, callback: (drawable: Drawable?) -> Unit) {
         val bgAttrs = background.split(";").map {
             val sp = it.split(":")
