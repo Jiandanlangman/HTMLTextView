@@ -116,7 +116,7 @@ class ATagHandler : TagHandler {
                 }
                 invalidateRect.top += (tao + .5f).toInt()
                 invalidateRect.bottom += (tao + .5f).toInt()
-                if (target.lineCount > 1) {//TODO，判断是否是最后一行
+                if (top / target.lineHeight != target.lineCount - 1) {
                     invalidateRect.top = (invalidateRect.top - drawAlignCenterOffsetY + .5f).toInt()
                     invalidateRect.bottom = (invalidateRect.bottom - drawAlignCenterOffsetY + .5f).toInt()
                 }

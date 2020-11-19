@@ -84,7 +84,7 @@ class ImgTagHandler : TagHandler {
             invalidateRect.right = invalidateRect.left + totalWidth
             invalidateRect.top = top + (baseHeight - totalHeight) / 2
             invalidateRect.bottom = invalidateRect.top +totalHeight
-            if (target.lineCount > 1) {//TODO，判断是否是最后一行
+            if (top / target.lineHeight != target.lineCount - 1) {
                 invalidateRect.top = (invalidateRect.top - drawAlignCenterOffsetY / 2 + .5f).toInt()
                 invalidateRect.bottom = (invalidateRect.bottom - drawAlignCenterOffsetY / 2 + .5f).toInt()
             }
