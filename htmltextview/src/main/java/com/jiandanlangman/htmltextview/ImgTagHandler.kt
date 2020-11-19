@@ -15,10 +15,10 @@ class ImgTagHandler : TagHandler {
 
     override fun handleTag(target: HTMLTextView, tag: String, output: Editable, start: Int, attrs: Map<String, String>, style: Style, background: Background) {
         output.append("\u200B")
-        output.setSpan(ImgSpan(target, attrs, style), start, output.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+        output.setSpan(ImgSpan(target, attrs, style, background), start, output.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
     }
 
-    private class ImgSpan(val target: HTMLTextView, attrs: Map<String, String>, private val style: Style) : DynamicDrawableSpan(ALIGN_BOTTOM), ActionSpan, Drawable.Callback, View.OnAttachStateChangeListener {
+    private class ImgSpan(val target: HTMLTextView, attrs: Map<String, String>, private val style: Style, private val background: Background) : DynamicDrawableSpan(ALIGN_BOTTOM), ActionSpan, Drawable.Callback, View.OnAttachStateChangeListener {
 
         private val action = attrs[Attribute.ACTION.value] ?: ""
         private val srcType = attrs[Attribute.SRC_TYPE.value] ?: Attribute.SrcType.IMAGE_PNG.value
@@ -49,6 +49,7 @@ class ImgTagHandler : TagHandler {
         private var scaleAnimator: ValueAnimator? = null
 
         private var drawable: Drawable? = null
+        private var backgroundDrawable: Drawable? = null
 
         init {
             HTMLTagHandler.getImageGetter()?.let {
@@ -67,6 +68,10 @@ class ImgTagHandler : TagHandler {
                     target.invalidate()
                 }
             }
+            background.getDrawable(target) {
+                backgroundDrawable = it
+                target.invalidate()
+            }
         }
 
         override fun getDrawable() = drawable
@@ -76,7 +81,7 @@ class ImgTagHandler : TagHandler {
             invalidateRect.right = invalidateRect.left + padding.left + width + padding.right
             invalidateRect.top = top - padding.top
             invalidateRect.bottom = invalidateRect.top + padding.top + height + padding.bottom
-            if (drawable == null)
+            if (drawable == null && backgroundDrawable == null)
                 return
             canvas.save()
             if (canvasScale != 1f)
@@ -84,8 +89,14 @@ class ImgTagHandler : TagHandler {
             canvas.translate((padding.left + margin.left).toFloat(), -((padding.top - padding.bottom) + (margin.top - margin.bottom)).toFloat())
             canvas.translate(x, (target.textSize - height) / 2f + (bottom - y) / 4f * 3f)
             canvas.translate(0f, -drawAlignCenterOffsetY)
-            canvas.scale(scaleX, scaleY)
-            drawable!!.draw(canvas)
+            backgroundDrawable?.let {
+                it.setBounds(invalidateRect.left, invalidateRect.top, invalidateRect.right, invalidateRect.bottom)
+                it.draw(canvas)
+            }
+            drawable?.let {
+                canvas.scale(scaleX, scaleY)
+                it.draw(canvas)
+            }
             canvas.restore()
         }
 

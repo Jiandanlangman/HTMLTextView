@@ -66,7 +66,7 @@ class MainActivity : AppCompatActivity() {
 //        recyclerView.adapter = Adapter()
 
         val textView = findViewById<HTMLTextView>(R.id.textView)
-        textView.text = "<img src=\"1234\" action=\"1233\" style=\"padding:8;margin:8;width:32;height:32;pressed:scale\" />哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈"
+        textView.text = "<img src=\"1234\" action=\"1233\" background=\"radius:8;fill:#FF4D81\" style=\"padding-left:8;padding-right:8;padding-top:4;padding-bottom:4;width:32;height:32;pressed:scale\" />哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈"
     }
 
     private inner class ViewHolder(itemView:HTMLTextView):RecyclerView.ViewHolder(itemView) {
