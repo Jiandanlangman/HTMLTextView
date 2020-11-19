@@ -24,16 +24,24 @@ class ImgTagHandler : TagHandler {
         private val srcType = attrs[Attribute.SRC_TYPE.value] ?: Attribute.SrcType.IMAGE_PNG.value
         private val density = target.resources.displayMetrics.density
         private val src = attrs[Attribute.SRC.value] ?: ""
-        private val width = style.width * density
-        private val height = style.height * density
-        private val paddingLeft = if (style.padding.left < 0) 0f else style.padding.left * density
-        private val paddingRight = if (style.padding.right < 0) 0f else style.padding.right * density
-        private val paddingTop = if (style.padding.top < 0) 0f else style.padding.top * density
-        private val paddingBottom = if (style.padding.bottom < 0) 0f else style.padding.bottom * density
-        private val drawAlignCenterOffsetY = (target.lineSpacingMultiplier - 1) * target.textSize
+        private val padding = Rect(
+            if (style.padding.left < 0) 0 else Util.dpToPx(style.padding.left, density),
+            if (style.padding.top < 0) 0 else Util.dpToPx(style.padding.top, density),
+            if (style.padding.right < 0) 0 else Util.dpToPx(style.padding.right, density),
+            if (style.padding.bottom < 0) 0 else Util.dpToPx(style.padding.bottom, density)
+        )
+        private val margin = Rect(
+            if (style.margin.left < 0) 0 else Util.dpToPx(style.margin.left, density),
+            if (style.margin.top < 0) 0 else Util.dpToPx(style.margin.top, density),
+            if (style.margin.right < 0) 0 else Util.dpToPx(style.margin.right, density),
+            if (style.margin.bottom < 0) 0 else Util.dpToPx(style.margin.bottom, density)
+        )
+        private val drawAlignCenterOffsetY = (target.lineSpacingMultiplier - 1) * target.textSize //TODO 一行文字时对齐会有问题
 
         private val invalidateRect = Rect()
 
+        private var width = Util.dpToPx(style.width, density)
+        private var height = Util.dpToPx(style.height, density)
         private var scaleX = 1f
         private var scaleY = 1f
         private var canvasScale = 1f
@@ -47,11 +55,16 @@ class ImgTagHandler : TagHandler {
                 it.getImageDrawable(src, srcType) { d ->
                     drawable = d
                     if (d != null) {
+                        if (width == 0)
+                            width = d.intrinsicWidth
+                        if (height == 0)
+                            height = d.intrinsicHeight
                         d.setBounds(0, 0, d.intrinsicWidth, d.intrinsicHeight)
-                        scaleX = (width - paddingLeft - paddingRight) / d.intrinsicWidth
-                        scaleY = (height - paddingTop - paddingBottom) / d.intrinsicHeight
+                        scaleX = width / d.intrinsicWidth.toFloat()
+                        scaleY = height / d.intrinsicHeight.toFloat()
                         d.callback = this
                     }
+                    target.invalidate()
                 }
             }
         }
@@ -59,17 +72,17 @@ class ImgTagHandler : TagHandler {
         override fun getDrawable() = drawable
 
         override fun draw(canvas: Canvas, text: CharSequence?, start: Int, end: Int, x: Float, top: Int, y: Int, bottom: Int, paint: Paint) {
-            invalidateRect.left = x.toInt()
-            invalidateRect.right = (x + width).toInt()
-            invalidateRect.top = (top + (target.textSize - height) / 2 + (bottom - y) / 4f * 3f  -drawAlignCenterOffsetY).toInt()
-            invalidateRect.bottom = (invalidateRect.top + height).toInt()
+            invalidateRect.left = x.toInt() - padding.left
+            invalidateRect.right = invalidateRect.left + padding.left + width + padding.right
+            invalidateRect.top = top - padding.top
+            invalidateRect.bottom = invalidateRect.top + padding.top + height + padding.bottom
             if (drawable == null)
                 return
             canvas.save()
             if (canvasScale != 1f)
-                canvas.scale(canvasScale, canvasScale, x + width / 2, y.toFloat() - height / 2)
-            canvas.translate(paddingLeft, paddingTop)
-            canvas.translate(x, (target.textSize - height) / 2 + (bottom - y) / 4f * 3f)
+                canvas.scale(canvasScale, canvasScale, x + width / 2f, y.toFloat() - height / 2f)
+            canvas.translate((padding.left + margin.left).toFloat(), -((padding.top - padding.bottom) + (margin.top - margin.bottom)).toFloat())
+            canvas.translate(x, (target.textSize - height) / 2f + (bottom - y) / 4f * 3f)
             canvas.translate(0f, -drawAlignCenterOffsetY)
             canvas.scale(scaleX, scaleY)
             drawable!!.draw(canvas)
@@ -77,9 +90,7 @@ class ImgTagHandler : TagHandler {
         }
 
 
-        override fun getSize(paint: Paint, text: CharSequence?, start: Int, end: Int, fm: Paint.FontMetricsInt?): Int {
-            return width.toInt()
-        }
+        override fun getSize(paint: Paint, text: CharSequence?, start: Int, end: Int, fm: Paint.FontMetricsInt?) = width + padding.left + padding.right + margin.left + margin.right
 
         override fun getAction() = action
 

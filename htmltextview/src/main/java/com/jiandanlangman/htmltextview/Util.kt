@@ -18,4 +18,8 @@ internal object Util {
         }
     }
 
+    fun dpToPx(dp:Float, density:Float) = (dp * density + .5f).toInt()
+
+    fun dpToPx(dp:Int, density:Float) = Util.dpToPx(dp.toFloat(), density)
+
 }
