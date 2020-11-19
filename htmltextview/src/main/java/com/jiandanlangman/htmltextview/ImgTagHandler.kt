@@ -36,7 +36,6 @@ class ImgTagHandler : TagHandler {
             if (style.margin.right < 0) 0 else Util.dpToPx(style.margin.right, density),
             if (style.margin.bottom < 0) 0 else Util.dpToPx(style.margin.bottom, density)
         )
-        private val drawAlignCenterOffsetY = (target.lineSpacingMultiplier - 1) * target.textSize
 
         private val invalidateRect = Rect()
 
@@ -77,25 +76,27 @@ class ImgTagHandler : TagHandler {
         override fun getDrawable() = drawable
 
         override fun draw(canvas: Canvas, text: CharSequence?, start: Int, end: Int, x: Float, top: Int, y: Int, bottom: Int, paint: Paint) {
-            invalidateRect.left = x.toInt() - padding.left
-            invalidateRect.right = invalidateRect.left + padding.left + width + padding.right
-            invalidateRect.top = top - padding.top
-            invalidateRect.bottom = invalidateRect.top + padding.top + height + padding.bottom
+            val totalHeight = padding.top + padding.bottom + height
+            val baseHeight = bottom - top
+            val totalWidth = padding.left + padding.right + width
+            invalidateRect.left = x.toInt()
+            invalidateRect.right = invalidateRect.left + totalWidth
+            invalidateRect.top = top + (baseHeight - totalHeight) / 2
+            invalidateRect.bottom = invalidateRect.top +totalHeight
             if (drawable == null && backgroundDrawable == null)
                 return
             canvas.save()
+            canvas.translate(margin.left.toFloat(), (margin.top - margin.bottom) / 2f)
             if (canvasScale != 1f)
                 canvas.scale(canvasScale, canvasScale, x + width / 2f, y.toFloat() - height / 2f)
-            canvas.translate((padding.left + margin.left).toFloat(), -((padding.top - padding.bottom) + (margin.top - margin.bottom)).toFloat())
-            canvas.translate(x, (target.textSize - height) / 2f + (bottom - y) / 4f * 3f)
-            if (target.lineCount > 1) //TODO 判断是否是最后一行
-                canvas.translate(0f, -drawAlignCenterOffsetY)
             backgroundDrawable?.let {
                 it.setBounds(invalidateRect.left, invalidateRect.top, invalidateRect.right, invalidateRect.bottom)
                 it.draw(canvas)
             }
             drawable?.let {
-                canvas.scale(scaleX, scaleY)
+                val l = invalidateRect.left + padding.left
+                val t = invalidateRect.top + padding.top
+                it.setBounds(l, t, l + width, t + height)
                 it.draw(canvas)
             }
             canvas.restore()
