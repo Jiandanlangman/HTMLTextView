@@ -21,7 +21,7 @@ import java.io.FileOutputStream
 
 class MainActivity : AppCompatActivity() {
 
-    val text = "<base drawable=\"drawable-left:1234;drawable-top:1234;drawable-right:1234;drawable-bottom:1234;drawable-padding:8\" background=\"stroke:#FF4D81;stroke-width:2;stroke-dash:4;stroke-gap:2;radius:8;gradient:linear;gradient-colors:#FF0000,#00FF00,#0000FF;gradient-angle:135\" action=\"我是View本身\" style=\"pressed:scale;margin:16;padding:16;line-height:1.3\"/><img src=\"\" style=\"pressed:scale\" action=\"图标1\" /><img action=\"图标2\" src=\"\" style=\"width:36;height:12;pressed:scale;padding-left:4;padding-right:4\" /><img action=\"图标3\" src=\"\" style=\"width:32;height:12;pressed:scale;padding-right:4\" />你好呀<a action=\"你好\" style=\"color:#FF0000;font-weight:bold;text-align:center;pressed:scale;width:28;height:12;font-size:20\">我是超链接</a>哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈"
+    val text = "<base drawable=\"drawable-left:1234;drawable-top:1234;drawable-right:1234;drawable-bottom:1234;drawable-padding:8\" background=\"stroke:#FF4D81;stroke-width:2;stroke-dash:4;stroke-gap:2;radius:8;gradient:linear;gradient-colors:#FF0000,#00FF00,#0000FF;gradient-angle:135\" action=\"我是View本身\" style=\"pressed:scale;margin:16;padding:16;line-height:1.3\"/><img src=\"\" style=\"pressed:scale\" action=\"图标1\" /><img action=\"图标2\" src=\"\" style=\"pressed:scale;padding-left:4;padding-right:4\" /><img action=\"图标3\" src=\"\" style=\"pressed:scale;\" />你好呀<a action=\"你好\" style=\"color:#FF0000;font-weight:bold;text-align:center;pressed:scale;width:28;height:12;font-size:20\">我是超链接</a>哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈"
 
 
 
@@ -61,12 +61,12 @@ class MainActivity : AppCompatActivity() {
 
         }
         HTMLTextView.setImageGetter(imageGetter)
-//        val recyclerView = findViewById<RecyclerView>(R.id.recyclerView)
-//        recyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
-//        recyclerView.adapter = Adapter()
+        val recyclerView = findViewById<RecyclerView>(R.id.recyclerView)
+        recyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
+        recyclerView.adapter = Adapter()
 
-        val textView = findViewById<HTMLTextView>(R.id.textView)
-        textView.text = "<img src=\"1234\" action=\"1233\" background=\"radius:8;fill:#FF4D81\" style=\"padding:8;margin:8;width:16;height:16;pressed:scale\" />哈哈<a action=\"1233\" style=\"color:#FF4D81;font-weight:bold;pressed:scale;text-align:center;padding-left:8;padding-right:8;padding-top:4;padding-bottom:4;color:#FFFFFF;margin:4\" background=\"radius:8;fill:#FF4D81\">哈哈哈哈</a>哈哈哈哈"
+//        val textView = findViewById<HTMLTextView>(R.id.textView)
+//        textView.text = "<img src=\"1234\" action=\"1233\" style=\"width:32;height:32;pressed:scale\" />哈哈<a action=\"1233\" style=\"color:#FF4D81;font-weight:bold;pressed:scale;text-align:center;padding-left:8;padding-right:8;padding-top:4;padding-bottom:4;color:#FFFFFF;margin:4\" background=\"radius:8;fill:#FF4D81\">哈哈哈哈</a>哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈"
     }
 
     private inner class ViewHolder(itemView:HTMLTextView):RecyclerView.ViewHolder(itemView) {

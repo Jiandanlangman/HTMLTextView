@@ -23,6 +23,7 @@ class ImgTagHandler : TagHandler {
         private val action = attrs[Attribute.ACTION.value] ?: ""
         private val srcType = attrs[Attribute.SRC_TYPE.value] ?: Attribute.SrcType.IMAGE_PNG.value
         private val density = target.resources.displayMetrics.density
+        private val drawAlignCenterOffsetY = (target.lineSpacingMultiplier - 1) * target.textSize
         private val src = attrs[Attribute.SRC.value] ?: ""
         private val padding = Rect(
             if (style.padding.left < 0) 0 else Util.dpToPx(style.padding.left, density),
@@ -83,6 +84,10 @@ class ImgTagHandler : TagHandler {
             invalidateRect.right = invalidateRect.left + totalWidth
             invalidateRect.top = top + (baseHeight - totalHeight) / 2
             invalidateRect.bottom = invalidateRect.top +totalHeight
+            if (target.lineCount > 1) {//TODO，判断是否是最后一行
+                invalidateRect.top = (invalidateRect.top - drawAlignCenterOffsetY / 2 + .5f).toInt()
+                invalidateRect.bottom = (invalidateRect.bottom - drawAlignCenterOffsetY / 2 + .5f).toInt()
+            }
             if (drawable == null && backgroundDrawable == null)
                 return
             canvas.save()
