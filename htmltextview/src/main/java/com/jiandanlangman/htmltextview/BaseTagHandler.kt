@@ -36,7 +36,12 @@ internal class BaseTagHandler : TagHandler {
         val drawablePadding = drawable.getDrawPadding(target)
         if (drawablePadding >= 0)
             target.compoundDrawablePadding = drawablePadding
-        drawable.getDrawables{ it?.let { target.setCompoundDrawables(it.left, it.top, it.right, it.bottom) } }
+        drawable.getDrawables {
+            it?.let {
+                val actions = drawable.getDrawableActions()
+                target.setCompoundDrawables(it.left, it.top, it.right, it.bottom, actions.left, actions.top, actions.right, actions.bottom)
+            }
+        }
         if (style.lineHeight >= 0)
             target.setLineSpacing(target.lineSpacingExtra, style.lineHeight)
         if (style.textDecoration.isNotEmpty()) {
