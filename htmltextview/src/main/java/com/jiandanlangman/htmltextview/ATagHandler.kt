@@ -29,21 +29,27 @@ class ATagHandler : TagHandler {
         val isUnderlineText = style.textDecoration.contains(Style.TextDecoration.UNDERLINE)
         val isLineThrough = style.textDecoration.contains(Style.TextDecoration.LINE_THROUGH)
         val pressed = style.pressed
-        val span = if (textSize == target.textSize && style.padding.left < 0 && style.padding.top < 0 && style.padding.right < 0 && style.padding.bottom < 0 && pressed == Style.Pressed.NONE && background.isNotBackground())
+        val span = if (textSize == target.textSize && style.padding.left < 0 && style.padding.top < 0 && style.padding.right < 0 && style.padding.bottom < 0 && style.margin.left < 0 && style.margin.top < 0 && style.margin.right < 0 && style.margin.bottom < 0 && pressed == Style.Pressed.NONE && background.isNotBackground())
             ASpan(action, color, isFakeBoldText, isUnderlineText, isLineThrough)
         else {
-                val padding = Rect(
+            val padding = Rect(
                 if (style.padding.left < 0) 0 else Util.dpToPx(style.padding.left, density),
                 if (style.padding.top < 0) 0 else Util.dpToPx(style.padding.top, density),
                 if (style.padding.right < 0) 0 else Util.dpToPx(style.padding.right, density),
                 if (style.padding.bottom < 0) 0 else Util.dpToPx(style.padding.bottom, density)
             )
-            FontSizeASpan(target, action, textSize, color, isFakeBoldText, isUnderlineText, isLineThrough, padding, pressed, style.textAlign, background)
+            val margin = Rect(
+                if (style.margin.left < 0) 0 else Util.dpToPx(style.margin.left, density),
+                if (style.margin.top < 0) 0 else Util.dpToPx(style.margin.top, density),
+                if (style.margin.right < 0) 0 else Util.dpToPx(style.margin.right, density),
+                if (style.margin.bottom < 0) 0 else Util.dpToPx(style.margin.bottom, density)
+            )
+            FontSizeASpan(target, action, textSize, color, isFakeBoldText, isUnderlineText, isLineThrough, padding,margin,  pressed, style.textAlign, background)
         }
         output.setSpan(span, start, output.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
     }
 
-    private class FontSizeASpan(private val target: HTMLTextView, private val action: String, private val textSize: Float, private val color: Int, private val isFakeBoldText: Boolean, private val isUnderlineText: Boolean, private val isLineThrough: Boolean, private val padding: Rect, private val pressed: Style.Pressed, private val textAlign: Style.TextAlign, val background: Background) : ReplacementSpan(), ActionSpan {
+    private class FontSizeASpan(private val target: HTMLTextView, private val action: String, private val textSize: Float, private val color: Int, private val isFakeBoldText: Boolean, private val isUnderlineText: Boolean, private val isLineThrough: Boolean, private val padding: Rect, private val margin:Rect, private val pressed: Style.Pressed, private val textAlign: Style.TextAlign, val background: Background) : ReplacementSpan(), ActionSpan {
 
         private val drawAlignCenterOffsetY = (target.lineSpacingMultiplier - 1) * textSize
         private val textAlignOffset = (textSize - target.textSize) / 2
@@ -56,7 +62,7 @@ class ATagHandler : TagHandler {
 
         private var paint: TextPaint? = null
         private var scaleAnimator: ValueAnimator? = null
-        private var backgroundDrawable:Drawable ?= null
+        private var backgroundDrawable: Drawable? = null
 
         init {
             background.getDrawable(target) {
@@ -83,8 +89,8 @@ class ATagHandler : TagHandler {
         }
 
         override fun getSize(paint: Paint, text: CharSequence?, start: Int, end: Int, fm: Paint.FontMetricsInt?): Int {
-            val width = text?.let { getTextPaint(paint).measureText(text, start, end) } ?: 0f
-            return (width + padding.left + padding.right).toInt()
+            val width = text?.let { (getTextPaint(paint).measureText(text, start, end) + .5f).toInt() } ?: 0
+            return width + padding.left + padding.right + margin.left + margin.right
         }
 
 
@@ -92,26 +98,26 @@ class ATagHandler : TagHandler {
             text?.let {
                 val textPaint = getTextPaint(paint)
                 val size = textPaint.measureText(text, start, end)
-                val topBottomOffset = ((textSize - (bottom - top)) / 2f  + .5f).toInt()
-                datumRect.left = x.toInt()
-                datumRect.top = top - topBottomOffset - padding.top
+                val topBottomOffset = ((textSize - (bottom - top)) / 2f + .5f).toInt()
+                datumRect.left = (x + margin.left + .5f).toInt()
+                datumRect.top = top - topBottomOffset - padding.top + (margin.top - margin.bottom)
                 datumRect.right = (datumRect.left + size + .5f + padding.left + padding.right).toInt()
                 if (target.lineCount > 1) //TODO，判断是否是最后一行
-                    datumRect.bottom = (bottom + topBottomOffset - drawAlignCenterOffsetY + padding.bottom).toInt()
+                    datumRect.bottom = (bottom + topBottomOffset - drawAlignCenterOffsetY + padding.bottom + (margin.top - margin.bottom)).toInt()
                 else
-                    datumRect.bottom = (bottom + topBottomOffset + padding.bottom)
+                    datumRect.bottom = bottom + topBottomOffset + padding.bottom + (margin.top - margin.bottom)
                 invalidateRect.left = datumRect.left
                 invalidateRect.right = datumRect.right
-                val offset = when(textAlign) {
+                val offset = when (textAlign) {
                     Style.TextAlign.TOP -> {
                         val offsetInt = (textAlignOffset + .5f).toInt()
                         invalidateRect.top = datumRect.top + offsetInt
                         invalidateRect.bottom = datumRect.bottom + offsetInt
                         textAlignOffset
                     }
-                    Style.TextAlign.BOTTOM-> {
+                    Style.TextAlign.BOTTOM -> {
                         val offsetInt = (textAlignOffset + .5f).toInt()
-                        invalidateRect.top = datumRect.top  - offsetInt
+                        invalidateRect.top = datumRect.top - offsetInt
                         invalidateRect.bottom = datumRect.bottom - offsetInt
                         -textAlignOffset
                     }
@@ -124,7 +130,7 @@ class ATagHandler : TagHandler {
                 canvas.save()
                 if (canvasScale != 1f)
                     canvas.scale(canvasScale, canvasScale, x + size / 2, y.toFloat() - textSize / 2)
-                backgroundDrawable?.let {d ->
+                backgroundDrawable?.let { d ->
                     d.setBounds(invalidateRect.left, invalidateRect.top, invalidateRect.right, invalidateRect.bottom)
                     d.draw(canvas)
                 }
