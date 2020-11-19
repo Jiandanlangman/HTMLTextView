@@ -44,16 +44,15 @@ class ATagHandler : TagHandler {
                 if (style.margin.right < 0) 0 else Util.dpToPx(style.margin.right, density),
                 if (style.margin.bottom < 0) 0 else Util.dpToPx(style.margin.bottom, density)
             )
-            FontSizeASpan(target, action, textSize, color, isFakeBoldText, isUnderlineText, isLineThrough, padding,margin,  pressed, style.textAlign, background)
+            FontSizeASpan(target, action, textSize, color, isFakeBoldText, isUnderlineText, isLineThrough, padding, margin, pressed, style.textAlign, background)
         }
         output.setSpan(span, start, output.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
     }
 
-    private class FontSizeASpan(private val target: HTMLTextView, private val action: String, private val textSize: Float, private val color: Int, private val isFakeBoldText: Boolean, private val isUnderlineText: Boolean, private val isLineThrough: Boolean, private val padding: Rect, private val margin:Rect, private val pressed: Style.Pressed, private val textAlign: Style.TextAlign, val background: Background) : ReplacementSpan(), ActionSpan {
+    private class FontSizeASpan(private val target: HTMLTextView, private val action: String, private val textSize: Float, private val color: Int, private val isFakeBoldText: Boolean, private val isUnderlineText: Boolean, private val isLineThrough: Boolean, private val padding: Rect, private val margin: Rect, private val pressed: Style.Pressed, private val textAlign: Style.TextAlign, val background: Background) : ReplacementSpan(), ActionSpan {
 
-        private val drawAlignCenterOffsetY = (target.lineSpacingMultiplier - 1) * textSize
+        private val drawAlignCenterOffsetY = (target.lineSpacingMultiplier - 1) * textSize / 2
         private val textAlignOffset = (textSize - target.textSize) / 2
-        private val datumRect = Rect()
         private val invalidateRect = Rect()
 
         private var canvasScale = 1f
@@ -97,44 +96,43 @@ class ATagHandler : TagHandler {
         override fun draw(canvas: Canvas, text: CharSequence?, start: Int, end: Int, x: Float, top: Int, y: Int, bottom: Int, paint: Paint) {
             text?.let {
                 val textPaint = getTextPaint(paint)
-                val size = textPaint.measureText(text, start, end)
                 val topBottomOffset = ((textSize - (bottom - top)) / 2f + .5f).toInt()
-                datumRect.left = (x + margin.left + .5f).toInt()
-                datumRect.top = top - topBottomOffset - padding.top + (margin.top - margin.bottom)
-                datumRect.right = (datumRect.left + size + .5f + padding.left + padding.right).toInt()
-                if (target.lineCount > 1) //TODO，判断是否是最后一行
-                    datumRect.bottom = (bottom + topBottomOffset - drawAlignCenterOffsetY + padding.bottom + (margin.top - margin.bottom)).toInt()
+                val baseHeight = (textPaint.textSize + .5f).toInt()
+                val totalHeight = baseHeight + padding.top + padding.bottom
+                val totalWidth = (textPaint.measureText(text, start, end) + .5f).toInt() + padding.left + padding.right
+                invalidateRect.left = x.toInt()
+                invalidateRect.top = top + (baseHeight - totalHeight) / 2 - topBottomOffset
+                invalidateRect.right = invalidateRect.left + totalWidth
+                invalidateRect.bottom = invalidateRect.top + totalHeight
+                val topBottomPaddingOffset = padding.top - padding.bottom
+                if(topBottomPaddingOffset > 0)
+                    invalidateRect.top -= topBottomPaddingOffset
                 else
-                    datumRect.bottom = bottom + topBottomOffset + padding.bottom + (margin.top - margin.bottom)
-                invalidateRect.left = datumRect.left
-                invalidateRect.right = datumRect.right
-                val offset = when (textAlign) {
-                    Style.TextAlign.TOP -> {
-                        val offsetInt = (textAlignOffset + .5f).toInt()
-                        invalidateRect.top = datumRect.top + offsetInt
-                        invalidateRect.bottom = datumRect.bottom + offsetInt
-                        textAlignOffset
-                    }
-                    Style.TextAlign.BOTTOM -> {
-                        val offsetInt = (textAlignOffset + .5f).toInt()
-                        invalidateRect.top = datumRect.top - offsetInt
-                        invalidateRect.bottom = datumRect.bottom - offsetInt
-                        -textAlignOffset
-                    }
-                    else -> {
-                        invalidateRect.top = datumRect.top
-                        invalidateRect.bottom = datumRect.bottom
-                        0f
-                    }
+                    invalidateRect.bottom -= topBottomPaddingOffset
+                val tao = when(textAlign) {
+                    Style.TextAlign.CENTER -> 0f
+                    Style.TextAlign.BOTTOM -> -textAlignOffset
+                    Style.TextAlign.TOP -> textAlignOffset
                 }
+                invalidateRect.top += (tao + .5f).toInt()
+                invalidateRect.bottom += (tao + .5f).toInt()
+                if (target.lineCount > 1) {//TODO，判断是否是最后一行
+                    invalidateRect.top = (invalidateRect.top - drawAlignCenterOffsetY + .5f).toInt()
+                    invalidateRect.bottom = (invalidateRect.bottom - drawAlignCenterOffsetY + .5f).toInt()
+                }
+
                 canvas.save()
+                canvas.translate(margin.left.toFloat(), (margin.top - margin.bottom) / 2f)
                 if (canvasScale != 1f)
-                    canvas.scale(canvasScale, canvasScale, x + size / 2, y.toFloat() - textSize / 2)
+                    canvas.scale(canvasScale, canvasScale, x + invalidateRect.width() / 2f, y.toFloat() - invalidateRect.height() / 2f)
                 backgroundDrawable?.let { d ->
                     d.setBounds(invalidateRect.left, invalidateRect.top, invalidateRect.right, invalidateRect.bottom)
                     d.draw(canvas)
                 }
-                canvas.drawText(it, start, end, datumRect.centerX().toFloat(), datumRect.centerY() + drawTextYOffset + offset, textPaint)
+                //因为有文本对齐选项，所以纵向背景必须移动
+                val leftRightPaddingOffset = padding.left - padding.right
+                canvas.translate(leftRightPaddingOffset.toFloat(), topBottomPaddingOffset / 2f) //TODO 是否合适？
+                canvas.drawText(it, start, end, invalidateRect.centerX() - leftRightPaddingOffset / 2f.toFloat(), invalidateRect.centerY() + drawTextYOffset , textPaint)
                 canvas.restore()
             }
         }
