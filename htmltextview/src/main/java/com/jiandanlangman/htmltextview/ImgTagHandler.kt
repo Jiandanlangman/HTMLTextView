@@ -67,7 +67,6 @@ class ImgTagHandler : TagHandler {
 
                     override fun onViewDetachedFromWindow(v: View?) {
                         targetAttachState = 2
-                        removeCallbackAndRecycleRes()
                         target.removeOnAttachStateChangeListener(this)
                     }
 
@@ -157,6 +156,8 @@ class ImgTagHandler : TagHandler {
                 listener.invoke(this, action)
             }
         }
+
+        override fun onInvalid() = removeCallbackAndRecycleRes()
 
 
         override fun invalidateDrawable(who: Drawable) {

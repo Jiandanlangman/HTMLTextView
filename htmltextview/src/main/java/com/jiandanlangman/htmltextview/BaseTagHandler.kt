@@ -144,6 +144,8 @@ internal class BaseTagHandler : TagHandler {
 
         override fun onUnPressed(isClick: Boolean) = Unit
 
+        override fun onInvalid() = Unit
+
     }
 
 }

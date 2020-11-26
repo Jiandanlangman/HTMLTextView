@@ -77,8 +77,6 @@ class ATagHandler : TagHandler {
                 override fun onViewDetachedFromWindow(v: View?) {
                     targetAttachState = 2
                     target.removeOnAttachStateChangeListener(this)
-                    backgroundDrawable?.clear()
-                    backgroundDrawable = null
                 }
 
             })
@@ -183,6 +181,11 @@ class ATagHandler : TagHandler {
             }
         }
 
+        override fun onInvalid() {
+            backgroundDrawable?.clear()
+            backgroundDrawable = null
+        }
+
         private fun playScaleAnimator(from: Float, to: Float) {
             scaleAnimator?.cancel()
             scaleAnimator = ValueAnimator.ofFloat(from, to)
@@ -224,6 +227,8 @@ class ATagHandler : TagHandler {
         override fun onPressed() = Unit
 
         override fun onUnPressed(isClick: Boolean) = Unit
+
+        override fun onInvalid()  = Unit
     }
 
 }

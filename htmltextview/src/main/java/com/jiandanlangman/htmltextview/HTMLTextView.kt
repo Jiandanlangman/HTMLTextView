@@ -42,10 +42,12 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
+        (text as? Spannable)?.let { it.getSpans(0, it.length, ActionSpan::class.java)?.forEach { a -> a.onInvalid() } }
         super.setText("", BufferType.NORMAL)
     }
 
     override fun setText(text: CharSequence?, type: BufferType?) {
+        (getText() as? Spannable)?.let { it.getSpans(0, it.length, ActionSpan::class.java)?.forEach { a -> a.onInvalid() } }
         sourceText = text ?: ""
         val spannedText = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) Html.fromHtml(sourceText.toString(), Html.FROM_HTML_MODE_LEGACY, null, HTMLTagHandler(this)) else Html.fromHtml(sourceText.toString(), null, HTMLTagHandler(this))
         val spans = spannedText.getSpans<ActionSpan>(0, spannedText.length)
