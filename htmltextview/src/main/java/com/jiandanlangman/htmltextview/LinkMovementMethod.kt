@@ -2,7 +2,6 @@ package com.jiandanlangman.htmltextview
 
 import android.graphics.RectF
 import android.text.Spannable
-import android.util.Log
 import android.view.MotionEvent
 import android.widget.TextView
 
@@ -38,12 +37,13 @@ internal class LinkMovementMethod : android.text.method.LinkMovementMethod() {
 
     }
 
-    private val touchedLineBounds = RectF()
     private val pressedSpans = HashMap<TextView, ArrayList<ActionSpan>>()
 
     override fun onTouchEvent(widget: TextView, buffer: Spannable, event: MotionEvent): Boolean {
-        if (event.action == MotionEvent.ACTION_UP || event.action == MotionEvent.ACTION_CANCEL)
-            pressedSpans.remove(widget)?.forEach { sp -> sp.onUnPressed() }
+        if (event.action == MotionEvent.ACTION_CANCEL) {
+            pressedSpans.remove(widget)?.forEach { sp -> sp.onUnPressed(false) }
+            return super.onTouchEvent(widget, buffer, event)
+        }
         if (event.action == MotionEvent.ACTION_DOWN || event.action == MotionEvent.ACTION_UP) {
             val actionSpans = getEventActionSpan(widget, buffer, event, ActionSpan::class.java)
             if (!actionSpans.isNullOrEmpty()) {
@@ -55,11 +55,7 @@ internal class LinkMovementMethod : android.text.method.LinkMovementMethod() {
                     }
                     pressedSpans[widget] = spans
                 } else
-                    actionSpans.forEach {
-                        val action = it.getAction()
-                        if (action.isNotEmpty())
-                            (widget as? HTMLTextView)?.onAction(action)
-                    }
+                    actionSpans.forEach { it.onUnPressed(true) }
             }
         }
         return super.onTouchEvent(widget, buffer, event)

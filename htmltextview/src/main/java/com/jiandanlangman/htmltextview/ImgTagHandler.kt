@@ -10,6 +10,7 @@ import android.text.Spannable
 import android.text.style.DynamicDrawableSpan
 import android.view.View
 import androidx.core.animation.doOnEnd
+import java.lang.ref.WeakReference
 
 class ImgTagHandler : TagHandler {
 
@@ -18,7 +19,7 @@ class ImgTagHandler : TagHandler {
         output.setSpan(ImgSpan(target, attrs, style, background), start, output.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
     }
 
-    private class ImgSpan(val target: HTMLTextView, attrs: Map<String, String>, private val style: Style, background: Background) : DynamicDrawableSpan(ALIGN_BOTTOM), ActionSpan, Drawable.Callback, View.OnAttachStateChangeListener {
+    private class ImgSpan(val target: HTMLTextView, attrs: Map<String, String>, private val style: Style, background: Background) : DynamicDrawableSpan(ALIGN_BOTTOM), ActionSpan, Drawable.Callback {
 
         private val action = attrs[Attribute.ACTION.value] ?: ""
         private val srcType = attrs[Attribute.SRC_TYPE.value] ?: Attribute.SrcType.IMAGE_PNG.value
@@ -45,36 +46,61 @@ class ImgTagHandler : TagHandler {
         private var scaleX = 1f
         private var scaleY = 1f
         private var canvasScale = 1f
+        private var listener: ((ActionSpan, String) -> Unit) = { _, _ -> }
+        private var targetAttachState = 0
 
         private var scaleAnimator: ValueAnimator? = null
 
-        private var drawable: Drawable? = null
-        private var backgroundDrawable: Drawable? = null
+        private var drawable: WeakReference<Drawable>? = null
+
+        private var backgroundDrawable: WeakReference<Drawable>? = null
 
         init {
             HTMLTagHandler.getImageGetter()?.let {
-                it.getImageDrawable(src, srcType) { d ->
-                    drawable = d
-                    if (d != null) {
-                        if (width == 0)
-                            width = d.intrinsicWidth
-                        if (height == 0)
-                            height = d.intrinsicHeight
-                        d.setBounds(0, 0, d.intrinsicWidth, d.intrinsicHeight)
-                        scaleX = width / d.intrinsicWidth.toFloat()
-                        scaleY = height / d.intrinsicHeight.toFloat()
-                        d.callback = this
+                if (target.isAttachedToWindow)
+                    targetAttachState = 1
+                target.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
+                    override fun onViewAttachedToWindow(v: View?) {
+                        targetAttachState = 1
+                        setCallback()
                     }
-                    target.invalidate()
+
+                    override fun onViewDetachedFromWindow(v: View?) {
+                        targetAttachState = 2
+                        removeCallbackAndRecycleRes()
+                        target.removeOnAttachStateChangeListener(this)
+                    }
+
+                })
+                it.getImageDrawable(src, srcType) { d ->
+                    if (targetAttachState == 2)
+                        return@getImageDrawable
+                    drawable = WeakReference(d)
+                    d?.apply {
+                        if (width == 0)
+                            width = intrinsicWidth
+                        if (height == 0)
+                            height = intrinsicHeight
+                        setBounds(0, 0, intrinsicWidth, intrinsicHeight)
+                        scaleX = width / intrinsicWidth.toFloat()
+                        scaleY = height / intrinsicHeight.toFloat()
+                        if (targetAttachState == 1)
+                            setCallback()
+                    }
                 }
             }
             background.getDrawable(target) {
-                backgroundDrawable = it
-                it?.let { target.invalidate() }
+                if (targetAttachState == 2)
+                    return@getDrawable
+                backgroundDrawable = WeakReference(it)
+                it?.let {
+                    if (targetAttachState == 1)
+                        target.invalidate()
+                }
             }
         }
 
-        override fun getDrawable() = drawable
+        override fun getDrawable() = null
 
         override fun draw(canvas: Canvas, text: CharSequence?, start: Int, end: Int, x: Float, top: Int, y: Int, bottom: Int, paint: Paint) {
             val totalHeight = padding.top + padding.bottom + height
@@ -83,7 +109,7 @@ class ImgTagHandler : TagHandler {
             invalidateRect.left = x.toInt()
             invalidateRect.right = invalidateRect.left + totalWidth
             invalidateRect.top = top + (baseHeight - totalHeight) / 2
-            invalidateRect.bottom = invalidateRect.top +totalHeight
+            invalidateRect.bottom = invalidateRect.top + totalHeight
             if (top / target.lineHeight != target.lineCount - 1) {
                 invalidateRect.top = (invalidateRect.top - drawAlignCenterOffsetY / 2 + .5f).toInt()
                 invalidateRect.bottom = (invalidateRect.bottom - drawAlignCenterOffsetY / 2 + .5f).toInt()
@@ -94,11 +120,11 @@ class ImgTagHandler : TagHandler {
             canvas.translate(margin.left.toFloat(), (margin.top - margin.bottom) / 2f)
             if (canvasScale != 1f)
                 canvas.scale(canvasScale, canvasScale, x + width / 2f, y.toFloat() - height / 2f)
-            backgroundDrawable?.let {
+            backgroundDrawable?.get()?.let {
                 it.setBounds(invalidateRect.left, invalidateRect.top, invalidateRect.right, invalidateRect.bottom)
                 it.draw(canvas)
             }
-            drawable?.let {
+            drawable?.get()?.let {
                 val l = invalidateRect.left + padding.left
                 val t = invalidateRect.top + padding.top
                 it.setBounds(l, t, l + width, t + height)
@@ -110,7 +136,9 @@ class ImgTagHandler : TagHandler {
 
         override fun getSize(paint: Paint, text: CharSequence?, start: Int, end: Int, fm: Paint.FontMetricsInt?) = width + padding.left + padding.right + margin.left + margin.right
 
-        override fun getAction() = action
+        override fun setOnClickListener(listener: (span: ActionSpan, action: String) -> Unit) {
+            this.listener = listener
+        }
 
         override fun onPressed() {
             if (action.isNotEmpty())
@@ -120,12 +148,14 @@ class ImgTagHandler : TagHandler {
                 }
         }
 
-        override fun onUnPressed() {
-            if (action.isNotEmpty())
+        override fun onUnPressed(isClick: Boolean) {
+            if (action.isNotEmpty()) {
                 when (style.pressed) {
                     Style.Pressed.SCALE -> playScaleAnimator(.88f, 1f)
                     Style.Pressed.NONE -> Unit
                 }
+                listener.invoke(this, action)
+            }
         }
 
 
@@ -142,14 +172,26 @@ class ImgTagHandler : TagHandler {
             target.unscheduleDrawable(who, what)
         }
 
-        override fun onViewAttachedToWindow(v: View?) {
-            drawable?.callback = this
+
+        private fun setCallback() {
+            drawable?.get()?.let {
+                it.callback = this
+                Util.tryCatchInvoke { it::class.java.getMethod("start").invoke(it) }
+            }
+            target.invalidate()
         }
 
-        override fun onViewDetachedFromWindow(v: View?) {
-            drawable?.callback = null
+        private fun removeCallbackAndRecycleRes() {
+            drawable?.get()?.let {
+                it.callback = null
+                val clazz = it::class.java
+                Util.tryCatchInvoke { clazz.getMethod("stop").invoke(it) }
+            }
+            drawable?.clear()
+            drawable = null
+            backgroundDrawable?.clear()
+            backgroundDrawable = null
         }
-
 
         private fun playScaleAnimator(from: Float, to: Float) {
             scaleAnimator?.cancel()

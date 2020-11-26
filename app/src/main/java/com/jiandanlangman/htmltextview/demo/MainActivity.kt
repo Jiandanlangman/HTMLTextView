@@ -54,8 +54,6 @@ class MainActivity : AppCompatActivity() {
                 } else
                     ImageLoader.loadAnimatedWebp(this@MainActivity, "https://asset.liaoke.tv/assets/api/user/rich/level_1.webp") {
                         callback.invoke(it)
-                        it?.loopCount = -1
-                        it?.start()
                     }
             }
 

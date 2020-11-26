@@ -11,6 +11,7 @@ import android.text.style.ClickableSpan
 import android.text.style.ReplacementSpan
 import android.view.View
 import androidx.core.animation.doOnEnd
+import java.lang.ref.WeakReference
 
 
 class ATagHandler : TagHandler {
@@ -49,7 +50,7 @@ class ATagHandler : TagHandler {
         output.setSpan(span, start, output.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
     }
 
-    private class FontSizeASpan(private val target: HTMLTextView, private val action: String, private val textSize: Float, private val color: Int, private val isFakeBoldText: Boolean, private val isUnderlineText: Boolean, private val isLineThrough: Boolean, private val padding: Rect, private val margin: Rect, private val pressed: Style.Pressed, private val textAlign: Style.TextAlign, val background: Background) : ReplacementSpan(), ActionSpan {
+    private class FontSizeASpan(private val target: HTMLTextView, private val action: String, private val textSize: Float, private val color: Int, private val isFakeBoldText: Boolean, private val isUnderlineText: Boolean, private val isLineThrough: Boolean, private val padding: Rect, private val margin: Rect, private val pressed: Style.Pressed, private val textAlign: Style.TextAlign, background: Background) : ReplacementSpan(), ActionSpan {
 
         private val drawAlignCenterOffsetY = (target.lineSpacingMultiplier - 1) * textSize / 2
         private val textAlignOffset = (textSize - target.textSize) / 2
@@ -58,15 +59,37 @@ class ATagHandler : TagHandler {
         private var canvasScale = 1f
         private var drawTextYOffset = 0f
 
+        private var listener: ((ActionSpan, String) -> Unit) = { _, _ -> }
+        private var targetAttachState = 0
 
         private var paint: TextPaint? = null
         private var scaleAnimator: ValueAnimator? = null
-        private var backgroundDrawable: Drawable? = null
+        private var backgroundDrawable: WeakReference<Drawable>? = null
 
         init {
+            if (target.isAttachedToWindow)
+                targetAttachState = 1
+            target.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
+                override fun onViewAttachedToWindow(v: View?) {
+                    targetAttachState = 1
+                }
+
+                override fun onViewDetachedFromWindow(v: View?) {
+                    targetAttachState = 2
+                    target.removeOnAttachStateChangeListener(this)
+                    backgroundDrawable?.clear()
+                    backgroundDrawable = null
+                }
+
+            })
             background.getDrawable(target) {
-                backgroundDrawable = it
-                it?.let { target.invalidate() }
+                if (targetAttachState == 2)
+                    return@getDrawable
+                backgroundDrawable = WeakReference(it)
+                it?.let {
+                    if (targetAttachState == 1)
+                        target.invalidate()
+                }
             }
         }
 
@@ -105,11 +128,11 @@ class ATagHandler : TagHandler {
                 invalidateRect.right = invalidateRect.left + totalWidth
                 invalidateRect.bottom = invalidateRect.top + totalHeight
                 val topBottomPaddingOffset = padding.top - padding.bottom
-                if(topBottomPaddingOffset > 0)
+                if (topBottomPaddingOffset > 0)
                     invalidateRect.top -= topBottomPaddingOffset
                 else
                     invalidateRect.bottom -= topBottomPaddingOffset
-                val tao = when(textAlign) {
+                val tao = when (textAlign) {
                     Style.TextAlign.CENTER -> 0f
                     Style.TextAlign.BOTTOM -> -textAlignOffset
                     Style.TextAlign.TOP -> textAlignOffset
@@ -125,20 +148,22 @@ class ATagHandler : TagHandler {
                 canvas.translate(margin.left.toFloat(), (margin.top - margin.bottom) / 2f)
                 if (canvasScale != 1f)
                     canvas.scale(canvasScale, canvasScale, x + invalidateRect.width() / 2f, y.toFloat() - invalidateRect.height() / 2f)
-                backgroundDrawable?.let { d ->
+                backgroundDrawable?.get()?.let { d ->
                     d.setBounds(invalidateRect.left, invalidateRect.top, invalidateRect.right, invalidateRect.bottom)
                     d.draw(canvas)
                 }
                 //因为有文本对齐选项，所以纵向背景必须移动
                 val leftRightPaddingOffset = padding.left - padding.right
                 canvas.translate(leftRightPaddingOffset.toFloat(), topBottomPaddingOffset / 2f) //TODO 是否合适？
-                canvas.drawText(it, start, end, invalidateRect.centerX() - leftRightPaddingOffset / 2f.toFloat(), invalidateRect.centerY() + drawTextYOffset , textPaint)
+                canvas.drawText(it, start, end, invalidateRect.centerX() - leftRightPaddingOffset / 2f, invalidateRect.centerY() + drawTextYOffset, textPaint)
                 canvas.restore()
             }
         }
 
 
-        override fun getAction() = action
+        override fun setOnClickListener(listener: (span: ActionSpan, action: String) -> Unit) {
+            this.listener = listener
+        }
 
         override fun onPressed() {
             if (action.isNotEmpty())
@@ -148,12 +173,14 @@ class ATagHandler : TagHandler {
                 }
         }
 
-        override fun onUnPressed() {
-            if (action.isNotEmpty())
+        override fun onUnPressed(isClick: Boolean) {
+            if (action.isNotEmpty()) {
                 when (pressed) {
                     Style.Pressed.SCALE -> playScaleAnimator(.88f, 1f)
                     Style.Pressed.NONE -> Unit
                 }
+                listener.invoke(this, action)
+            }
         }
 
         private fun playScaleAnimator(from: Float, to: Float) {
@@ -173,7 +200,9 @@ class ATagHandler : TagHandler {
     }
 
 
-    private class ASpan(private val action: String, private val color: Int, private val isFakeBoldText: Boolean, private val isUnderlineText: Boolean, private val isLineThrough: Boolean) : ClickableSpan() {
+    private class ASpan(private val action: String, private val color: Int, private val isFakeBoldText: Boolean, private val isUnderlineText: Boolean, private val isLineThrough: Boolean) : ClickableSpan(), ActionSpan {
+
+        private var listener: ((ActionSpan, String) -> Unit) = { _, _ -> }
 
         override fun updateDrawState(ds: TextPaint) {
             super.updateDrawState(ds)
@@ -185,8 +214,16 @@ class ATagHandler : TagHandler {
 
         override fun onClick(widget: View) {
             if (action.isNotEmpty())
-                (widget as HTMLTextView).onAction(action)
+                listener.invoke(this, action)
         }
+
+        override fun setOnClickListener(listener: (span: ActionSpan, action: String) -> Unit) {
+            this.listener = listener
+        }
+
+        override fun onPressed() = Unit
+
+        override fun onUnPressed(isClick: Boolean) = Unit
     }
 
 }

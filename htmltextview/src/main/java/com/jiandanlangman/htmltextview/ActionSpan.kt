@@ -2,10 +2,10 @@ package com.jiandanlangman.htmltextview
 
 interface ActionSpan {
 
-    fun getAction():String
+    fun setOnClickListener(listener:(span:ActionSpan, action:String) -> Unit)
 
     fun onPressed()
 
-    fun onUnPressed()
+    fun onUnPressed(isClick: Boolean)
 
 }

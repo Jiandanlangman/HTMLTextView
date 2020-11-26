@@ -17,20 +17,31 @@ internal class HTMLTagHandler(private val target: HTMLTextView) : Html.TagHandle
         private const val HTML_TAG = "html"
 
         private val tagHandlers = HashMap<String, TagHandler>()
+        private val defaultATagHandler = ATagHandler()
+        private val defaultImgTagHandler = ImgTagHandler()
+        private val defaultBaseTagHandler = BaseTagHandler()
 
         private var imageGetter:ImageGetter ?= null
 
         init {
-            val aTagHandler = ATagHandler()
-            registerTagHandler("a", aTagHandler)
-            registerTagHandler("span", aTagHandler)
-            registerTagHandler("font", aTagHandler)
-            registerTagHandler("img", ImgTagHandler())
-            registerTagHandler("base", BaseTagHandler())
+            registerTagHandler("a", defaultATagHandler)
+            registerTagHandler("span", defaultATagHandler)
+            registerTagHandler("font", defaultATagHandler)
+            registerTagHandler("img", defaultImgTagHandler)
+            registerTagHandler("base", defaultBaseTagHandler)
         }
 
         internal fun registerTagHandler(tag: String, handler: TagHandler) {
             tagHandlers[tag] = handler
+        }
+
+        internal fun unRegisterTagHandler(tag: String) {
+            tagHandlers.remove(tag)
+            when(tag) {
+                "a", "span", "font" -> registerTagHandler(tag, defaultATagHandler)
+                "img" -> registerTagHandler(tag, defaultImgTagHandler)
+                "base" -> registerTagHandler(tag, defaultBaseTagHandler)
+            }
         }
 
         internal fun setImageGetter(imageGetter: ImageGetter?) {

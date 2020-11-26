@@ -5,11 +5,13 @@ import android.graphics.Color
 import android.graphics.Rect
 import android.graphics.drawable.Drawable
 import android.os.Build
-import android.text.Html
+import android.text.*
 import android.util.AttributeSet
 import android.view.MotionEvent
 import androidx.appcompat.widget.AppCompatTextView
-import java.util.HashMap
+import androidx.core.text.getSpans
+import java.util.*
+
 
 class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) : AppCompatTextView(context, attrs, defStyleAttr) {
 
@@ -17,9 +19,13 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
 
         fun registerTagHandler(tag: String, handler: TagHandler) = HTMLTagHandler.registerTagHandler(tag, handler)
 
+        fun unRegisterTagHandler(tag: String) = HTMLTagHandler.unRegisterTagHandler(tag)
+
         fun setImageGetter(imageGetter: ImageGetter?) = HTMLTagHandler.setImageGetter(imageGetter)
 
     }
+
+    private val onSpanClickListener: ((ActionSpan, String) -> Unit) = { _, action -> onClickListener?.invoke(this, action) }
 
     private var sourceText: CharSequence = ""
     private var onClickListener: ((HTMLTextView, String) -> Unit)? = null
@@ -29,10 +35,21 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
         super.setHighlightColor(Color.TRANSPARENT)
     }
 
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        text = sourceText
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        super.setText("", BufferType.NORMAL)
+    }
 
     override fun setText(text: CharSequence?, type: BufferType?) {
         sourceText = text ?: ""
         val spannedText = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) Html.fromHtml(sourceText.toString(), Html.FROM_HTML_MODE_LEGACY, null, HTMLTagHandler(this)) else Html.fromHtml(sourceText.toString(), null, HTMLTagHandler(this))
+        val spans = spannedText.getSpans<ActionSpan>(0, spannedText.length)
+        spans.forEach { it.setOnClickListener(onSpanClickListener) }
         super.setText(spannedText, type)
     }
 
@@ -104,9 +121,9 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
             if (eventDrawable != null && drawableRect.contains(x, y)) {
                 val act = drawableActions[eventDrawable]
                 if (!act.isNullOrEmpty())
-                        onAction(act)
+                    onClickListener?.invoke(this, act)
             }
-        if(eventDrawable != null && !drawableActions[eventDrawable].isNullOrEmpty())
+        if (eventDrawable != null && !drawableActions[eventDrawable].isNullOrEmpty())
             return true
         return super.dispatchTouchEvent(event)
     }
@@ -116,7 +133,6 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
         this.onClickListener = onClickListener
     }
 
-    internal fun onAction(action: String) = onClickListener?.invoke(this, action)
 
     private val drawableActions = HashMap<Drawable, String>()
 

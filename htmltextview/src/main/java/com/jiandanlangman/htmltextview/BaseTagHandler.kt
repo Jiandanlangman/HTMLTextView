@@ -16,6 +16,9 @@ internal class BaseTagHandler : TagHandler {
 
     @SuppressLint("Range", "ClickableViewAccessibility")
     override fun handleTag(target: HTMLTextView, tag: String, output: Editable, start: Int, attrs: Map<String, String>, style: Style, background: Background) {
+        val baseSpan = BaseSpan()
+        output.append("\u200B")
+        output.setSpan(baseSpan, start, output.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
         val density = target.context.resources.displayMetrics.density
         if (style.fontSize >= 0)
             target.setTextSize(TypedValue.COMPLEX_UNIT_DIP, style.fontSize.toFloat())
@@ -31,17 +34,6 @@ internal class BaseTagHandler : TagHandler {
             if (style.padding.bottom >= 0) (style.padding.bottom * density).toInt() else target.paddingBottom
         )
         target.paint.isFakeBoldText = style.fontWeight == Style.FontWeight.BOLD
-        background.getDrawable(target) { it?.let { target.background = it } }
-        val drawable = Drawable.from(attrs[Attribute.DRAWABLE.value] ?: "")
-        val drawablePadding = drawable.getDrawPadding(target)
-        if (drawablePadding >= 0)
-            target.compoundDrawablePadding = drawablePadding
-        drawable.getDrawables {
-            it?.let {
-                val actions = drawable.getDrawableActions()
-                target.setCompoundDrawables(it.left, it.top, it.right, it.bottom, actions.left, actions.top, actions.right, actions.bottom)
-            }
-        }
         if (style.lineHeight >= 0)
             target.setLineSpacing(target.lineSpacingExtra, style.lineHeight)
         if (style.textDecoration.isNotEmpty()) {
@@ -56,7 +48,6 @@ internal class BaseTagHandler : TagHandler {
                 when (event.action) {
                     MotionEvent.ACTION_DOWN -> {
                         pressedTarget = LinkMovementMethod.getEventActionSpan(target, target.text as Spannable, event, ActionSpan::class.java)?.isEmpty() ?: true
-                        pressedTarget = pressedTarget && LinkMovementMethod.getEventActionSpan(target, target.text as Spannable, event, ClickableSpan::class.java)?.isEmpty() ?: true
                         if (pressedTarget && style.pressed == Style.Pressed.SCALE)
                             playScaleAnimator(target, .88f)
                     }
@@ -64,34 +55,54 @@ internal class BaseTagHandler : TagHandler {
                         if (style.pressed == Style.Pressed.SCALE)
                             playScaleAnimator(target, 1f)
                         if (event.action == MotionEvent.ACTION_UP)
-                            target.onAction(action)
+                            baseSpan.listener.invoke(baseSpan, action)
                     }
                 }
                 return@setOnTouchListener false
             }
         }
         fun updateLayoutParams(v: View) {
-            try {
-                v.updateLayoutParams<ViewGroup.LayoutParams> {
-                    if (style.width > 0)
-                        width = (style.width * density + .5f).toInt()
-                    if (style.height > 0)
-                        height = (style.height * density + .5f).toInt()
-                    setMargin(this, style, density)
-                }
-            } catch (ignore: Throwable) {
-                target.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
-                    override fun onViewAttachedToWindow(v: View) {
-                        updateLayoutParams(v)
-                        v.removeOnAttachStateChangeListener(this)
-                    }
-
-                    override fun onViewDetachedFromWindow(v: View) = v.removeOnAttachStateChangeListener(this)
-
-                })
+            v.updateLayoutParams<ViewGroup.LayoutParams> {
+                if (style.width > 0)
+                    width = (style.width * density + .5f).toInt()
+                if (style.height > 0)
+                    height = (style.height * density + .5f).toInt()
+                setMargin(this, style, density)
             }
         }
-        updateLayoutParams(target)
+
+        var targetAttachState = if (target.isAttachedToWindow) 1 else 0
+        if (targetAttachState == 1)
+            updateLayoutParams(target)
+        target.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
+            override fun onViewAttachedToWindow(v: View?) {
+                targetAttachState = 1
+                updateLayoutParams(target)
+            }
+
+            override fun onViewDetachedFromWindow(v: View?) {
+                targetAttachState = 2
+                target.removeOnAttachStateChangeListener(this)
+            }
+
+        })
+        background.getDrawable(target) {
+            if (targetAttachState == 2)
+                return@getDrawable
+            it?.let { target.background = it }
+        }
+        val drawable = CompoundDrawables.from(attrs[Attribute.DRAWABLE.value] ?: "")
+        val drawablePadding = drawable.getDrawPadding(target)
+        if (drawablePadding >= 0)
+            target.compoundDrawablePadding = drawablePadding
+        drawable.getDrawables {
+            if (targetAttachState == 2)
+                return@getDrawables
+            it?.let {
+                val actions = drawable.getDrawableActions()
+                target.setCompoundDrawables(it.left, it.top, it.right, it.bottom, actions.left, actions.top, actions.right, actions.bottom)
+            }
+        }
     }
 
     private fun playScaleAnimator(target: HTMLTextView, to: Float) {
@@ -117,6 +128,22 @@ internal class BaseTagHandler : TagHandler {
             set("topMargin", (style.margin.top * density).toInt())
         if (style.margin.left >= 0)
             set("bottomMargin", (style.margin.bottom * density).toInt())
+    }
+
+    private class BaseSpan : ClickableSpan(), ActionSpan {
+
+        var listener: ((ActionSpan, String) -> Unit) = { _, _ -> }
+
+        override fun onClick(widget: View) = Unit
+
+        override fun setOnClickListener(listener: (span: ActionSpan, action: String) -> Unit) {
+            this.listener = listener
+        }
+
+        override fun onPressed() = Unit
+
+        override fun onUnPressed(isClick: Boolean) = Unit
+
     }
 
 }

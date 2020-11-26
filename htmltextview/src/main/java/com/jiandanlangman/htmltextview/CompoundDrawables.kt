@@ -1,7 +1,7 @@
 package com.jiandanlangman.htmltextview
 
 
-internal class Drawable private constructor(drawable: String) {
+internal class CompoundDrawables private constructor(drawable: String) {
 
     companion object {
 
@@ -16,7 +16,7 @@ internal class Drawable private constructor(drawable: String) {
         const val KEY_BOTTOM_ACTION = "bottom-action"
 
 
-        fun from(drawable: String) = Drawable(drawable)
+        fun from(drawable: String) = CompoundDrawables(drawable)
 
     }
 
