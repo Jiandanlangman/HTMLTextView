@@ -38,7 +38,7 @@ class ATagHandler : TagHandler {
         output.setSpan(span, start, output.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
     }
 
-    private class FontSizeASpan(private val target: HTMLTextView, private val action: String, private val textSize: Float, private val color: Int, private val isFakeBoldText: Boolean, private val isUnderlineText: Boolean, private val isLineThrough: Boolean, private val padding: Rect, private val margin: Rect, private val pressedScale: Float, private val pressedTintColor: Int, private val textAlign: Style.TextAlign, background: Background) : ReplacementSpan(), ActionSpan {
+    private class FontSizeASpan(private val target: HTMLTextView, private val action: String, private val textSize: Float, private val color: Int, private val isFakeBoldText: Boolean, private val isUnderlineText: Boolean, private val isLineThrough: Boolean, private val padding: Rect, private val margin: Rect, private val pressedScale: Float, private val pressedTintColor: Int, private val textAlign: Style.TextAlign, background: Background) : ReplacementSpan(), ActionSpan, TargetInvalidWatcher {
 
         private val drawAlignCenterOffsetY = (target.lineSpacingMultiplier - 1) * textSize / 2
         private val textAlignOffset = (textSize - target.textSize) / 2
@@ -251,7 +251,6 @@ class ATagHandler : TagHandler {
 
         override fun onUnPressed(isClick: Boolean) = Unit
 
-        override fun onInvalid() = Unit
     }
 
 }

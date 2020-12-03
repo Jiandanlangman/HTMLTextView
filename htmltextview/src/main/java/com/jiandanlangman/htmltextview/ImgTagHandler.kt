@@ -18,7 +18,7 @@ class ImgTagHandler : TagHandler {
         output.setSpan(ImgSpan(target, attrs, style, background), start, output.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
     }
 
-    private class ImgSpan(val target: HTMLTextView, attrs: Map<String, String>, private val style: Style, background: Background) : DynamicDrawableSpan(ALIGN_BOTTOM), ActionSpan, Drawable.Callback {
+    private class ImgSpan(val target: HTMLTextView, attrs: Map<String, String>, private val style: Style, background: Background) : DynamicDrawableSpan(ALIGN_BOTTOM), ActionSpan, TargetInvalidWatcher, Drawable.Callback {
 
         private val action = attrs[Attribute.ACTION.value] ?: ""
         private val srcType = attrs[Attribute.SRC_TYPE.value] ?: Attribute.SrcType.IMAGE_PNG.value
@@ -66,12 +66,12 @@ class ImgTagHandler : TagHandler {
                 if (target.isAttachedToWindow)
                     targetAttachState = 1
                 target.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
-                    override fun onViewAttachedToWindow(v: View?) {
+                    override fun onViewAttachedToWindow(v: View) {
                         targetAttachState = 1
                         setCallback()
                     }
 
-                    override fun onViewDetachedFromWindow(v: View?) {
+                    override fun onViewDetachedFromWindow(v: View) {
                         targetAttachState = 2
                         target.removeOnAttachStateChangeListener(this)
                     }
@@ -190,13 +190,9 @@ class ImgTagHandler : TagHandler {
                 target.postInvalidate(invalidateRect.left, invalidateRect.top, invalidateRect.right, invalidateRect.bottom)
         }
 
-        override fun scheduleDrawable(who: Drawable, what: Runnable, `when`: Long) {
-            target.scheduleDrawable(who, what, `when`)
-        }
+        override fun scheduleDrawable(who: Drawable, what: Runnable, `when`: Long) = target.scheduleDrawable(who, what, `when`)
 
-        override fun unscheduleDrawable(who: Drawable, what: Runnable) {
-            target.unscheduleDrawable(who, what)
-        }
+        override fun unscheduleDrawable(who: Drawable, what: Runnable) =  target.unscheduleDrawable(who, what)
 
 
         private fun setCallback() {
@@ -210,8 +206,7 @@ class ImgTagHandler : TagHandler {
         private fun removeCallbackAndRecycleRes() {
             drawable?.let {
                 it.callback = null
-                val clazz = it::class.java
-                Util.tryCatchInvoke { clazz.getMethod("stop").invoke(it) }
+                Util.tryCatchInvoke {  it::class.java.getMethod("stop").invoke(it) }
             }
             drawable = null
             backgroundDrawable = null

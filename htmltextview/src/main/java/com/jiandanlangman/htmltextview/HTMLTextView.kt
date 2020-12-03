@@ -1,13 +1,17 @@
 package com.jiandanlangman.htmltextview
 
 import android.content.Context
+import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.text.*
+import android.text.style.DynamicDrawableSpan
 import android.util.AttributeSet
 import android.view.MotionEvent
+import android.view.View
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.text.getSpans
 import java.util.*
@@ -17,11 +21,17 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
 
     companion object {
 
+        private var emotionDrawableProvider: EmotionDrawableProvider? = null
+
         fun registerTagHandler(tag: String, handler: TagHandler) = HTMLTagHandler.registerTagHandler(tag, handler)
 
         fun unRegisterTagHandler(tag: String) = HTMLTagHandler.unRegisterTagHandler(tag)
 
         fun setImageGetter(imageGetter: ImageGetter?) = HTMLTagHandler.setImageGetter(imageGetter)
+
+        fun setEmotionDrawableProvider(provider: EmotionDrawableProvider?) {
+            emotionDrawableProvider = provider
+        }
 
     }
 
@@ -43,14 +53,14 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
-        (text as? Spannable)?.let { it.getSpans(0, it.length, ActionSpan::class.java)?.forEach { a -> a.onInvalid() } }
+        (text as? Spannable)?.let { it.getSpans(0, it.length, TargetInvalidWatcher::class.java)?.forEach { a -> a.onInvalid() } }
         super.setText("", BufferType.NORMAL)
     }
 
     override fun setText(text: CharSequence?, type: BufferType?) {
-        (getText() as? Spannable)?.let { it.getSpans(0, it.length, ActionSpan::class.java)?.forEach { a -> a.onInvalid() } }
+        (getText() as? Spannable)?.let { it.getSpans(0, it.length, TargetInvalidWatcher::class.java)?.forEach { a -> a.onInvalid() } }
         sourceText = text ?: ""
-        val spannedText = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) Html.fromHtml(sourceText.toString(), Html.FROM_HTML_MODE_LEGACY, null, HTMLTagHandler(this)) else Html.fromHtml(sourceText.toString(), null, HTMLTagHandler(this))
+        val spannedText = replaceEmotionToDrawable((if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) Html.fromHtml(sourceText.toString(), Html.FROM_HTML_MODE_LEGACY, null, HTMLTagHandler(this)) else Html.fromHtml(sourceText.toString(), null, HTMLTagHandler(this))) as Spannable)
         val spans = spannedText.getSpans<ActionSpan>(0, spannedText.length)
         spans.forEach { it.setOnClickListener(onSpanClickListener) }
         super.setText(spannedText, type)
@@ -145,6 +155,105 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
         right?.let { drawableActions[it] = rightAction ?: "" }
         bottom?.let { drawableActions[it] = bottomAction ?: "" }
         setCompoundDrawables(left, top, right, bottom)
+    }
+
+    private fun replaceEmotionToDrawable(spannable: Spannable): Spannable {
+        emotionDrawableProvider?.let {
+            val text = spannable.toString()
+            val textLength = text.length
+            var startIndex = 0
+            var prevPointCount = text.codePointCount(0, textLength)
+            for (i in 0 until textLength) {
+                val pointCount = text.codePointCount(i, textLength)
+                if (pointCount != prevPointCount) {
+                    val ch = text.substring(startIndex, i)
+                    if (it.isEmotionDrawable(ch))
+                        spannable.setSpan(EmotionSpan(this, it, ch), startIndex, i, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                    startIndex = i
+                    prevPointCount = pointCount
+                }
+            }
+        }
+        return spannable
+    }
+
+
+    private class EmotionSpan(private val target: HTMLTextView, provider: EmotionDrawableProvider, emotion: String) : DynamicDrawableSpan(ALIGN_BASELINE), TargetInvalidWatcher, Drawable.Callback {
+
+        private val invalidateRect = Rect()
+        private val size = (target.textSize + target.textSize / 12f + .5f).toInt()
+
+        private var targetAttachState = if (target.isAttachedToWindow) 1 else 0
+
+        private var emotionDrawable: Drawable? = null
+
+        init {
+            target.addOnAttachStateChangeListener(object : OnAttachStateChangeListener {
+                override fun onViewAttachedToWindow(v: View) {
+                    targetAttachState = 1
+                    setCallback()
+                }
+
+                override fun onViewDetachedFromWindow(v: View) {
+                    targetAttachState = 2
+                    target.removeOnAttachStateChangeListener(this)
+                }
+
+            })
+            provider.getEmotionDrawable(emotion) {
+                if (targetAttachState == 2)
+                    return@getEmotionDrawable
+                emotionDrawable = it
+                setCallback()
+            }
+        }
+
+        override fun getDrawable() = null
+
+        override fun getSize(paint: Paint, text: CharSequence?, start: Int, end: Int, fm: Paint.FontMetricsInt?) = size
+
+        override fun draw(canvas: Canvas, text: CharSequence?, start: Int, end: Int, x: Float, top: Int, y: Int, bottom: Int, paint: Paint) {
+            if (emotionDrawable == null)
+                return
+            invalidateRect.left = x.toInt()
+            invalidateRect.right = invalidateRect.left + emotionDrawable!!.bounds.width()
+            invalidateRect.top = top + (bottom - top - emotionDrawable!!.bounds.height()) / 2
+            invalidateRect.bottom = invalidateRect.top + emotionDrawable!!.bounds.height()
+            canvas.save()
+            canvas.translate(invalidateRect.left.toFloat(), invalidateRect.top.toFloat())
+            emotionDrawable!!.setBounds(0, 0, size, size)
+            emotionDrawable!!.draw(canvas)
+            canvas.restore()
+        }
+
+        override fun invalidateDrawable(who: Drawable) {
+            if (target.isShown)
+                target.postInvalidate(invalidateRect.left, invalidateRect.top, invalidateRect.right, invalidateRect.bottom)
+        }
+
+        override fun scheduleDrawable(who: Drawable, what: Runnable, `when`: Long) = target.scheduleDrawable(who, what, `when`)
+
+        override fun unscheduleDrawable(who: Drawable, what: Runnable) = target.unscheduleDrawable(who, what)
+
+        override fun onInvalid() = removeCallbackAndRecycleRes()
+
+        private fun setCallback() {
+            emotionDrawable?.let {
+                it.callback = this
+                Util.tryCatchInvoke { it::class.java.getMethod("start").invoke(it) }
+                target.invalidate()
+            }
+        }
+
+        private fun removeCallbackAndRecycleRes() {
+            emotionDrawable?.let {
+                it.callback = null
+                Util.tryCatchInvoke { it::class.java.getMethod("stop").invoke(it) }
+            }
+            emotionDrawable = null
+        }
+
+
     }
 
 
