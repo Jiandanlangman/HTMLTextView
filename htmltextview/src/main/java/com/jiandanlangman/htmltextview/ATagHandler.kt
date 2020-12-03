@@ -28,15 +28,16 @@ class ATagHandler : TagHandler {
         val textSize: Float = if (style.fontSize >= 0) style.fontSize.toFloat() else target.textSize
         val isUnderlineText = style.textDecoration.contains(Style.TextDecoration.UNDERLINE)
         val isLineThrough = style.textDecoration.contains(Style.TextDecoration.LINE_THROUGH)
-        val pressed = style.pressed
-        val span = if (textSize == target.textSize && style.padding.left < 0 && style.padding.top < 0 && style.padding.right < 0 && style.padding.bottom < 0 && style.margin.left < 0 && style.margin.top < 0 && style.margin.right < 0 && style.margin.bottom < 0 && pressed == Style.Pressed.NONE && background.isNotBackground())
+        val pressedScale = style.pressedScale
+        val pressedTintColor = Util.tryCatchInvoke({ Color.parseColor(style.pressedTint) }, Color.TRANSPARENT)
+        val span = if (textSize == target.textSize && style.padding.left < 0 && style.padding.top < 0 && style.padding.right < 0 && style.padding.bottom < 0 && style.margin.left < 0 && style.margin.top < 0 && style.margin.right < 0 && style.margin.bottom < 0 && pressedScale == 1f && pressedTintColor == Color.TRANSPARENT && background.isNotBackground())
             ASpan(action, color, isFakeBoldText, isUnderlineText, isLineThrough)
         else
-            FontSizeASpan(target, action, textSize, color, isFakeBoldText, isUnderlineText, isLineThrough, style.padding, style.margin, pressed, style.textAlign, background)
+            FontSizeASpan(target, action, textSize, color, isFakeBoldText, isUnderlineText, isLineThrough, style.padding, style.margin, pressedScale, pressedTintColor, style.textAlign, background)
         output.setSpan(span, start, output.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
     }
 
-    private class FontSizeASpan(private val target: HTMLTextView, private val action: String, private val textSize: Float, private val color: Int, private val isFakeBoldText: Boolean, private val isUnderlineText: Boolean, private val isLineThrough: Boolean, private val padding: Rect, private val margin: Rect, private val pressed: Style.Pressed, private val textAlign: Style.TextAlign, background: Background) : ReplacementSpan(), ActionSpan {
+    private class FontSizeASpan(private val target: HTMLTextView, private val action: String, private val textSize: Float, private val color: Int, private val isFakeBoldText: Boolean, private val isUnderlineText: Boolean, private val isLineThrough: Boolean, private val padding: Rect, private val margin: Rect, private val pressedScale: Float, private val pressedTintColor: Int, private val textAlign: Style.TextAlign, background: Background) : ReplacementSpan(), ActionSpan {
 
         private val drawAlignCenterOffsetY = (target.lineSpacingMultiplier - 1) * textSize / 2
         private val textAlignOffset = (textSize - target.textSize) / 2
@@ -44,6 +45,7 @@ class ATagHandler : TagHandler {
 
         private var canvasScale = 1f
         private var drawTextYOffset = 0f
+        private var pressed = false
 
         private var listener: ((ActionSpan, String) -> Unit) = { _, _ -> }
         private var targetAttachState = 0
@@ -150,19 +152,22 @@ class ATagHandler : TagHandler {
         }
 
         override fun onPressed() {
-            if (action.isNotEmpty())
-                when (pressed) {
-                    Style.Pressed.SCALE -> playScaleAnimator(1f, .88f)
-                    Style.Pressed.NONE -> Unit
-                }
+            if (action.isNotEmpty()) {
+                pressed = true
+                if (pressedScale != 1f)
+                    playScaleAnimator(1f, pressedScale)
+                else
+                    target.postInvalidate(invalidateRect.left, invalidateRect.top, invalidateRect.right, invalidateRect.bottom)
+            }
         }
 
         override fun onUnPressed(isClick: Boolean) {
             if (action.isNotEmpty()) {
-                when (pressed) {
-                    Style.Pressed.SCALE -> playScaleAnimator(.88f, 1f)
-                    Style.Pressed.NONE -> Unit
-                }
+                pressed = false
+                if (pressedScale != 1f)
+                    playScaleAnimator(pressedScale, 1f)
+                else
+                    target.postInvalidate(invalidateRect.left, invalidateRect.top, invalidateRect.right, invalidateRect.bottom)
                 listener.invoke(this, action)
             }
         }
@@ -214,7 +219,7 @@ class ATagHandler : TagHandler {
 
         override fun onUnPressed(isClick: Boolean) = Unit
 
-        override fun onInvalid()  = Unit
+        override fun onInvalid() = Unit
     }
 
 }

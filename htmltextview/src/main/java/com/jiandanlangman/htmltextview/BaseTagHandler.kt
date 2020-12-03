@@ -43,11 +43,11 @@ internal class BaseTagHandler : TagHandler {
                 when (event.action) {
                     MotionEvent.ACTION_DOWN -> {
                         pressedTarget = LinkMovementMethod.getEventActionSpan(target, target.text as Spannable, event, ActionSpan::class.java)?.isEmpty() ?: true
-                        if (pressedTarget && style.pressed == Style.Pressed.SCALE)
-                            playScaleAnimator(target, .88f)
+                        if (pressedTarget && style.pressedScale != 1f)
+                            playScaleAnimator(target, style.pressedScale)
                     }
                     MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> if (pressedTarget) {
-                        if (style.pressed == Style.Pressed.SCALE)
+                        if (style.pressedScale != 1f)
                             playScaleAnimator(target, 1f)
                         if (event.action == MotionEvent.ACTION_UP)
                             baseSpan.listener.invoke(baseSpan, action)

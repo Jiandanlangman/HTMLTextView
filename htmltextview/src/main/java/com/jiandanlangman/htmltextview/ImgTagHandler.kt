@@ -36,6 +36,7 @@ class ImgTagHandler : TagHandler {
         private var canvasScale = 1f
         private var listener: ((ActionSpan, String) -> Unit) = { _, _ -> }
         private var targetAttachState = 0
+        private var pressed = false
 
         private var scaleAnimator: ValueAnimator? = null
 
@@ -128,19 +129,22 @@ class ImgTagHandler : TagHandler {
         }
 
         override fun onPressed() {
-            if (action.isNotEmpty())
-                when (style.pressed) {
-                    Style.Pressed.SCALE -> playScaleAnimator(1f, .88f)
-                    Style.Pressed.NONE -> Unit
-                }
+            if (action.isNotEmpty()) {
+                pressed = true
+                if (style.pressedScale != 1f)
+                    playScaleAnimator(1f, style.pressedScale)
+                else
+                    target.postInvalidate(invalidateRect.left, invalidateRect.top, invalidateRect.right, invalidateRect.bottom)
+            }
         }
 
         override fun onUnPressed(isClick: Boolean) {
             if (action.isNotEmpty()) {
-                when (style.pressed) {
-                    Style.Pressed.SCALE -> playScaleAnimator(.88f, 1f)
-                    Style.Pressed.NONE -> Unit
-                }
+                pressed = false
+                if (style.pressedScale != 1f)
+                    playScaleAnimator(style.pressedScale, 1f)
+                else
+                    target.postInvalidate(invalidateRect.left, invalidateRect.top, invalidateRect.right, invalidateRect.bottom)
                 listener.invoke(this, action)
             }
         }

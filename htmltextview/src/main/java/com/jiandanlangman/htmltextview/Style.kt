@@ -14,7 +14,8 @@ data class Style(
     val textAlign: TextAlign = TextAlign.CENTER,
     val textDecoration: Array<TextDecoration> = emptyArray(),
     val fontWeight: FontWeight = FontWeight.NATIVE,
-    val pressed: Pressed = Pressed.NONE,
+    val pressedScale:Float = 1f,
+    val pressedTint:String = "",
     val lineHeight: Float = -1f
 ) {
 
@@ -37,7 +38,8 @@ data class Style(
         private const val KEY_TEXT_ALIGN = "text-align"                 //文字对齐方式，View暂不支持
         private const val KEY_TEXT_DECORATION = "text-decoration"       //文字修饰，View暂不支持
         private const val KEY_FONT_WEIGHT = "font-weight"               //字重
-        private const val KEY_PRESSED = "pressed"                       //按下后的视觉反馈
+        private const val KEY_PRESSED_SCALE = "pressed-scale"           //按下后的缩放级别，默认1为不缩放
+        private const val KEY_PRESSED_TINT = "pressed-tint"             //按下后的着色颜色，默认为透明
         private const val KEY_LINE_HEIGHT = "line-height"               //行间距
 
         private val locale = Locale.ENGLISH
@@ -109,10 +111,8 @@ data class Style(
                     val value = map[KEY_FONT_WEIGHT] ?: ""
                     FontWeight.values().firstOrNull { it.value == value } ?: FontWeight.NATIVE
                 }, FontWeight.NATIVE),
-                Util.tryCatchInvoke({
-                    val value = map[KEY_PRESSED] ?: ""
-                    Pressed.values().firstOrNull { it.value == value } ?: Pressed.NONE
-                }, Pressed.NONE),
+                Util.tryCatchInvoke ({ (map[KEY_PRESSED_SCALE] ?: "1").toFloat()  }, 1f),
+                map[KEY_PRESSED_TINT] ?: "",
                 Util.tryCatchInvoke({ (map[KEY_LINE_HEIGHT] ?: "-1").toFloat() }, -1f)
             )
 
@@ -144,7 +144,8 @@ data class Style(
 
     enum class Pressed(val value: String) {
         NONE("none"),                               //默认值，按下无反馈
-        SCALE("scale")                              //按下缩放反馈
+        SCALE("scale"),                             //按下缩放反馈
+        TINT("tint")                                //染色
     }
 
 }
