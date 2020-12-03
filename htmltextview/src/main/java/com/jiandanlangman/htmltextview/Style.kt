@@ -10,12 +10,12 @@ data class Style(
     val color: String = "",
     val fontSize: Int = -1,
     val padding: Rect = Rect(),
-    val margin:Rect = Rect(),
+    val margin: Rect = Rect(),
     val textAlign: TextAlign = TextAlign.CENTER,
     val textDecoration: Array<TextDecoration> = emptyArray(),
     val fontWeight: FontWeight = FontWeight.NATIVE,
     val pressed: Pressed = Pressed.NONE,
-    val lineHeight:Float = -1f
+    val lineHeight: Float = -1f
 ) {
 
     companion object {
@@ -49,55 +49,55 @@ data class Style(
             }.toMap()
 
             val paddingRect = Rect()
-            val padding = Util.tryCatchInvoke({ (map[KEY_PADDING] ?: "-1").toInt() }, -1)
+            val padding = Util.applyDimension(map[KEY_PADDING] ?: "-1", -1)
             val paddingLeft = run {
-                val tmp = Util.tryCatchInvoke({ (map[KEY_PADDING_LEFT] ?: "-1").toInt() }, -1)
-                if (tmp != -1) tmp else padding
+                val tmp = Util.applyDimension(map[KEY_PADDING_LEFT] ?: "-1", -1)
+                if (tmp >= 0) tmp else padding
             }
             val paddingTop = run {
-                val tmp = Util.tryCatchInvoke({ (map[KEY_PADDING_TOP] ?: "-1").toInt() }, -1)
-                if (tmp != -1) tmp else padding
+                val tmp = Util.applyDimension(map[KEY_PADDING_TOP] ?: "-1", -1)
+                if (tmp >= 0) tmp else padding
             }
             val paddingRight = run {
-                val tmp = Util.tryCatchInvoke({ (map[KEY_PADDING_RIGHT] ?: "-1").toInt() }, -1)
-                if (tmp != -1) tmp else padding
+                val tmp = Util.applyDimension(map[KEY_PADDING_RIGHT] ?: "-1", -1)
+                if (tmp >= 0) tmp else padding
             }
             val paddingBottom = run {
-                val tmp = Util.tryCatchInvoke({ (map[KEY_PADDING_BOTTOM] ?: "-1").toInt() }, -1)
-                if (tmp != -1) tmp else padding
+                val tmp = Util.applyDimension(map[KEY_PADDING_BOTTOM] ?: "-1", -1)
+                if (tmp >= 0) tmp else padding
             }
             paddingRect.set(paddingLeft, paddingTop, paddingRight, paddingBottom)
             val marginRect = Rect()
-            val margin = Util.tryCatchInvoke({ (map[KEY_MARGIN] ?: "-1").toInt() }, -1)
+            val margin = Util.applyDimension(map[KEY_MARGIN] ?: "-1", -1)
             val marginLeft = run {
-                val tmp = Util.tryCatchInvoke({ (map[KEY_MARGIN_LEFT] ?: "-1").toInt() }, -1)
-                if (tmp != -1) tmp else margin
+                val tmp = Util.applyDimension(map[KEY_MARGIN_LEFT] ?: "-1", -1)
+                if (tmp >= 0) tmp else margin
             }
             val marginTop = run {
-                val tmp = Util.tryCatchInvoke({ (map[KEY_MARGIN_TOP] ?: "-1").toInt() }, -1)
-                if (tmp != -1) tmp else margin
+                val tmp = Util.applyDimension(map[KEY_MARGIN_TOP] ?: "-1", -1)
+                if (tmp >= 0) tmp else margin
             }
             val marginRight = run {
-                val tmp = Util.tryCatchInvoke({ (map[KEY_MARGIN_RIGHT] ?: "-1").toInt() }, -1)
-                if (tmp != -1) tmp else margin
+                val tmp = Util.applyDimension(map[KEY_MARGIN_RIGHT] ?: "-1", -1)
+                if (tmp >= 0) tmp else margin
             }
             val marginBottom = run {
-                val tmp = Util.tryCatchInvoke({ (map[KEY_MARGIN_BOTTOM] ?: "-1").toInt() }, -1)
-                if (tmp != -1) tmp else margin
+                val tmp = Util.applyDimension(map[KEY_MARGIN_BOTTOM] ?: "-1", -1)
+                if (tmp >= 0) tmp else margin
             }
             marginRect.set(marginLeft, marginTop, marginRight, marginBottom)
 
             val tdList = ArrayList<TextDecoration>()
             (map[KEY_TEXT_DECORATION] ?: "").split(",").forEach {
                 val td = TextDecoration.values().firstOrNull { e -> e.value == it }
-                if(td != null)
+                if (td != null)
                     tdList.add(td)
             }
             return Style(
-                Util.tryCatchInvoke({ (map[KEY_WIDTH] ?: "0").toInt() }, 0),
-                Util.tryCatchInvoke({ (map[KEY_HEIGHT] ?: "0").toInt() }, 0),
+                Util.applyDimension(map[KEY_WIDTH] ?: "0", 0),
+                Util.applyDimension(map[KEY_HEIGHT] ?: "0", 0),
                 map[KEY_COLOR] ?: "",
-                Util.tryCatchInvoke({ (map[KEY_FONT_SIZE] ?: "-1").toInt() }, -1),
+                Util.applyDimension(map[KEY_FONT_SIZE] ?: "-1", -1),
                 paddingRect,
                 marginRect,
                 Util.tryCatchInvoke({
@@ -113,11 +113,10 @@ data class Style(
                     val value = map[KEY_PRESSED] ?: ""
                     Pressed.values().firstOrNull { it.value == value } ?: Pressed.NONE
                 }, Pressed.NONE),
-                Util.tryCatchInvoke({(map[KEY_LINE_HEIGHT] ?: "-1").toFloat()   }, -1f)
+                Util.tryCatchInvoke({ (map[KEY_LINE_HEIGHT] ?: "-1").toFloat() }, -1f)
             )
 
         }
-
 
 
     }

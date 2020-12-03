@@ -31,6 +31,7 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
     private var onClickListener: ((HTMLTextView, String) -> Unit)? = null
 
     init {
+        Util.init(context)
         movementMethod = LinkMovementMethod.getInstance()
         super.setHighlightColor(Color.TRANSPARENT)
     }

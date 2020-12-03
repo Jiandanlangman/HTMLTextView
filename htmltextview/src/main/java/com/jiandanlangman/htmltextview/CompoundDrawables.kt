@@ -24,11 +24,11 @@ internal class CompoundDrawables private constructor(drawable: String) {
         val sp = it.split(":")
         sp[0] to if (sp.size > 1) sp[1] else ""
     }.toMap()
-    private val drawablePadding = Util.tryCatchInvoke({ (map[KEY_DRAWABLE_PADDING] ?: "-1").toInt() }, -1)
+    private val drawablePadding = Util.applyDimension(map[KEY_DRAWABLE_PADDING] ?: "-1", -1)
     private val drawableCache = HashMap<String, android.graphics.drawable.Drawable>()
 
 
-    fun getDrawPadding(target: HTMLTextView) = (drawablePadding * target.resources.displayMetrics.density).toInt()
+    fun getDrawPadding(target: HTMLTextView) = drawablePadding
 
     fun getDrawables(callback: (drawables: Drawables?) -> Unit) {
         if (map.isEmpty() || map.keys.none { it != KEY_DRAWABLE_PADDING && it != KEY_LEFT_ACTION && it != KEY_TOP_ACTION && it != KEY_RIGHT_ACTION && it != KEY_BOTTOM_ACTION }) {

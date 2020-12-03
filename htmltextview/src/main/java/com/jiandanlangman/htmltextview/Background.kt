@@ -25,11 +25,11 @@ class Background private constructor(private val background: String) {
 
     private var drawable: Drawable? = null
 
-    fun getDrawable(target: HTMLTextView, callback: (drawable: Drawable?) -> Unit) {
+    fun getDrawable(callback: (drawable: Drawable?) -> Unit) {
         when {
             background.isEmpty() -> callback.invoke(null)
             drawable != null -> callback.invoke(drawable)
-            else -> createDrawable(target) {
+            else -> createDrawable {
                 it?.setBounds(0, 0, it.intrinsicWidth, it.intrinsicWidth)
                 drawable = it
                 callback.invoke(it)
@@ -39,7 +39,7 @@ class Background private constructor(private val background: String) {
 
     fun isNotBackground() = background.isEmpty()
 
-    private fun createDrawable(target: HTMLTextView, callback: (drawable: Drawable?) -> Unit) {
+    private fun createDrawable(callback: (drawable: Drawable?) -> Unit) {
         val bgAttrs = background.split(";").map {
             val sp = it.split(":")
             sp[0] to if (sp.size > 1) sp[1] else ""
@@ -52,13 +52,12 @@ class Background private constructor(private val background: String) {
             return
         }
         val drawable = GradientDrawable()
-        val density = target.resources.displayMetrics.density
         val stroke = Util.tryCatchInvoke({ Color.parseColor(bgAttrs[KEY_STROKE]) }, 0)
-        val strokeWidth = (Util.tryCatchInvoke({ (bgAttrs[KEY_STROKE_WIDTH] ?: "0").toInt() }, 0) * density).toInt()
-        val strokeDash = Util.tryCatchInvoke({ (bgAttrs[KEY_STROKE_DASH] ?: "0").toInt() }, 0) * density
-        val strokeGap = Util.tryCatchInvoke({ (bgAttrs[KEY_STROKE_GAP] ?: "0").toInt() }, 0) * density
+        val strokeWidth =  Util.applyDimension(bgAttrs[KEY_STROKE_WIDTH] ?: "0", 0)
+        val strokeDash = Util.applyDimension(bgAttrs[KEY_STROKE_DASH] ?: "0", 0).toFloat()
+        val strokeGap =Util.applyDimension(bgAttrs[KEY_STROKE_GAP] ?: "0", 0).toFloat()
         drawable.setStroke(strokeWidth, stroke, strokeDash, strokeGap)
-        drawable.cornerRadius = Util.tryCatchInvoke({ (bgAttrs[KEY_RADIUS] ?: "0").toInt() }, 0) * density
+        drawable.cornerRadius = Util.applyDimension(bgAttrs[KEY_RADIUS] ?: "0", 0).toFloat()
         val gradient = bgAttrs[KEY_GRADIENT]
         val hasGradient = if (!gradient.isNullOrEmpty()) {
             when (gradient) {

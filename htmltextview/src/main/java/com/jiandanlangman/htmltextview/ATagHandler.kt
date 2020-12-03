@@ -18,7 +18,6 @@ class ATagHandler : TagHandler {
 
     @SuppressLint("Range")
     override fun handleTag(target: HTMLTextView, tag: String, output: Editable, start: Int, attrs: Map<String, String>, style: Style, background: Background) {
-        val density = target.resources.displayMetrics.density
         val action = attrs[Attribute.ACTION.value] ?: ""
         val color = Util.tryCatchInvoke({ Color.parseColor(style.color) }, target.textColors.defaultColor)
         val isFakeBoldText = when (style.fontWeight) {
@@ -26,27 +25,14 @@ class ATagHandler : TagHandler {
             Style.FontWeight.BOLD -> true
             else -> target.paint.isFakeBoldText
         }
-        val textSize: Float = if (style.fontSize >= 0) Util.dpToPx(style.fontSize, density).toFloat() else target.textSize
+        val textSize: Float = if (style.fontSize >= 0) style.fontSize.toFloat() else target.textSize
         val isUnderlineText = style.textDecoration.contains(Style.TextDecoration.UNDERLINE)
         val isLineThrough = style.textDecoration.contains(Style.TextDecoration.LINE_THROUGH)
         val pressed = style.pressed
         val span = if (textSize == target.textSize && style.padding.left < 0 && style.padding.top < 0 && style.padding.right < 0 && style.padding.bottom < 0 && style.margin.left < 0 && style.margin.top < 0 && style.margin.right < 0 && style.margin.bottom < 0 && pressed == Style.Pressed.NONE && background.isNotBackground())
             ASpan(action, color, isFakeBoldText, isUnderlineText, isLineThrough)
-        else {
-            val padding = Rect(
-                if (style.padding.left < 0) 0 else Util.dpToPx(style.padding.left, density),
-                if (style.padding.top < 0) 0 else Util.dpToPx(style.padding.top, density),
-                if (style.padding.right < 0) 0 else Util.dpToPx(style.padding.right, density),
-                if (style.padding.bottom < 0) 0 else Util.dpToPx(style.padding.bottom, density)
-            )
-            val margin = Rect(
-                if (style.margin.left < 0) 0 else Util.dpToPx(style.margin.left, density),
-                if (style.margin.top < 0) 0 else Util.dpToPx(style.margin.top, density),
-                if (style.margin.right < 0) 0 else Util.dpToPx(style.margin.right, density),
-                if (style.margin.bottom < 0) 0 else Util.dpToPx(style.margin.bottom, density)
-            )
-            FontSizeASpan(target, action, textSize, color, isFakeBoldText, isUnderlineText, isLineThrough, padding, margin, pressed, style.textAlign, background)
-        }
+        else
+            FontSizeASpan(target, action, textSize, color, isFakeBoldText, isUnderlineText, isLineThrough, style.padding, style.margin, pressed, style.textAlign, background)
         output.setSpan(span, start, output.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
     }
 
@@ -80,7 +66,7 @@ class ATagHandler : TagHandler {
                 }
 
             })
-            background.getDrawable(target) {
+            background.getDrawable {
                 if (targetAttachState == 2)
                     return@getDrawable
                 backgroundDrawable = WeakReference(it)

@@ -19,19 +19,14 @@ internal class BaseTagHandler : TagHandler {
         val baseSpan = BaseSpan()
         output.append("\u200B")
         output.setSpan(baseSpan, start, output.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-        val density = target.context.resources.displayMetrics.density
         if (style.fontSize >= 0)
-            target.setTextSize(TypedValue.COMPLEX_UNIT_DIP, style.fontSize.toFloat())
-        try {
-            target.setTextColor(Color.parseColor(style.color))
-        } catch (ignore: Throwable) {
-
-        }
+            target.setTextSize(TypedValue.COMPLEX_UNIT_PX, style.fontSize.toFloat())
+        Util.tryCatchInvoke { target.setTextColor(Color.parseColor(style.color)) }
         target.setPadding(
-            if (style.padding.left >= 0) (style.padding.left * density).toInt() else target.paddingLeft,
-            if (style.padding.top >= 0) (style.padding.top * density).toInt() else target.paddingTop,
-            if (style.padding.right >= 0) (style.padding.right * density).toInt() else target.paddingRight,
-            if (style.padding.bottom >= 0) (style.padding.bottom * density).toInt() else target.paddingBottom
+            if (style.padding.left >= 0) style.padding.left else target.paddingLeft,
+            if (style.padding.top >= 0) style.padding.top else target.paddingTop,
+            if (style.padding.right >= 0) style.padding.right else target.paddingRight,
+            if (style.padding.bottom >= 0) style.padding.bottom else target.paddingBottom
         )
         target.paint.isFakeBoldText = style.fontWeight == Style.FontWeight.BOLD
         if (style.lineHeight >= 0)
@@ -64,10 +59,10 @@ internal class BaseTagHandler : TagHandler {
         fun updateLayoutParams(v: View) {
             v.updateLayoutParams<ViewGroup.LayoutParams> {
                 if (style.width > 0)
-                    width = (style.width * density + .5f).toInt()
+                    width = style.width
                 if (style.height > 0)
-                    height = (style.height * density + .5f).toInt()
-                setMargin(this, style, density)
+                    height = style.height
+                setMargin(this, style)
             }
         }
 
@@ -86,7 +81,7 @@ internal class BaseTagHandler : TagHandler {
             }
 
         })
-        background.getDrawable(target) {
+        background.getDrawable {
             if (targetAttachState == 2)
                 return@getDrawable
             it?.let { target.background = it }
@@ -110,24 +105,22 @@ internal class BaseTagHandler : TagHandler {
         target.animate().scaleX(to).scaleY(to).setDuration(64).start()
     }
 
-    private fun setMargin(params: ViewGroup.LayoutParams, style: Style, density: Float) {
+    private fun setMargin(params: ViewGroup.LayoutParams, style: Style) {
         val clazz = params::class.java
         fun set(name: String, value: Int) {
-            try {
+            Util.tryCatchInvoke {
                 val field = clazz.getField(name)
                 field.set(params, value)
-            } catch (ignore: Throwable) {
-
             }
         }
         if (style.margin.left >= 0)
-            set("leftMargin", (style.margin.left * density).toInt())
+            set("leftMargin", style.margin.left)
         if (style.margin.right >= 0)
-            set("rightMargin", (style.margin.right * density).toInt())
+            set("rightMargin", style.margin.right)
         if (style.margin.top >= 0)
-            set("topMargin", (style.margin.top * density).toInt())
+            set("topMargin", style.margin.top)
         if (style.margin.left >= 0)
-            set("bottomMargin", (style.margin.bottom * density).toInt())
+            set("bottomMargin", style.margin.bottom)
     }
 
     private class BaseSpan : ClickableSpan(), ActionSpan {

@@ -23,26 +23,14 @@ class ImgTagHandler : TagHandler {
 
         private val action = attrs[Attribute.ACTION.value] ?: ""
         private val srcType = attrs[Attribute.SRC_TYPE.value] ?: Attribute.SrcType.IMAGE_PNG.value
-        private val density = target.resources.displayMetrics.density
         private val drawAlignCenterOffsetY = (target.lineSpacingMultiplier - 1) * target.textSize
         private val src = attrs[Attribute.SRC.value] ?: ""
-        private val padding = Rect(
-            if (style.padding.left < 0) 0 else Util.dpToPx(style.padding.left, density),
-            if (style.padding.top < 0) 0 else Util.dpToPx(style.padding.top, density),
-            if (style.padding.right < 0) 0 else Util.dpToPx(style.padding.right, density),
-            if (style.padding.bottom < 0) 0 else Util.dpToPx(style.padding.bottom, density)
-        )
-        private val margin = Rect(
-            if (style.margin.left < 0) 0 else Util.dpToPx(style.margin.left, density),
-            if (style.margin.top < 0) 0 else Util.dpToPx(style.margin.top, density),
-            if (style.margin.right < 0) 0 else Util.dpToPx(style.margin.right, density),
-            if (style.margin.bottom < 0) 0 else Util.dpToPx(style.margin.bottom, density)
-        )
-
+        private val padding = style.padding
+        private val margin = style.margin
         private val invalidateRect = Rect()
 
-        private var width = Util.dpToPx(style.width, density)
-        private var height = Util.dpToPx(style.height, density)
+        private var width = style.width
+        private var height = style.height
         private var scaleX = 1f
         private var scaleY = 1f
         private var canvasScale = 1f
@@ -88,7 +76,7 @@ class ImgTagHandler : TagHandler {
                     }
                 }
             }
-            background.getDrawable(target) {
+            background.getDrawable {
                 if (targetAttachState == 2)
                     return@getDrawable
                 backgroundDrawable = WeakReference(it)
