@@ -13,7 +13,6 @@ import android.text.style.ReplacementSpan
 import android.view.View
 import androidx.core.animation.doOnEnd
 import androidx.core.graphics.toRectF
-import java.lang.ref.WeakReference
 
 
 class ATagHandler : TagHandler {
@@ -55,9 +54,25 @@ class ATagHandler : TagHandler {
 
         private var paint: TextPaint? = null
         private var scaleAnimator: ValueAnimator? = null
-        private var backgroundDrawable: WeakReference<Drawable>? = null
+        private var backgroundDrawable: Drawable? = null
 
         init {
+            if (padding.left < 0)
+                padding.left = 0
+            if (padding.top < 0)
+                padding.top = 0
+            if (padding.right < 0)
+                padding.right = 0
+            if (padding.bottom < 0)
+                padding.bottom = 0
+            if (margin.left < 0)
+                margin.left = 0
+            if (margin.top < 0)
+                margin.top = 0
+            if (margin.right < 0)
+                margin.right = 0
+            if (margin.bottom < 0)
+                margin.bottom = 0
             if (target.isAttachedToWindow)
                 targetAttachState = 1
             target.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
@@ -74,8 +89,8 @@ class ATagHandler : TagHandler {
             background.getDrawable {
                 if (targetAttachState == 2)
                     return@getDrawable
-                backgroundDrawable = WeakReference(it)
-                it?.let {
+                it?.apply {
+                    backgroundDrawable = this
                     if (targetAttachState == 1)
                         target.invalidate()
                 }
@@ -143,7 +158,7 @@ class ATagHandler : TagHandler {
                 canvas.translate(margin.left.toFloat(), (margin.top - margin.bottom) / 2f)
                 if (canvasScale != 1f)
                     canvas.scale(canvasScale, canvasScale, x + invalidateRect.width() / 2f, y.toFloat() - invalidateRect.height() / 2f)
-                backgroundDrawable?.get()?.let { d ->
+                backgroundDrawable?.let { d ->
                     d.setBounds(invalidateRect.left, invalidateRect.top, invalidateRect.right, invalidateRect.bottom)
                     d.draw(canvas)
                 }
@@ -191,7 +206,6 @@ class ATagHandler : TagHandler {
         }
 
         override fun onInvalid() {
-            backgroundDrawable?.clear()
             backgroundDrawable = null
         }
 

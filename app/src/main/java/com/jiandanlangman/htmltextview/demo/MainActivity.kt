@@ -9,6 +9,8 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.Gravity
+import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.core.content.ContextCompat
@@ -21,9 +23,12 @@ import java.io.FileOutputStream
 
 class MainActivity : AppCompatActivity() {
 
-    val text = "<base drawable=\"left:1234;top:1234;right:1234;bottom:1234;padding:8;left-action:2222;top-action:2222;right-action:2222;bottom-action:2222\" background=\"stroke:#FF4D81;stroke-width:2;stroke-dash:8dp;stroke-gap:4dp;radius:8dp;gradient:linear;gradient-colors:#FF0000,#00FF00,#0000FF;gradient-angle:135\" action=\"我是View本身\" style=\"pressed-scale:.96;margin:16dp;padding:16dp;line-height:1.3\"/><img src=\"\" style=\"pressed-scale:.8;pressed-tint:#FFFF00\" action=\"图标1\" /><img action=\"图标2\" src=\"\" style=\"pressed:scale;padding-left:4;padding-right:4\" /><img action=\"图标3\" src=\"\" style=\"pressed:scale;\" />你好呀<a action=\"你好\" style=\"color:#FF0000;font-weight:bold;text-align:center;pressed-scale:.88;pressed-tint:#FFFF00;width:28;height:12;font-size:20;padding-left:8dp;padding-right:8dp;padding-top:4dp;padding-bottom:4dp;margin:4dp\" background=\"fill:#FFA940;radius:4dp\">我是超链接</a>哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈"
+    val text = "<base drawable=\"left:1234;top:1234;right:1234;bottom:1234;padding:8;left-action:2222;top-action:2222;right-action:2222;bottom-action:2222\" background=\"stroke:#FF4D81;stroke-width:2;stroke-dash:8dp;stroke-gap:4dp;radius:8dp;gradient:linear;gradient-colors:#FF0000,#00FF00,#0000FF;gradient-angle:135\" action=\"我是View本身\" style=\"pressed-scale:.98;margin:16dp;padding:16dp;line-height:1.3\"/><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" />你好呀<a action=\"你好\" style=\"color:#FF0000;font-weight:bold;text-align:center;pressed-scale:.88;pressed-tint:#FFFF00;width:28;height:12;font-size:20;padding-left:8dp;padding-right:8dp;padding-top:4dp;padding-bottom:4dp;margin:4dp\" background=\"fill:#FFA940;radius:4dp\">我是超链接</a>哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈"
 
 
+    companion object {
+        private var contentView: View?= null
+    }
 
     @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -37,7 +42,9 @@ class MainActivity : AppCompatActivity() {
             fos.write(buffer, 0, readLength)
         fos.close()
         iss.close()
-        setContentView(R.layout.activity_main)
+        if(contentView == null)
+            contentView = LayoutInflater.from(this).inflate(R.layout.activity_main, null, false)
+        setContentView(contentView)
         val imageGetter = object : ImageGetter {
             override fun getImageDrawable(src: String, type: String, callback: (result: Drawable?) -> Unit) {
                 if("1234" == src) {
@@ -48,6 +55,8 @@ class MainActivity : AppCompatActivity() {
 //                        it?.loopCount = -1
 //                        it?.start()
 //                    }
+                } else if("4567" == src) {
+                    callback.invoke(null)
                 } else if (type == "") {
                     val bitmap = BitmapFactory.decodeFile(file.absolutePath)
                     callback.invoke(NinePatchDrawable(resources, bitmap, bitmap.ninePatchChunk, Rect(), null))

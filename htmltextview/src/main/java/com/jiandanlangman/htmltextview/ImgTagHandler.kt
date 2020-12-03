@@ -10,7 +10,6 @@ import android.text.style.DynamicDrawableSpan
 import android.view.View
 import androidx.core.animation.doOnEnd
 import androidx.core.graphics.toRectF
-import java.lang.ref.WeakReference
 
 class ImgTagHandler : TagHandler {
 
@@ -28,7 +27,7 @@ class ImgTagHandler : TagHandler {
         private val padding = style.padding
         private val margin = style.margin
         private val invalidateRect = Rect()
-        private val pressedTintColor = Util.tryCatchInvoke({Color.parseColor(style.pressedTint)}, Color.TRANSPARENT)
+        private val pressedTintColor = Util.tryCatchInvoke({ Color.parseColor(style.pressedTint) }, Color.TRANSPARENT)
         private val xferMode = PorterDuffXfermode(PorterDuff.Mode.MULTIPLY)
 
         private var width = style.width
@@ -42,11 +41,27 @@ class ImgTagHandler : TagHandler {
 
         private var scaleAnimator: ValueAnimator? = null
 
-        private var drawable: WeakReference<Drawable>? = null
+        private var drawable: Drawable? = null
 
-        private var backgroundDrawable: WeakReference<Drawable>? = null
+        private var backgroundDrawable: Drawable? = null
 
         init {
+            if (padding.left < 0)
+                padding.left = 0
+            if (padding.top < 0)
+                padding.top = 0
+            if (padding.right < 0)
+                padding.right = 0
+            if (padding.bottom < 0)
+                padding.bottom = 0
+            if (margin.left < 0)
+                margin.left = 0
+            if (margin.top < 0)
+                margin.top = 0
+            if (margin.right < 0)
+                margin.right = 0
+            if (margin.bottom < 0)
+                margin.bottom = 0
             HTMLTagHandler.getImageGetter()?.let {
                 if (target.isAttachedToWindow)
                     targetAttachState = 1
@@ -65,15 +80,14 @@ class ImgTagHandler : TagHandler {
                 it.getImageDrawable(src, srcType) { d ->
                     if (targetAttachState == 2)
                         return@getImageDrawable
-                    drawable = WeakReference(d)
                     d?.apply {
                         if (width == 0)
                             width = intrinsicWidth
                         if (height == 0)
                             height = intrinsicHeight
-                        setBounds(0, 0, intrinsicWidth, intrinsicHeight)
                         scaleX = width / intrinsicWidth.toFloat()
                         scaleY = height / intrinsicHeight.toFloat()
+                        drawable = this
                         if (targetAttachState == 1)
                             setCallback()
                     }
@@ -82,8 +96,8 @@ class ImgTagHandler : TagHandler {
             background.getDrawable {
                 if (targetAttachState == 2)
                     return@getDrawable
-                backgroundDrawable = WeakReference(it)
-                it?.let {
+                it?.apply {
+                    backgroundDrawable = this
                     if (targetAttachState == 1)
                         target.invalidate()
                 }
@@ -93,6 +107,8 @@ class ImgTagHandler : TagHandler {
         override fun getDrawable() = null
 
         override fun draw(canvas: Canvas, text: CharSequence?, start: Int, end: Int, x: Float, top: Int, y: Int, bottom: Int, paint: Paint) {
+            if (drawable == null && backgroundDrawable == null)
+                return
             val totalHeight = padding.top + padding.bottom + height
             val baseHeight = bottom - top
             val totalWidth = padding.left + padding.right + width
@@ -104,8 +120,6 @@ class ImgTagHandler : TagHandler {
                 invalidateRect.top = (invalidateRect.top - drawAlignCenterOffsetY / 2 + .5f).toInt()
                 invalidateRect.bottom = (invalidateRect.bottom - drawAlignCenterOffsetY / 2 + .5f).toInt()
             }
-            if (drawable == null && backgroundDrawable == null)
-                return
             canvas.save()
             val saveCount = if (pressed && pressedTintColor != Color.TRANSPARENT) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
@@ -117,11 +131,11 @@ class ImgTagHandler : TagHandler {
             canvas.translate(margin.left.toFloat(), (margin.top - margin.bottom) / 2f)
             if (canvasScale != 1f)
                 canvas.scale(canvasScale, canvasScale, x + width / 2f, y.toFloat() - height / 2f)
-            backgroundDrawable?.get()?.let {
+            backgroundDrawable?.let {
                 it.setBounds(invalidateRect.left, invalidateRect.top, invalidateRect.right, invalidateRect.bottom)
                 it.draw(canvas)
             }
-            drawable?.get()?.let {
+            drawable?.let {
                 val l = invalidateRect.left + padding.left
                 val t = invalidateRect.top + padding.top
                 it.setBounds(l, t, l + width, t + height)
@@ -186,7 +200,7 @@ class ImgTagHandler : TagHandler {
 
 
         private fun setCallback() {
-            drawable?.get()?.let {
+            drawable?.let {
                 it.callback = this
                 Util.tryCatchInvoke { it::class.java.getMethod("start").invoke(it) }
             }
@@ -194,14 +208,12 @@ class ImgTagHandler : TagHandler {
         }
 
         private fun removeCallbackAndRecycleRes() {
-            drawable?.get()?.let {
+            drawable?.let {
                 it.callback = null
                 val clazz = it::class.java
                 Util.tryCatchInvoke { clazz.getMethod("stop").invoke(it) }
             }
-            drawable?.clear()
             drawable = null
-            backgroundDrawable?.clear()
             backgroundDrawable = null
         }
 
