@@ -4,6 +4,7 @@ import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.graphics.*
 import android.graphics.drawable.Drawable
+import android.os.Build
 import android.text.Editable
 import android.text.Spannable
 import android.text.TextPaint
@@ -11,6 +12,7 @@ import android.text.style.ClickableSpan
 import android.text.style.ReplacementSpan
 import android.view.View
 import androidx.core.animation.doOnEnd
+import androidx.core.graphics.toRectF
 import java.lang.ref.WeakReference
 
 
@@ -42,6 +44,7 @@ class ATagHandler : TagHandler {
         private val drawAlignCenterOffsetY = (target.lineSpacingMultiplier - 1) * textSize / 2
         private val textAlignOffset = (textSize - target.textSize) / 2
         private val invalidateRect = Rect()
+        private val xferMode = PorterDuffXfermode(PorterDuff.Mode.MULTIPLY)
 
         private var canvasScale = 1f
         private var drawTextYOffset = 0f
@@ -84,9 +87,9 @@ class ATagHandler : TagHandler {
                 paint = TextPaint(p)
                 paint!!.let {
                     it.textAlign = Paint.Align.CENTER
-                    it.color = color
                     it.isFakeBoldText = isFakeBoldText
                     it.textSize = textSize
+                    it.color = color
                     it.isUnderlineText = isUnderlineText
                     it.flags = if (isLineThrough) it.flags or Paint.STRIKE_THRU_TEXT_FLAG else it.flags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
                     val fontMetrics = it.fontMetrics
@@ -129,8 +132,14 @@ class ATagHandler : TagHandler {
                     invalidateRect.top = (invalidateRect.top - drawAlignCenterOffsetY + .5f).toInt()
                     invalidateRect.bottom = (invalidateRect.bottom - drawAlignCenterOffsetY + .5f).toInt()
                 }
-
                 canvas.save()
+                val saveCount = if (pressed && pressedTintColor != Color.TRANSPARENT) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+                        canvas.saveLayer(invalidateRect.toRectF(), textPaint)
+                    else
+                        canvas.saveLayer(invalidateRect.toRectF(), textPaint, Canvas.ALL_SAVE_FLAG)
+                } else
+                    0
                 canvas.translate(margin.left.toFloat(), (margin.top - margin.bottom) / 2f)
                 if (canvasScale != 1f)
                     canvas.scale(canvasScale, canvasScale, x + invalidateRect.width() / 2f, y.toFloat() - invalidateRect.height() / 2f)
@@ -142,6 +151,15 @@ class ATagHandler : TagHandler {
                 val leftRightPaddingOffset = padding.left - padding.right
                 canvas.translate(leftRightPaddingOffset.toFloat(), topBottomPaddingOffset / 2f) //TODO 是否合适？
                 canvas.drawText(it, start, end, invalidateRect.centerX() - leftRightPaddingOffset / 2f, invalidateRect.centerY() + drawTextYOffset, textPaint)
+                if (pressed && pressedTintColor != Color.TRANSPARENT) {
+                    val prevColor = textPaint.color
+                    textPaint.color = pressedTintColor
+                    textPaint.xfermode = xferMode
+                    canvas.drawRect(invalidateRect, textPaint)
+                    canvas.restoreToCount(saveCount)
+                    textPaint.xfermode = null
+                    textPaint.color = prevColor
+                }
                 canvas.restore()
             }
         }

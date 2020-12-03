@@ -1,15 +1,15 @@
 package com.jiandanlangman.htmltextview
 
 import android.animation.ValueAnimator
-import android.graphics.Canvas
-import android.graphics.Paint
-import android.graphics.Rect
+import android.graphics.*
 import android.graphics.drawable.Drawable
+import android.os.Build
 import android.text.Editable
 import android.text.Spannable
 import android.text.style.DynamicDrawableSpan
 import android.view.View
 import androidx.core.animation.doOnEnd
+import androidx.core.graphics.toRectF
 import java.lang.ref.WeakReference
 
 class ImgTagHandler : TagHandler {
@@ -28,6 +28,8 @@ class ImgTagHandler : TagHandler {
         private val padding = style.padding
         private val margin = style.margin
         private val invalidateRect = Rect()
+        private val pressedTintColor = Util.tryCatchInvoke({Color.parseColor(style.pressedTint)}, Color.TRANSPARENT)
+        private val xferMode = PorterDuffXfermode(PorterDuff.Mode.MULTIPLY)
 
         private var width = style.width
         private var height = style.height
@@ -105,6 +107,13 @@ class ImgTagHandler : TagHandler {
             if (drawable == null && backgroundDrawable == null)
                 return
             canvas.save()
+            val saveCount = if (pressed && pressedTintColor != Color.TRANSPARENT) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+                    canvas.saveLayer(invalidateRect.toRectF(), paint)
+                else
+                    canvas.saveLayer(invalidateRect.toRectF(), paint, Canvas.ALL_SAVE_FLAG)
+            } else
+                0
             canvas.translate(margin.left.toFloat(), (margin.top - margin.bottom) / 2f)
             if (canvasScale != 1f)
                 canvas.scale(canvasScale, canvasScale, x + width / 2f, y.toFloat() - height / 2f)
@@ -117,6 +126,16 @@ class ImgTagHandler : TagHandler {
                 val t = invalidateRect.top + padding.top
                 it.setBounds(l, t, l + width, t + height)
                 it.draw(canvas)
+            }
+            if (pressed && pressedTintColor != Color.TRANSPARENT) {
+                val prevColor = paint.color
+                paint.color = pressedTintColor
+                paint.xfermode = xferMode
+                canvas.drawRect(invalidateRect, paint)
+                canvas.restoreToCount(saveCount)
+                paint.xfermode = null
+                paint.color = prevColor
+
             }
             canvas.restore()
         }

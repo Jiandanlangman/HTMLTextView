@@ -23,15 +23,12 @@ class Background private constructor(private val background: String) {
         fun from(background: String) = Background(background)
     }
 
-    private var drawable: Drawable? = null
 
     fun getDrawable(callback: (drawable: Drawable?) -> Unit) {
         when {
             background.isEmpty() -> callback.invoke(null)
-            drawable != null -> callback.invoke(drawable)
             else -> createDrawable {
                 it?.setBounds(0, 0, it.intrinsicWidth, it.intrinsicWidth)
-                drawable = it
                 callback.invoke(it)
             }
         }
