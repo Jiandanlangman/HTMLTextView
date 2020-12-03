@@ -181,7 +181,7 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
     private class EmotionSpan(private val target: HTMLTextView, provider: EmotionDrawableProvider, emotion: String) : DynamicDrawableSpan(ALIGN_BASELINE), TargetInvalidWatcher, Drawable.Callback {
 
         private val invalidateRect = Rect()
-        private val size = (target.textSize + target.textSize / 12f + .5f).toInt()
+        private val size = (target.textSize  + .5f).toInt()
 
         private var targetAttachState = if (target.isAttachedToWindow) 1 else 0
 
