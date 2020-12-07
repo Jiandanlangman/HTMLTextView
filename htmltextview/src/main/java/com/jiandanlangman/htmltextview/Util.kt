@@ -48,6 +48,14 @@ internal object Util {
         }
     }
 
+    fun getCurrentLineHeight(target:HTMLTextView, top:Int, bottom:Int) : Int {
+        val currentLine = top / target.lineHeight
+        val lineSpacingMultiplier = if (currentLine == target.lineCount - 1) 1f else target.lineSpacingMultiplier
+        val currentLineHeight = (bottom - top) / lineSpacingMultiplier + .5f
+        val currentLineHeightInt = currentLineHeight.toInt()
+        return if (currentLineHeight - currentLineHeightInt >= .5f) currentLineHeightInt + 1 else currentLineHeightInt
+    }
+
     private fun getUnit(value:String) = when {
         value.endsWith("dp") -> TypedValue.COMPLEX_UNIT_DIP
         value.endsWith("sp") -> TypedValue.COMPLEX_UNIT_SP

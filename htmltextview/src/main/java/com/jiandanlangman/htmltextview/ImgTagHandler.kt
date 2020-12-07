@@ -11,7 +11,7 @@ import android.view.View
 import androidx.core.animation.doOnEnd
 import androidx.core.graphics.toRectF
 
-class ImgTagHandler : TagHandler {
+internal class ImgTagHandler : TagHandler {
 
     override fun handleTag(target: HTMLTextView, tag: String, output: Editable, start: Int, attrs: Map<String, String>, style: Style, background: Background) {
         output.append("\u200B")
@@ -110,16 +110,22 @@ class ImgTagHandler : TagHandler {
             if (drawable == null && backgroundDrawable == null)
                 return
             val totalHeight = padding.top + padding.bottom + height
-            val baseHeight = bottom - top
             val totalWidth = padding.left + padding.right + width
             invalidateRect.left = x.toInt()
+            invalidateRect.top = top
             invalidateRect.right = invalidateRect.left + totalWidth
-            invalidateRect.top = top + (baseHeight - totalHeight) / 2
+            invalidateRect.bottom = (top + Util.getCurrentLineHeight(target, top, bottom))
+
+            invalidateRect.top = (invalidateRect.top + (invalidateRect.height() - totalHeight) / 2f + .5f).toInt()
             invalidateRect.bottom = invalidateRect.top + totalHeight
-            if (top / target.lineHeight != target.lineCount - 1) {
-                invalidateRect.top = (invalidateRect.top - drawAlignCenterOffsetY / 2 + .5f).toInt()
-                invalidateRect.bottom = (invalidateRect.bottom - drawAlignCenterOffsetY / 2 + .5f).toInt()
-            }
+
+            val horizontalMarginOffset = margin.left
+            invalidateRect.left += horizontalMarginOffset
+            invalidateRect.right += horizontalMarginOffset
+            val verticalMarginOffset = (margin.top - margin.bottom) / 2
+            invalidateRect.top += verticalMarginOffset
+            invalidateRect.bottom += verticalMarginOffset
+
             canvas.save()
             val saveCount = if (pressed && pressedTintColor != Color.TRANSPARENT) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
@@ -128,7 +134,6 @@ class ImgTagHandler : TagHandler {
                     canvas.saveLayer(invalidateRect.toRectF(), paint, Canvas.ALL_SAVE_FLAG)
             } else
                 0
-            canvas.translate(margin.left.toFloat(), (margin.top - margin.bottom) / 2f)
             if (canvasScale != 1f)
                 canvas.scale(canvasScale, canvasScale, x + width / 2f, y.toFloat() - height / 2f)
             backgroundDrawable?.let {
@@ -192,8 +197,7 @@ class ImgTagHandler : TagHandler {
 
         override fun scheduleDrawable(who: Drawable, what: Runnable, `when`: Long) = target.scheduleDrawable(who, what, `when`)
 
-        override fun unscheduleDrawable(who: Drawable, what: Runnable) =  target.unscheduleDrawable(who, what)
-
+        override fun unscheduleDrawable(who: Drawable, what: Runnable) = target.unscheduleDrawable(who, what)
 
         private fun setCallback() {
             drawable?.let {
@@ -206,7 +210,7 @@ class ImgTagHandler : TagHandler {
         private fun removeCallbackAndRecycleRes() {
             drawable?.let {
                 it.callback = null
-                Util.tryCatchInvoke {  it::class.java.getMethod("stop").invoke(it) }
+                Util.tryCatchInvoke { it::class.java.getMethod("stop").invoke(it) }
             }
             drawable = null
             backgroundDrawable = null

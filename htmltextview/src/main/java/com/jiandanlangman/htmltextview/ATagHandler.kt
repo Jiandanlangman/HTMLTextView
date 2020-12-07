@@ -15,7 +15,7 @@ import androidx.core.animation.doOnEnd
 import androidx.core.graphics.toRectF
 
 
-class ATagHandler : TagHandler {
+internal class ATagHandler : TagHandler {
 
     @SuppressLint("Range")
     override fun handleTag(target: HTMLTextView, tag: String, output: Editable, start: Int, attrs: Map<String, String>, style: Style, background: Background) {
