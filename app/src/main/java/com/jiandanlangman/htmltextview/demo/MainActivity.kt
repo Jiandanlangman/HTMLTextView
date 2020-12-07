@@ -26,7 +26,7 @@ import java.io.FileOutputStream
 class MainActivity : AppCompatActivity() {
 
     val text = "<base drawable=\"left:1234;top:1234;right:1234;bottom:1234;padding:8;left-action:2222;top-action:2222;right-action:2222;bottom-action:2222\" background=\"stroke:#FF4D81;stroke-width:2;stroke-dash:8dp;stroke-gap:4dp;radius:8dp;gradient:linear;gradient-colors:#FF0000,#00FF00,#0000FF;gradient-angle:135\" action=\"我是View本身\" style=\"pressed-scale:.98;margin:16dp;padding:16dp;line-height:1.3\"/><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" />你好呀<a action=\"你好\" style=\"color:#FF0000;font-weight:bold;text-align:center;pressed-scale:.88;pressed-tint:#FFFF00;width:28;height:12;font-size:20;padding-left:8dp;padding-right:8dp;padding-top:4dp;padding-bottom:4dp;margin:4dp\" background=\"fill:#FFA940;radius:4dp\">我是超链接</a>哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈"
-    val text2 =  "<base style=\"font-size:16sp;line-height:1.3\" /><img/>尽管算法不是很明显，但还是可以通过位屏蔽来查找尾数\uD83D\uDE01\uD83D\uDE01\uD83D\uDE01哈哈哈，大傻逼！<img/>尾数由，大傻逼！哈哈哈，大傻逼！哈哈哈，大傻逼！哈哈哈，大傻逼！哈哈哈，大傻逼！哈哈哈，大傻逼！哈哈哈，大傻逼！哈哈哈，<img/>要提取位！"
+    val text2 =  "<base style=\"font-size:16sp;line-height:1.3\" /><img style=\"width:38dp;height:16dp\"/>尽管算法不是很明显，但还是可以通过位屏蔽来查找尾数\uD83D\uDE01\uD83D\uDE01\uD83D\uDE01哈哈哈，大傻逼！<img style=\"width:38dp;height:16dp\"/>尾数由，大傻逼！哈哈哈，大傻逼！哈哈哈，大傻逼！哈哈哈，大傻逼！哈哈哈，大傻逼！哈哈哈，大傻逼！哈哈哈，大傻逼！哈哈哈，<img style=\"width:38dp;height:16dp\"/>要提取位！"
 
     @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -42,7 +42,7 @@ class MainActivity : AppCompatActivity() {
         iss.close()
         setContentView(R.layout.activity_main)
         val imageGetter = object : ImageGetter {
-            override fun getImageDrawable(src: String, type: String, callback: (result: Drawable?) -> Unit) {
+            override fun getImageDrawable(src: String, callback: (result: Drawable?) -> Unit) {
                 if("1234" == src) {
                     val drawable = ContextCompat.getDrawable(this@MainActivity, R.mipmap.ic_launcher_round)
                     callback.invoke(drawable)
@@ -53,10 +53,7 @@ class MainActivity : AppCompatActivity() {
 //                    }
                 } else if("4567" == src) {
                     callback.invoke(null)
-                } else if (type == "") {
-                    val bitmap = BitmapFactory.decodeFile(file.absolutePath)
-                    callback.invoke(NinePatchDrawable(resources, bitmap, bitmap.ninePatchChunk, Rect(), null))
-                } else
+                }  else
                     ImageLoader.loadAnimatedWebp(this@MainActivity, "https://asset.liaoke.tv/assets/api/user/rich/level_1.webp") {
                         callback.invoke(it)
                     }
@@ -102,7 +99,7 @@ class MainActivity : AppCompatActivity() {
             (holder.itemView as HTMLTextView).text = text2
         }
 
-        override fun getItemCount() = 1
+        override fun getItemCount() = 1000
 
     }
 

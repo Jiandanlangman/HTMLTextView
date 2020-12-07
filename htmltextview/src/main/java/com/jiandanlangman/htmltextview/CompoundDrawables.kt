@@ -72,7 +72,7 @@ internal class CompoundDrawables private constructor(drawable: String) {
         when {
             src.isEmpty() -> callback.invoke(null)
             drawableCache[src] != null -> callback.invoke(drawableCache[src])
-            else -> HTMLTagHandler.getImageGetter()?.getImageDrawable(src, Attribute.SrcType.UNKNOWN.value) {
+            else -> HTMLTagHandler.getImageGetter()?.getImageDrawable(src) {
                 if (it != null) {
                     drawableCache[src] = it
                     it.setBounds(0, 0, it.intrinsicWidth, it.intrinsicHeight)

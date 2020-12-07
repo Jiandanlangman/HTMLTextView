@@ -142,10 +142,4 @@ data class Style(
         BOLD("bold")                                //粗体
     }
 
-    enum class Pressed(val value: String) {
-        NONE("none"),                               //默认值，按下无反馈
-        SCALE("scale"),                             //按下缩放反馈
-        TINT("tint")                                //染色
-    }
-
 }

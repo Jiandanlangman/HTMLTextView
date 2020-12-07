@@ -21,8 +21,6 @@ internal class ImgTagHandler : TagHandler {
     private class ImgSpan(val target: HTMLTextView, attrs: Map<String, String>, private val style: Style, background: Background) : DynamicDrawableSpan(ALIGN_BOTTOM), ActionSpan, TargetInvalidWatcher, Drawable.Callback {
 
         private val action = attrs[Attribute.ACTION.value] ?: ""
-        private val srcType = attrs[Attribute.SRC_TYPE.value] ?: Attribute.SrcType.IMAGE_PNG.value
-        private val drawAlignCenterOffsetY = (target.lineSpacingMultiplier - 1) * target.textSize
         private val src = attrs[Attribute.SRC.value] ?: ""
         private val padding = style.padding
         private val margin = style.margin
@@ -77,7 +75,7 @@ internal class ImgTagHandler : TagHandler {
                     }
 
                 })
-                it.getImageDrawable(src, srcType) { d ->
+                it.getImageDrawable(src) { d ->
                     if (targetAttachState == 2)
                         return@getImageDrawable
                     d?.apply {
