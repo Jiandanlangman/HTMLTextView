@@ -75,7 +75,7 @@ internal class ImgTagHandler : TagHandler {
                     }
 
                 })
-                it.getImageDrawable(src) { d ->
+                it.getImageDrawable(target, src) { d ->
                     if (targetAttachState == 2)
                         return@getImageDrawable
                     d?.apply {
@@ -91,7 +91,7 @@ internal class ImgTagHandler : TagHandler {
                     }
                 }
             }
-            background.getDrawable {
+            background.getDrawable(target) {
                 if (targetAttachState == 2)
                     return@getDrawable
                 it?.apply {

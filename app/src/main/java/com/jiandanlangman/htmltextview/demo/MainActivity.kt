@@ -42,7 +42,7 @@ class MainActivity : AppCompatActivity() {
         iss.close()
         setContentView(R.layout.activity_main)
         val imageGetter = object : ImageGetter {
-            override fun getImageDrawable(src: String, callback: (result: Drawable?) -> Unit) {
+            override fun getImageDrawable(target:HTMLTextView, src: String, callback: (result: Drawable?) -> Unit) {
                 if("1234" == src) {
                     val drawable = ContextCompat.getDrawable(this@MainActivity, R.mipmap.ic_launcher_round)
                     callback.invoke(drawable)

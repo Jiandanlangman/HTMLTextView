@@ -81,16 +81,16 @@ internal class BaseTagHandler : TagHandler {
             }
 
         })
-        background.getDrawable {
+        background.getDrawable(target) {
             if (targetAttachState == 2)
                 return@getDrawable
             it?.let { target.background = it }
         }
         val drawable = CompoundDrawables.from(attrs[Attribute.DRAWABLE.value] ?: "")
-        val drawablePadding = drawable.getDrawPadding(target)
+        val drawablePadding = drawable.getDrawPadding()
         if (drawablePadding >= 0)
             target.compoundDrawablePadding = drawablePadding
-        drawable.getDrawables {
+        drawable.getDrawables(target) {
             if (targetAttachState == 2)
                 return@getDrawables
             it?.let {

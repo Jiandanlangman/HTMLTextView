@@ -28,9 +28,9 @@ internal class CompoundDrawables private constructor(drawable: String) {
     private val drawableCache = HashMap<String, android.graphics.drawable.Drawable>()
 
 
-    fun getDrawPadding(target: HTMLTextView) = drawablePadding
+    fun getDrawPadding() = drawablePadding
 
-    fun getDrawables(callback: (drawables: Drawables?) -> Unit) {
+    fun getDrawables(target: HTMLTextView, callback: (drawables: Drawables?) -> Unit) {
         if (map.isEmpty() || map.keys.none { it != KEY_DRAWABLE_PADDING && it != KEY_LEFT_ACTION && it != KEY_TOP_ACTION && it != KEY_RIGHT_ACTION && it != KEY_BOTTOM_ACTION }) {
             callback.invoke(null)
             return
@@ -39,25 +39,25 @@ internal class CompoundDrawables private constructor(drawable: String) {
             val totalGetCount = map.keys.filter {  it != KEY_DRAWABLE_PADDING && it != KEY_LEFT_ACTION && it != KEY_TOP_ACTION && it != KEY_RIGHT_ACTION && it != KEY_BOTTOM_ACTION }.size
             var currentGetCount = 0
             val drawables = Drawables(null, null, null, null)
-            getDrawable(map[KEY_DRAWABLE_LEFT] ?: "") {
+            getDrawable(target,map[KEY_DRAWABLE_LEFT] ?: "") {
                 currentGetCount++
                 drawables.left = it
                 if (currentGetCount == totalGetCount)
                     callback.invoke(drawables)
             }
-            getDrawable(map[KEY_DRAWABLE_TOP] ?: "") {
+            getDrawable(target,map[KEY_DRAWABLE_TOP] ?: "") {
                 currentGetCount++
                 drawables.top = it
                 if (currentGetCount == totalGetCount)
                     callback.invoke(drawables)
             }
-            getDrawable(map[KEY_DRAWABLE_RIGHT] ?: "") {
+            getDrawable(target,map[KEY_DRAWABLE_RIGHT] ?: "") {
                 currentGetCount++
                 drawables.right = it
                 if (currentGetCount == totalGetCount)
                     callback.invoke(drawables)
             }
-            getDrawable(map[KEY_DRAWABLE_BOTTOM] ?: "") {
+            getDrawable(target,map[KEY_DRAWABLE_BOTTOM] ?: "") {
                 currentGetCount++
                 drawables.bottom = it
                 if (currentGetCount == totalGetCount)
@@ -68,11 +68,11 @@ internal class CompoundDrawables private constructor(drawable: String) {
 
     fun getDrawableActions() = DrawableActions(map[KEY_LEFT_ACTION] ?: "", map[KEY_TOP_ACTION] ?: "", map[KEY_RIGHT_ACTION] ?: "", map[KEY_BOTTOM_ACTION] ?: "")
 
-    private fun getDrawable(src: String, callback: (drawable: android.graphics.drawable.Drawable?) -> Unit) {
+    private fun getDrawable(target: HTMLTextView, src: String, callback: (drawable: android.graphics.drawable.Drawable?) -> Unit) {
         when {
             src.isEmpty() -> callback.invoke(null)
             drawableCache[src] != null -> callback.invoke(drawableCache[src])
-            else -> HTMLTagHandler.getImageGetter()?.getImageDrawable(src) {
+            else -> HTMLTagHandler.getImageGetter()?.getImageDrawable(target, src) {
                 if (it != null) {
                     drawableCache[src] = it
                     it.setBounds(0, 0, it.intrinsicWidth, it.intrinsicHeight)

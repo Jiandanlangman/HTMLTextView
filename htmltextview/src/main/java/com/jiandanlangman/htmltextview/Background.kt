@@ -24,10 +24,10 @@ class Background private constructor(private val background: String) {
     }
 
 
-    fun getDrawable(callback: (drawable: Drawable?) -> Unit) {
+    fun getDrawable(target: HTMLTextView, callback: (drawable: Drawable?) -> Unit) {
         when {
             background.isEmpty() -> callback.invoke(null)
-            else -> createDrawable {
+            else -> createDrawable(target) {
                 it?.setBounds(0, 0, it.intrinsicWidth, it.intrinsicWidth)
                 callback.invoke(it)
             }
@@ -36,14 +36,14 @@ class Background private constructor(private val background: String) {
 
     fun isNotBackground() = background.isEmpty()
 
-    private fun createDrawable(callback: (drawable: Drawable?) -> Unit) {
+    private fun createDrawable(target:HTMLTextView, callback: (drawable: Drawable?) -> Unit) {
         val bgAttrs = background.split(";").map {
             val sp = it.split(":")
             sp[0] to if (sp.size > 1) sp[1] else ""
         }.toMap()
         val d = bgAttrs[KEY_DRAWABLE]
         if (!d.isNullOrEmpty()) {
-            HTMLTagHandler.getImageGetter()?.getImageDrawable(d) {
+            HTMLTagHandler.getImageGetter()?.getImageDrawable(target, d) {
                 callback.invoke(it)
             } ?: callback.invoke(null)
             return

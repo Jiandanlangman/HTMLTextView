@@ -86,7 +86,7 @@ internal class ATagHandler : TagHandler {
                 }
 
             })
-            background.getDrawable {
+            background.getDrawable(target) {
                 if (targetAttachState == 2)
                     return@getDrawable
                 it?.apply {
