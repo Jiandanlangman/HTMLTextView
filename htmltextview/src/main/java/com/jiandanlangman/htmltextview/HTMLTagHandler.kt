@@ -20,6 +20,7 @@ internal class HTMLTagHandler(private val target: HTMLTextView) : Html.TagHandle
         private val defaultATagHandler = ATagHandler()
         private val defaultImgTagHandler = ImgTagHandler()
         private val defaultBaseTagHandler = BaseTagHandler()
+        private val defaultSpaceTagHandler = SpaceTagHandler()
 
         private var imageGetter:ImageGetter ?= null
 
@@ -29,6 +30,7 @@ internal class HTMLTagHandler(private val target: HTMLTextView) : Html.TagHandle
             registerTagHandler("font", defaultATagHandler)
             registerTagHandler("img", defaultImgTagHandler)
             registerTagHandler("base", defaultBaseTagHandler)
+            registerTagHandler("space", defaultSpaceTagHandler)
         }
 
         internal fun registerTagHandler(tag: String, handler: TagHandler) {
