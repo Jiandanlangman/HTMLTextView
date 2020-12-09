@@ -38,6 +38,7 @@ internal class ImgTagHandler : TagHandler {
         private var listener: ((ActionSpan, String) -> Unit) = { _, _ -> }
         private var targetAttachState = 0
         private var pressed = false
+        private var invalid = false
 
         private var scaleAnimator: ValueAnimator? = null
 
@@ -78,7 +79,7 @@ internal class ImgTagHandler : TagHandler {
 
                 })
                 it.getImageDrawable(target, src) { d ->
-                    if (targetAttachState == 2)
+                    if (invalid || targetAttachState == 2)
                         return@getImageDrawable
                     d?.apply {
                         if (width == 0)
@@ -94,7 +95,7 @@ internal class ImgTagHandler : TagHandler {
                 }
             }
             background.getDrawable(target) {
-                if (targetAttachState == 2)
+                if (invalid || targetAttachState == 2)
                     return@getDrawable
                 it?.apply {
                     backgroundDrawable = this
@@ -189,7 +190,10 @@ internal class ImgTagHandler : TagHandler {
 
         override fun getAction() = action
 
-        override fun onInvalid() = removeCallbackAndRecycleRes()
+        override fun onInvalid() {
+            invalid = true
+            removeCallbackAndRecycleRes()
+        }
 
 
         override fun invalidateDrawable(who: Drawable) {

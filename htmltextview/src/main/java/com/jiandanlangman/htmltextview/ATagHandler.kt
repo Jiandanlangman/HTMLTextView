@@ -55,6 +55,7 @@ internal class ATagHandler : TagHandler {
 
         private var listener: ((ActionSpan, String) -> Unit) = { _, _ -> }
         private var targetAttachState = 0
+        private var invalid = false
 
         private var paint: TextPaint? = null
         private var scaleAnimator: ValueAnimator? = null
@@ -91,7 +92,7 @@ internal class ATagHandler : TagHandler {
 
             })
             background.getDrawable(target) {
-                if (targetAttachState == 2)
+                if (invalid || targetAttachState == 2)
                     return@getDrawable
                 it?.apply {
                     backgroundDrawable = this
@@ -214,6 +215,7 @@ internal class ATagHandler : TagHandler {
         override fun getAction() = action
 
         override fun onInvalid() {
+            invalid = true
             backgroundDrawable = null
         }
 
