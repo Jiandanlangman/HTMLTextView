@@ -130,12 +130,12 @@ internal class ATagHandler : TagHandler {
         override fun draw(canvas: Canvas, text: CharSequence?, start: Int, end: Int, x: Float, top: Int, y: Int, bottom: Int, paint: Paint) {
             text?.let {
                 val textPaint = getTextPaint(paint)
-                val topBottomOffset = ((textSize - (bottom - top)) / 2f + .5f).toInt()
-                val baseHeight = (textPaint.textSize + .5f).toInt()
+                val topBottomOffset = ((textSize - (bottom - top)) / 100f * 54f).toInt()
+                val baseHeight = (textSize + .5f).toInt()
                 val totalHeight = if(height> 0) height else baseHeight + padding.top + padding.bottom
                 val totalWidth = if(width > 0) width else (textPaint.measureText(text, start, end) + .5f).toInt() + padding.left + padding.right
                 invalidateRect.left = x.toInt()
-                invalidateRect.top = top + (baseHeight - totalHeight) / 2 - topBottomOffset
+                invalidateRect.top = top + (baseHeight - totalHeight)  / 2 - topBottomOffset
                 invalidateRect.right = invalidateRect.left + totalWidth
                 invalidateRect.bottom = invalidateRect.top + totalHeight
                 val topBottomPaddingOffset = padding.top - padding.bottom
