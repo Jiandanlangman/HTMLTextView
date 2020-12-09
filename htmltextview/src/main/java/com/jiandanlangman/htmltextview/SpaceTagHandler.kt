@@ -9,5 +9,7 @@ class SpaceTagHandler : TagHandler {
             output.append(" ")
     }
 
+    override fun isSingleTag() = true
+
 
 }

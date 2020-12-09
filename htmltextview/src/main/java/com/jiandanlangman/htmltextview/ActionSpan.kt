@@ -8,4 +8,6 @@ interface ActionSpan {
 
     fun onUnPressed(isClick: Boolean)
 
+    fun getAction():String?
+
 }

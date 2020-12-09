@@ -18,6 +18,8 @@ internal class ImgTagHandler : TagHandler {
         output.setSpan(ImgSpan(target, attrs, style, background), start, output.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
     }
 
+    override fun isSingleTag() = true
+
     private class ImgSpan(val target: HTMLTextView, attrs: Map<String, String>, private val style: Style, background: Background) : DynamicDrawableSpan(ALIGN_BOTTOM), ActionSpan, TargetInvalidWatcher, Drawable.Callback {
 
         private val action = attrs[Attribute.ACTION.value] ?: ""
@@ -184,6 +186,8 @@ internal class ImgTagHandler : TagHandler {
                 listener.invoke(this, action)
             }
         }
+
+        override fun getAction() = action
 
         override fun onInvalid() = removeCallbackAndRecycleRes()
 

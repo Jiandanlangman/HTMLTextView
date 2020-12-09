@@ -31,14 +31,18 @@ internal class ATagHandler : TagHandler {
         val isLineThrough = style.textDecoration.contains(Style.TextDecoration.LINE_THROUGH)
         val pressedScale = style.pressedScale
         val pressedTintColor = Util.tryCatchInvoke({ Color.parseColor(style.pressedTint) }, Color.TRANSPARENT)
-        val span = if (textSize == target.textSize && style.padding.left < 0 && style.padding.top < 0 && style.padding.right < 0 && style.padding.bottom < 0 && style.margin.left < 0 && style.margin.top < 0 && style.margin.right < 0 && style.margin.bottom < 0 && pressedScale == 1f && pressedTintColor == Color.TRANSPARENT && background.isNotBackground())
+        val width = style.width
+        val height = style.height
+        val span = if (textSize == target.textSize && style.padding.left < 0 && style.padding.top < 0 && style.padding.right < 0 && style.padding.bottom < 0 && style.margin.left < 0 && style.margin.top < 0 && style.margin.right < 0 && style.margin.bottom < 0 && pressedScale == 1f && pressedTintColor == Color.TRANSPARENT && background.isNotBackground() && width <= 0 && height <= 0)
             ASpan(action, color, isFakeBoldText, isUnderlineText, isLineThrough)
         else
-            FontSizeASpan(target, action, textSize, color, isFakeBoldText, isUnderlineText, isLineThrough, style.padding, style.margin, pressedScale, pressedTintColor, style.textAlign, background)
+            FontSizeASpan(target, action, width, height, textSize, color, isFakeBoldText, isUnderlineText, isLineThrough, style.padding, style.margin, pressedScale, pressedTintColor, style.textAlign, background)
         output.setSpan(span, start, output.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
     }
 
-    private class FontSizeASpan(private val target: HTMLTextView, private val action: String, private val textSize: Float, private val color: Int, private val isFakeBoldText: Boolean, private val isUnderlineText: Boolean, private val isLineThrough: Boolean, private val padding: Rect, private val margin: Rect, private val pressedScale: Float, private val pressedTintColor: Int, private val textAlign: Style.TextAlign, background: Background) : ReplacementSpan(), ActionSpan, TargetInvalidWatcher {
+    override fun isSingleTag() = false
+
+    private class FontSizeASpan(private val target: HTMLTextView, private val action: String, private val width:Int, private val height:Int,private val textSize: Float, private val color: Int, private val isFakeBoldText: Boolean, private val isUnderlineText: Boolean, private val isLineThrough: Boolean, private val padding: Rect, private val margin: Rect, private val pressedScale: Float, private val pressedTintColor: Int, private val textAlign: Array<Style.TextAlign>, background: Background) : ReplacementSpan(), ActionSpan, TargetInvalidWatcher {
 
         private val drawAlignCenterOffsetY = (target.lineSpacingMultiplier - 1) * textSize / 2
         private val textAlignOffset = (textSize - target.textSize) / 2
@@ -115,8 +119,10 @@ internal class ATagHandler : TagHandler {
         }
 
         override fun getSize(paint: Paint, text: CharSequence?, start: Int, end: Int, fm: Paint.FontMetricsInt?): Int {
+            if(width > 0)
+                return width + margin.left + margin.right
             val width = text?.let { (getTextPaint(paint).measureText(text, start, end) + .5f).toInt() } ?: 0
-            return width + padding.left + padding.right + margin.left + margin.right
+            return width  + margin.left + margin.right
         }
 
 
@@ -125,8 +131,8 @@ internal class ATagHandler : TagHandler {
                 val textPaint = getTextPaint(paint)
                 val topBottomOffset = ((textSize - (bottom - top)) / 2f + .5f).toInt()
                 val baseHeight = (textPaint.textSize + .5f).toInt()
-                val totalHeight = baseHeight + padding.top + padding.bottom
-                val totalWidth = (textPaint.measureText(text, start, end) + .5f).toInt() + padding.left + padding.right
+                val totalHeight = if(height> 0) height else baseHeight + padding.top + padding.bottom
+                val totalWidth = if(width > 0) width else (textPaint.measureText(text, start, end) + .5f).toInt() + padding.left + padding.right
                 invalidateRect.left = x.toInt()
                 invalidateRect.top = top + (baseHeight - totalHeight) / 2 - topBottomOffset
                 invalidateRect.right = invalidateRect.left + totalWidth
@@ -136,10 +142,10 @@ internal class ATagHandler : TagHandler {
                     invalidateRect.top -= topBottomPaddingOffset
                 else
                     invalidateRect.bottom -= topBottomPaddingOffset
-                val tao = when (textAlign) {
-                    Style.TextAlign.CENTER -> 0f
-                    Style.TextAlign.BOTTOM -> -textAlignOffset
-                    Style.TextAlign.TOP -> textAlignOffset
+                val tao = when {
+                    textAlign.contains(Style.TextAlign.TOP) -> -textAlignOffset
+                    textAlign.contains(Style.TextAlign.BOTTOM) -> textAlignOffset
+                    else -> 0f
                 }
                 invalidateRect.top += (tao + .5f).toInt()
                 invalidateRect.bottom += (tao + .5f).toInt()
@@ -205,6 +211,8 @@ internal class ATagHandler : TagHandler {
             }
         }
 
+        override fun getAction() = action
+
         override fun onInvalid() {
             backgroundDrawable = null
         }
@@ -250,6 +258,8 @@ internal class ATagHandler : TagHandler {
         override fun onPressed() = Unit
 
         override fun onUnPressed(isClick: Boolean) = Unit
+
+        override fun getAction() = action
 
     }
 

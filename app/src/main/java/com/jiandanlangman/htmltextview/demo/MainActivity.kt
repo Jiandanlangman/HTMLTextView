@@ -2,7 +2,9 @@ package com.jiandanlangman.htmltextview.demo
 
 import android.annotation.SuppressLint
 import android.graphics.BitmapFactory
+import android.graphics.NinePatch
 import android.graphics.Rect
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.NinePatchDrawable
 import androidx.appcompat.app.AppCompatActivity
@@ -26,13 +28,15 @@ import java.io.FileOutputStream
 class MainActivity : AppCompatActivity() {
 
     val text = "<base drawable=\"left:1234;top:1234;right:1234;bottom:1234;padding:8;left-action:2222;top-action:2222;right-action:2222;bottom-action:2222\" background=\"stroke:#FF4D81;stroke-width:2;stroke-dash:8dp;stroke-gap:4dp;radius:8dp;gradient:linear;gradient-colors:#FF0000,#00FF00,#0000FF;gradient-angle:135\" action=\"我是View本身\" style=\"pressed-scale:.98;margin:16dp;padding:16dp;line-height:1.3\"/><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" /><img src=\"\" />你好呀<a action=\"你好\" style=\"color:#FF0000;font-weight:bold;text-align:center;pressed-scale:.88;pressed-tint:#FFFF00;width:28;height:12;font-size:20;padding-left:8dp;padding-right:8dp;padding-top:4dp;padding-bottom:4dp;margin:4dp\" background=\"fill:#FFA940;radius:4dp\">我是超链接</a>哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈"
-    val text2 =  "<base style=\"font-size:16sp;line-height:1.3\"></base><img style=\"width:38dp;height:16dp\"/>尽管<space count=\"4\"/>算法不是很明显，但还是可以通过位屏蔽来查找尾数\uD83D\uDE01\uD83D\uDE01\uD83D\uDE01哈哈哈，大傻逼！<img style=\"width:38dp;height:16dp\"/>尾数由，大傻逼！哈哈哈，大傻逼！哈哈哈，大傻逼！哈哈哈，<a style=\"color:#FF0000\"><font style=\"color:#00FF00\">噶嘎嘎</font>！噶嘎嘎</a>，大傻逼！哈哈哈，大傻逼！哈哈哈，大傻逼！哈哈哈，<img style=\"width:38dp;height:16dp\"/>要提取位！"
+//    val text2 =  "<base style=\"font-size:16sp;line-height:1.3\"></base><img style=\"width:38dp;height:16dp\"/>尽管<space count=\"4\"/>算法不是很明显，但还是可以通过位屏蔽来查找尾数\uD83D\uDE01\uD83D\uDE01\uD83D\uDE01哈哈哈，大傻逼！<img style=\"width:38dp;height:16dp\"/>尾数由，大傻逼！哈哈哈，大傻逼！哈哈哈，大傻逼！哈哈哈，<a style=\"color:#FF0000\"><font style=\"color:#00FF00\">噶嘎嘎</font>！噶嘎嘎</a>，大傻逼！哈哈哈，大傻逼！哈哈哈，大傻逼！哈哈哈，<img style=\"width:38dp;height:16dp\"/>要提取位！"
+//    val text2 = "<base action='{\"action\":\"user\\/homepage\",\"params\":{\"id\":\"10460\"}}' background=\"fill:#33000000;radius:9\"><space count=\"1\"></space><img src=\"assets/api/user/rich/level_0.webp\" alt=\"\" style=\"width:38dp;height:16dp;margin-right:2dp\"></img><space count=\"1\"></space><font style=\"&quot;color:#FF94D2\">丢雷楼木</font><space count=\"1\"></space><font style=\"&quot;color:#FF94D2\">闪亮登场！</font></base>"
+    val text2 = "<base style=\"font-size:14dp;padding-left:12dp;padding-right:12dp;padding-top:4dp;padding-bottom:4dp\" background=\"drawable:bbbb\"><a background=\"drawable:1111\" style=\"padding-left:24dp;padding-right:4dp;padding-top:2dp;padding-bottom:2dp;color:#FFFFFF;font-size:10dp;text-align:center;width:59;height:16\">粉</a><space count=\"2\"></space>泥马了隔壁</base>"
 
     @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val iss = assets.open("test.9.png")
-        val file = File(cacheDir, "test.9.png")
+        val iss = assets.open("tab_fst_82.png")
+        val file = File(cacheDir, "tab_fst_82.png")
         val fos = FileOutputStream(file)
         val buffer = ByteArray(8196)
         var readLength = 0
@@ -53,7 +57,25 @@ class MainActivity : AppCompatActivity() {
 //                    }
                 } else if("4567" == src) {
                     callback.invoke(null)
-                }  else
+                } else if("bbbb" == src) {
+                    val iss = assets.open("qipaokuang_xiaozi.9.png")
+                    val file = File(cacheDir, "qipaokuang_xiaozi.9.png")
+                    val fos = FileOutputStream(file)
+                    val buffer = ByteArray(8196)
+                    var readLength = 0
+                    while (iss.read(buffer).also { readLength = it } != -1)
+                        fos.write(buffer, 0, readLength)
+                    fos.close()
+                    iss.close()
+                    val bitmap = BitmapFactory.decodeFile(file.absolutePath)
+                    val ninePatchChunk = bitmap.ninePatchChunk
+                    if(NinePatch.isNinePatchChunk(ninePatchChunk))
+                        callback.invoke(NinePatchDrawable(resources, bitmap, ninePatchChunk, Rect(), null))
+                    else
+                    callback.invoke(null)
+                }else if("1111" == src) {
+                    callback.invoke(BitmapDrawable(resources, BitmapFactory.decodeFile(file.absolutePath)))
+                }else
                     ImageLoader.loadAnimatedWebp(this@MainActivity, "https://asset.liaoke.tv/assets/api/user/rich/level_1.webp") {
                         callback.invoke(it)
                     }

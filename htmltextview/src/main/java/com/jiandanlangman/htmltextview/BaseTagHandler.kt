@@ -7,6 +7,7 @@ import android.text.Editable
 import android.text.Spannable
 import android.text.style.ClickableSpan
 import android.util.TypedValue
+import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
@@ -16,9 +17,6 @@ internal class BaseTagHandler : TagHandler {
 
     @SuppressLint("Range", "ClickableViewAccessibility")
     override fun handleTag(target: HTMLTextView, tag: String, output: Editable, start: Int, attrs: Map<String, String>, style: Style, background: Background) {
-        val baseSpan = BaseSpan()
-        output.append("\u200B")
-        output.setSpan(baseSpan, start, output.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
         if (style.fontSize >= 0)
             target.setTextSize(TypedValue.COMPLEX_UNIT_PX, style.fontSize.toFloat())
         Util.tryCatchInvoke { target.setTextColor(Color.parseColor(style.color)) }
@@ -31,6 +29,24 @@ internal class BaseTagHandler : TagHandler {
         target.paint.isFakeBoldText = style.fontWeight == Style.FontWeight.BOLD
         if (style.lineHeight >= 0)
             target.setLineSpacing(target.lineSpacingExtra, style.lineHeight)
+        var gravity = 0
+        if(style.textAlign.contains(Style.TextAlign.CENTER))
+            gravity = gravity or Gravity.CENTER
+        if(style.textAlign.contains(Style.TextAlign.CENTER_VERTICAL))
+            gravity = gravity or Gravity.CENTER_VERTICAL
+        if(style.textAlign.contains(Style.TextAlign.CENTER_HORIZONTAL))
+            gravity = gravity or Gravity.CENTER_HORIZONTAL
+        if(style.textAlign.contains(Style.TextAlign.CENTER_HORIZONTAL))
+            gravity = gravity or Gravity.CENTER_HORIZONTAL
+        if(style.textAlign.contains(Style.TextAlign.LEFT))
+            gravity = gravity or Gravity.START
+        if(style.textAlign.contains(Style.TextAlign.RIGHT))
+            gravity = gravity or Gravity.END
+        if(style.textAlign.contains(Style.TextAlign.TOP))
+            gravity = gravity or Gravity.TOP
+        if(style.textAlign.contains(Style.TextAlign.BOTTOM))
+            gravity = gravity or Gravity.BOTTOM
+        target.gravity = gravity
         if (style.textDecoration.isNotEmpty()) {
             val paint = target.paint
             paint.isUnderlineText = style.textDecoration.contains(Style.TextDecoration.UNDERLINE)
@@ -38,11 +54,15 @@ internal class BaseTagHandler : TagHandler {
         }
         val action = attrs[Attribute.ACTION.value] ?: ""
         if (action.isNotEmpty()) {
+            val baseSpan = BaseSpan(action)
+            output.append("\u200B")
+            output.setSpan(baseSpan, start, output.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
             var pressedTarget = false
             target.setOnTouchListener { _, event ->
                 when (event.action) {
                     MotionEvent.ACTION_DOWN -> {
-                        pressedTarget = LinkMovementMethod.getEventActionSpan(target, target.text as Spannable, event, ActionSpan::class.java)?.isEmpty() ?: true
+                        val actionSpans = LinkMovementMethod.getEventActionSpan(target, target.text as Spannable, event, ActionSpan::class.java)
+                        pressedTarget =  actionSpans?.let { it.firstOrNull { s -> !s.getAction().isNullOrEmpty() } == null } ?: true
                         if (pressedTarget && style.pressedScale != 1f)
                             playScaleAnimator(target, style.pressedScale)
                     }
@@ -100,6 +120,8 @@ internal class BaseTagHandler : TagHandler {
         }
     }
 
+    override fun isSingleTag() = true
+
     private fun playScaleAnimator(target: HTMLTextView, to: Float) {
         target.animate().cancel()
         target.animate().scaleX(to).scaleY(to).setDuration(64).start()
@@ -123,7 +145,7 @@ internal class BaseTagHandler : TagHandler {
             set("bottomMargin", style.margin.bottom)
     }
 
-    private class BaseSpan : ClickableSpan(), ActionSpan {
+    private class BaseSpan(private val action:String) : ClickableSpan(), ActionSpan {
 
         var listener: ((ActionSpan, String) -> Unit) = { _, _ -> }
 
@@ -136,6 +158,8 @@ internal class BaseTagHandler : TagHandler {
         override fun onPressed() = Unit
 
         override fun onUnPressed(isClick: Boolean) = Unit
+
+        override fun getAction() = action
 
     }
 

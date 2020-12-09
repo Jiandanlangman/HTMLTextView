@@ -22,7 +22,7 @@ internal class HTMLTagHandler(private val target: HTMLTextView) : Html.TagHandle
         private val defaultBaseTagHandler = BaseTagHandler()
         private val defaultSpaceTagHandler = SpaceTagHandler()
 
-        private var imageGetter:ImageGetter ?= null
+        private var imageGetter: ImageGetter? = null
 
         init {
             registerTagHandler("a", defaultATagHandler)
@@ -39,7 +39,7 @@ internal class HTMLTagHandler(private val target: HTMLTextView) : Html.TagHandle
 
         internal fun unRegisterTagHandler(tag: String) {
             tagHandlers.remove(tag)
-            when(tag) {
+            when (tag) {
                 "a", "span", "font" -> registerTagHandler(tag, defaultATagHandler)
                 "img" -> registerTagHandler(tag, defaultImgTagHandler)
                 "base" -> registerTagHandler(tag, defaultBaseTagHandler)
@@ -82,20 +82,27 @@ internal class HTMLTagHandler(private val target: HTMLTextView) : Html.TagHandle
     }
 
     override fun startElement(uri: String, localName: String, qName: String, atts: Attributes) {
-
-        getTagHandler(localName.toLowerCase(Locale.ENGLISH))?.let {
+        val tag = localName.toLowerCase(Locale.ENGLISH)
+        getTagHandler(tag)?.let {
             val attrs = HashMap<String, String>()
-            for(i in 0 until atts.length) {
+            for (i in 0 until atts.length) {
                 val key = atts.getQName(i).toLowerCase(Locale.ENGLISH)
                 attrs[key] = atts.getValue(key)
             }
-            tagRecorderList.add(TagRecorder(attrs, Style.from(attrs.remove(Attribute.STYLE.value)?: ""), Background.from(attrs.remove(Attribute.BACKGROUND.value)?: ""), originalOutput!!.length))
+            val style = Style.from(attrs.remove(Attribute.STYLE.value) ?: "")
+            val background = Background.from(attrs.remove(Attribute.BACKGROUND.value) ?: "")
+            if (it.isSingleTag())
+                it.handleTag(target, tag, originalOutput!!, originalOutput!!.length, attrs, style, background)
+            else
+                tagRecorderList.add(TagRecorder(attrs, style, background, originalOutput!!.length))
         } ?: originalContentHandler?.startElement(uri, localName, qName, atts)
     }
 
     override fun endElement(uri: String, localName: String, qName: String) {
         val tag = localName.toLowerCase(Locale.ENGLISH)
         getTagHandler(tag)?.let {
+            if(it.isSingleTag())
+                return
             val tagRecorder = tagRecorderList.removeLast()
             it.handleTag(target, tag, originalOutput!!, tagRecorder.start, tagRecorder.attrs, tagRecorder.style, tagRecorder.background)
         } ?: originalContentHandler?.endElement(uri, localName, qName)
@@ -119,6 +126,6 @@ internal class HTMLTagHandler(private val target: HTMLTextView) : Html.TagHandle
 
     override fun skippedEntity(name: String?) = originalContentHandler?.skippedEntity(name) ?: Unit
 
-    private class TagRecorder(val attrs:Map<String, String>, val style:Style, val background: Background, val start:Int)
+    private class TagRecorder(val attrs: Map<String, String>, val style: Style, val background: Background, val start: Int)
 
 }

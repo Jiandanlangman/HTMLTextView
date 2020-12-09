@@ -11,8 +11,8 @@ data class Style(
     val fontSize: Int = -1,
     val padding: Rect = Rect(),
     val margin: Rect = Rect(),
-    val textAlign: TextAlign = TextAlign.CENTER,
-    val textDecoration: Array<TextDecoration> = emptyArray(),
+    val textAlign: Array<TextAlign> = arrayOf(TextAlign.LEFT, TextAlign.CENTER_VERTICAL),
+    val textDecoration: Array<TextDecoration> = arrayOf(TextDecoration.NONE),
     val fontWeight: FontWeight = FontWeight.NATIVE,
     val pressedScale:Float = 1f,
     val pressedTint:String = "",
@@ -89,12 +89,24 @@ data class Style(
             }
             marginRect.set(marginLeft, marginTop, marginRight, marginBottom)
 
+            val textAlignList = ArrayList<TextAlign>()
+            (map[KEY_TEXT_ALIGN] ?: "").split(",").forEach {
+                val align = TextAlign.values().firstOrNull { e -> e.value == it }
+                if (align != null)
+                    textAlignList.add(align)
+            }
+            if(textAlignList.isEmpty()) {
+                textAlignList.add(TextAlign.LEFT)
+                textAlignList.add(TextAlign.CENTER_VERTICAL)
+            }
             val tdList = ArrayList<TextDecoration>()
             (map[KEY_TEXT_DECORATION] ?: "").split(",").forEach {
                 val td = TextDecoration.values().firstOrNull { e -> e.value == it }
                 if (td != null)
                     tdList.add(td)
             }
+            if(tdList.isEmpty())
+                tdList.add(TextDecoration.NONE)
             return Style(
                 Util.applyDimension(map[KEY_WIDTH] ?: "0", 0),
                 Util.applyDimension(map[KEY_HEIGHT] ?: "0", 0),
@@ -102,10 +114,7 @@ data class Style(
                 Util.applyDimension(map[KEY_FONT_SIZE] ?: "-1", -1),
                 paddingRect,
                 marginRect,
-                Util.tryCatchInvoke({
-                    val value = map[KEY_TEXT_ALIGN] ?: ""
-                    TextAlign.values().firstOrNull { it.value == value } ?: TextAlign.CENTER
-                }, TextAlign.CENTER),
+                textAlignList.toTypedArray(),
                 tdList.toTypedArray(),
                 Util.tryCatchInvoke({
                     val value = map[KEY_FONT_WEIGHT] ?: ""
@@ -122,9 +131,13 @@ data class Style(
     }
 
     enum class TextAlign(val value: String) {
-        CENTER("center"),                            //默认值，垂直居中对齐
+        CENTER("center"),                            //默认值，居中对齐
         TOP("top"),                                  //顶对齐
-        BOTTOM("bottom")                             //底对齐
+        BOTTOM("bottom"),                            //底对齐
+        CENTER_VERTICAL("center-vertical"),          //纵向居中
+        CENTER_HORIZONTAL("center-horizontal"),      //横向居中
+        LEFT("left"),                                //左对齐
+        RIGHT("right")                               //右对齐
 
 
     }
