@@ -115,8 +115,8 @@ data class Style(
             if (tdList.isEmpty())
                 tdList.add(TextDecoration.NONE)
             return Style(
-                Util.applyDimension(map[KEY_WIDTH] ?: "0", 0),
-                Util.applyDimension(map[KEY_HEIGHT] ?: "0", 0),
+                Util.applyDimension(map[KEY_WIDTH] ?: Dimension.UNDEFINED.toString(), Dimension.UNDEFINED),
+                Util.applyDimension(map[KEY_HEIGHT] ?: Dimension.UNDEFINED.toString(), Dimension.UNDEFINED),
                 map[KEY_COLOR] ?: "",
                 Util.applyDimension(map[KEY_FONT_SIZE] ?: "-1", -1),
                 paddingRect,

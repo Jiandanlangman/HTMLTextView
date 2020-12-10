@@ -30,21 +30,21 @@ internal class BaseTagHandler : TagHandler {
         if (style.lineHeight >= 0)
             target.setLineSpacing(target.lineSpacingExtra, style.lineHeight)
         var gravity = 0
-        if(style.textAlign.contains(Style.TextAlign.CENTER))
+        if (style.textAlign.contains(Style.TextAlign.CENTER))
             gravity = gravity or Gravity.CENTER
-        if(style.textAlign.contains(Style.TextAlign.CENTER_VERTICAL))
+        if (style.textAlign.contains(Style.TextAlign.CENTER_VERTICAL))
             gravity = gravity or Gravity.CENTER_VERTICAL
-        if(style.textAlign.contains(Style.TextAlign.CENTER_HORIZONTAL))
+        if (style.textAlign.contains(Style.TextAlign.CENTER_HORIZONTAL))
             gravity = gravity or Gravity.CENTER_HORIZONTAL
-        if(style.textAlign.contains(Style.TextAlign.CENTER_HORIZONTAL))
+        if (style.textAlign.contains(Style.TextAlign.CENTER_HORIZONTAL))
             gravity = gravity or Gravity.CENTER_HORIZONTAL
-        if(style.textAlign.contains(Style.TextAlign.LEFT))
+        if (style.textAlign.contains(Style.TextAlign.LEFT))
             gravity = gravity or Gravity.START
-        if(style.textAlign.contains(Style.TextAlign.RIGHT))
+        if (style.textAlign.contains(Style.TextAlign.RIGHT))
             gravity = gravity or Gravity.END
-        if(style.textAlign.contains(Style.TextAlign.TOP))
+        if (style.textAlign.contains(Style.TextAlign.TOP))
             gravity = gravity or Gravity.TOP
-        if(style.textAlign.contains(Style.TextAlign.BOTTOM))
+        if (style.textAlign.contains(Style.TextAlign.BOTTOM))
             gravity = gravity or Gravity.BOTTOM
         target.gravity = gravity
         if (style.textDecoration.isNotEmpty()) {
@@ -63,7 +63,7 @@ internal class BaseTagHandler : TagHandler {
                 when (event.action) {
                     MotionEvent.ACTION_DOWN -> {
                         val actionSpans = LinkMovementMethod.getEventActionSpan(target, target.text as Spannable, event, ActionSpan::class.java)
-                        pressedTarget =  actionSpans?.let { it.firstOrNull { s -> !s.getAction().isNullOrEmpty() } == null } ?: true
+                        pressedTarget = actionSpans?.let { it.firstOrNull { s -> !s.getAction().isNullOrEmpty() } == null } ?: true
                         if (pressedTarget && style.pressedScale != 1f)
                             playScaleAnimator(target, style.pressedScale)
                     }
@@ -79,10 +79,10 @@ internal class BaseTagHandler : TagHandler {
         }
         fun updateLayoutParams(v: View) {
             v.updateLayoutParams<ViewGroup.LayoutParams> {
-                if (style.width > 0)
+                if (style.width > Dimension.UNDEFINED)
                     width = style.width
-                if (style.height > 0)
-                    height = style.height
+                if(style.height > Dimension.UNDEFINED)
+                height = style.height
                 setMargin(this, style)
             }
         }
@@ -146,7 +146,7 @@ internal class BaseTagHandler : TagHandler {
             set("bottomMargin", style.margin.bottom)
     }
 
-    private class BaseSpan(private val action:String) : ClickableSpan(), ActionSpan {
+    private class BaseSpan(private val action: String) : ClickableSpan(), ActionSpan {
 
         var listener: ((ActionSpan, String) -> Unit) = { _, _ -> }
 

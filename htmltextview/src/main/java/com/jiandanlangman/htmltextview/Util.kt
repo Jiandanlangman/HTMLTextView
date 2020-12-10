@@ -35,20 +35,27 @@ internal object Util {
     }
 
 
-    fun applyDimension(value: String, errorReturn:Int): Int {
+    fun applyDimension(value: String, errorReturn: Int): Int {
         val trimValue = value.trim()
-        if(trimValue.isEmpty())
+        if (trimValue.isEmpty())
             return errorReturn
         val unit = getUnit(value)
-        return  if(unit == -1)
-            tryCatchInvoke({ (TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, trimValue.toFloat(), metrics) + .5f).toInt() }, errorReturn)
-         else {
+        return if (unit == -1)
+            tryCatchInvoke({
+                val v = trimValue.toFloat()
+                if (v <= 0) v.toInt() else
+                    (TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, v, metrics) + .5f).toInt()
+            }, errorReturn)
+        else {
             val index = value.length - 2
-            tryCatchInvoke({ (TypedValue.applyDimension(unit, trimValue.substring(0, index).toFloat(), metrics) + .5f).toInt() }, errorReturn)
+            tryCatchInvoke({
+                val v = trimValue.substring(0, index).toFloat()
+                if (v <= 0) v.toInt() else (TypedValue.applyDimension(unit, v, metrics) + .5f).toInt()
+            }, errorReturn)
         }
     }
 
-    fun getCurrentLineHeight(target:HTMLTextView, top:Int, bottom:Int) : Int {
+    fun getCurrentLineHeight(target: HTMLTextView, top: Int, bottom: Int): Int {
         val currentLine = top / target.lineHeight
         val lineSpacingMultiplier = if (currentLine == target.lineCount - 1) 1f else target.lineSpacingMultiplier
         val currentLineHeight = (bottom - top) / lineSpacingMultiplier + .5f
@@ -56,7 +63,7 @@ internal object Util {
         return if (currentLineHeight - currentLineHeightInt >= .5f) currentLineHeightInt + 1 else currentLineHeightInt
     }
 
-    private fun getUnit(value:String) = when {
+    private fun getUnit(value: String) = when {
         value.endsWith("dp") -> TypedValue.COMPLEX_UNIT_DIP
         value.endsWith("sp") -> TypedValue.COMPLEX_UNIT_SP
         value.endsWith("px") -> TypedValue.COMPLEX_UNIT_PX
