@@ -7,7 +7,7 @@ import android.graphics.drawable.Drawable
 import android.text.style.DynamicDrawableSpan
 import android.view.View
 
-internal class EmotionSpan(private val target: HTMLTextView, provider: EmotionDrawableProvider, emotion: String) : DynamicDrawableSpan(ALIGN_BASELINE), TargetInvalidWatcher, Drawable.Callback {
+internal class EmotionSpan(private val target: HTMLTextView, provider: ResourcesProvider, emotion: String) : DynamicDrawableSpan(ALIGN_BASELINE), TargetInvalidWatcher, Drawable.Callback {
 
     private val invalidateRect = Rect()
     private val size = (target.textSize + .5f).toInt()

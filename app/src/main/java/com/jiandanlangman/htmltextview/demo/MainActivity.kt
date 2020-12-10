@@ -4,24 +4,19 @@ import android.annotation.SuppressLint
 import android.graphics.BitmapFactory
 import android.graphics.NinePatch
 import android.graphics.Rect
+import android.graphics.Typeface
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.NinePatchDrawable
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
-import android.view.Gravity
-import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.integration.webp.decoder.WebpDrawable
-import com.jiandanlangman.htmltextview.EmotionDrawableProvider
 import com.jiandanlangman.htmltextview.HTMLTextView
-import com.jiandanlangman.htmltextview.ImageGetter
+import com.jiandanlangman.htmltextview.ResourcesProvider
 import java.io.File
 import java.io.FileOutputStream
 
@@ -45,7 +40,9 @@ class MainActivity : AppCompatActivity() {
         fos.close()
         iss.close()
         setContentView(R.layout.activity_main)
-        val imageGetter = object : ImageGetter {
+
+
+        val provider = object : ResourcesProvider {
             override fun getImageDrawable(target:HTMLTextView, src: String, callback: (result: Drawable?) -> Unit) {
                 if("1234" == src) {
                     val drawable = ContextCompat.getDrawable(this@MainActivity, R.mipmap.ic_launcher_round)
@@ -72,7 +69,7 @@ class MainActivity : AppCompatActivity() {
                     if(NinePatch.isNinePatchChunk(ninePatchChunk))
                         callback.invoke(NinePatchDrawable(resources, bitmap, ninePatchChunk, Rect(), null))
                     else
-                    callback.invoke(null)
+                        callback.invoke(null)
                 }else if("1111" == src) {
                     callback.invoke(BitmapDrawable(resources, BitmapFactory.decodeFile(file.absolutePath)))
                 }else
@@ -81,14 +78,10 @@ class MainActivity : AppCompatActivity() {
                     }
             }
 
-        }
+            override fun getTypeface(name: String): Typeface? {
+                return null
+            }
 
-
-        HTMLTextView.setImageGetter(imageGetter)
-        val recyclerView = findViewById<RecyclerView>(R.id.recyclerView)
-        recyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
-        recyclerView.adapter = Adapter()
-        HTMLTextView.setEmotionDrawableProvider(object : EmotionDrawableProvider {
             override fun isEmotionDrawable(text: String) = text == "\uD83D\uDE01"
 
             override fun getEmotionDrawable(text: String, callback: (drawable: Drawable?) -> Unit) {
@@ -97,7 +90,13 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
-        })
+        }
+
+        HTMLTextView.setResourcesProvider(provider)
+        val recyclerView = findViewById<RecyclerView>(R.id.recyclerView)
+        recyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
+        recyclerView.adapter = Adapter()
+
 
 
 //        val textView = findViewById<HTMLTextView>(R.id.textView)

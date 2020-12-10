@@ -17,17 +17,17 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
 
     companion object {
 
-        private var emotionDrawableProvider: EmotionDrawableProvider? = null
+        private var resourcesProvider: ResourcesProvider? = null
 
         fun registerTagHandler(tag: String, handler: TagHandler) = HTMLTagHandler.registerTagHandler(tag, handler)
 
         fun unRegisterTagHandler(tag: String) = HTMLTagHandler.unRegisterTagHandler(tag)
 
-        fun setImageGetter(imageGetter: ImageGetter?) = HTMLTagHandler.setImageGetter(imageGetter)
-
-        fun setEmotionDrawableProvider(provider: EmotionDrawableProvider?) {
-            emotionDrawableProvider = provider
+        fun setResourcesProvider(provider: ResourcesProvider?) {
+            this.resourcesProvider = provider
+            HTMLTagHandler.setResourcesProvider(provider)
         }
+
 
     }
 
@@ -154,7 +154,7 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
     }
 
     private fun replaceEmotionToDrawable(spannable: Spannable): Spannable {
-        emotionDrawableProvider?.let {
+        resourcesProvider?.let {
             val text = spannable.toString()
             val textLength = text.length
             var startIndex = 0

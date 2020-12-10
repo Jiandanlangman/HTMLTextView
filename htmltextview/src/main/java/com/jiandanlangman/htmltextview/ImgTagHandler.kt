@@ -10,7 +10,6 @@ import android.text.style.DynamicDrawableSpan
 import android.view.View
 import androidx.core.animation.doOnEnd
 import androidx.core.graphics.toRectF
-import kotlin.math.min
 
 internal class ImgTagHandler : TagHandler {
 
@@ -68,7 +67,7 @@ internal class ImgTagHandler : TagHandler {
                 margin.right = 0
             if (margin.bottom < 0)
                 margin.bottom = 0
-            HTMLTagHandler.getImageGetter()?.let {
+            HTMLTagHandler.getResourcesProvider()?.let {
                 if (target.isAttachedToWindow)
                     targetAttachState = 1
                 target.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
@@ -158,8 +157,8 @@ internal class ImgTagHandler : TagHandler {
             val verticalAlignOffset = when {
                 textAlign.contains(Style.TextAlign.CENTER_VERTICAL) || textAlign.contains(Style.TextAlign.CENTER) -> 0
                 textAlign.contains(Style.TextAlign.TOP) && textAlign.contains(Style.TextAlign.BOTTOM) -> 0
-                textAlign.contains(Style.TextAlign.TOP) -> -((currentLineHeight - rectHeight) / 4).toInt()
-                textAlign.contains(Style.TextAlign.BOTTOM) -> ((currentLineHeight - rectHeight) / 4).toInt()
+                textAlign.contains(Style.TextAlign.TOP) -> -((currentLineHeight - rectHeight) / 4)
+                textAlign.contains(Style.TextAlign.BOTTOM) -> ((currentLineHeight - rectHeight) / 4)
                 else -> 0
             }
             drawRect.top += verticalAlignOffset

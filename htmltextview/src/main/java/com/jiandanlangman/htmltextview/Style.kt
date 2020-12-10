@@ -1,6 +1,7 @@
 package com.jiandanlangman.htmltextview
 
 import android.graphics.Rect
+import android.graphics.Typeface
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -18,7 +19,8 @@ data class Style(
     val pressedTint: String = "",
     val lineHeight: Float = -1f,
     val strokeWidth: Float = 0f,
-    val stroke: String = ""
+    val stroke: String = "",
+    val typeface: Typeface? = null
 ) {
 
     companion object {
@@ -45,6 +47,7 @@ data class Style(
         private const val KEY_LINE_HEIGHT = "line-height"               //行间距
         private const val KEY_STROKE_WIDTH = "stroke-width"             //文字描边大小
         private const val KEY_STROKE = "stroke"                         //文字描边颜色
+        private const val KEY_FONT_FAMILY = "font-family"                   //字体
 
         private val locale = Locale.ENGLISH
 
@@ -128,7 +131,8 @@ data class Style(
                 map[KEY_PRESSED_TINT] ?: "",
                 Util.tryCatchInvoke({ (map[KEY_LINE_HEIGHT] ?: "-1").toFloat() }, -1f),
                 Util.tryCatchInvoke({ (map[KEY_STROKE_WIDTH] ?: "0").toFloat() }, 0f),
-                map[KEY_STROKE] ?: ""
+                map[KEY_STROKE] ?: "",
+                HTMLTagHandler.getResourcesProvider()?.getTypeface(map[KEY_FONT_FAMILY] ?: "")
             )
 
         }

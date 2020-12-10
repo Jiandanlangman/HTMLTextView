@@ -43,7 +43,7 @@ class Background private constructor(private val background: String) {
         }.toMap()
         val d = bgAttrs[KEY_DRAWABLE]
         if (!d.isNullOrEmpty()) {
-            HTMLTagHandler.getImageGetter()?.getImageDrawable(target, d) {
+            HTMLTagHandler.getResourcesProvider()?.getImageDrawable(target, d) {
                 callback.invoke(it)
             } ?: callback.invoke(null)
             return

@@ -22,7 +22,7 @@ internal class HTMLTagHandler(private val target: HTMLTextView) : Html.TagHandle
         private val defaultBaseTagHandler = BaseTagHandler()
         private val defaultSpaceTagHandler = SpaceTagHandler()
 
-        private var imageGetter: ImageGetter? = null
+        private var resourcesProvider: ResourcesProvider? = null
 
         init {
             registerTagHandler("a", defaultATagHandler)
@@ -46,11 +46,11 @@ internal class HTMLTagHandler(private val target: HTMLTextView) : Html.TagHandle
             }
         }
 
-        internal fun setImageGetter(imageGetter: ImageGetter?) {
-            this.imageGetter = imageGetter
+        internal fun setResourcesProvider(imageGetter: ResourcesProvider?) {
+            this.resourcesProvider = imageGetter
         }
 
-        internal fun getImageGetter() = imageGetter
+        internal fun getResourcesProvider() = resourcesProvider
 
         private fun getTagHandler(tag: String) = tagHandlers[tag]
 

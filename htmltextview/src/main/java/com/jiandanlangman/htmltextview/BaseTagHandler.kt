@@ -52,6 +52,7 @@ internal class BaseTagHandler : TagHandler {
             paint.isUnderlineText = style.textDecoration.contains(Style.TextDecoration.UNDERLINE)
             paint.flags = if (style.textDecoration.contains(Style.TextDecoration.LINE_THROUGH)) paint.flags or Paint.STRIKE_THRU_TEXT_FLAG else paint.flags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
         }
+        style.typeface?.let { target.typeface = it }
         val action = attrs[Attribute.ACTION.value] ?: ""
         if (action.isNotEmpty()) {
             val baseSpan = BaseSpan(action)

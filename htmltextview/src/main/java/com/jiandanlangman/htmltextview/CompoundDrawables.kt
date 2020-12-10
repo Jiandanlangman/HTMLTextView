@@ -35,7 +35,7 @@ internal class CompoundDrawables private constructor(drawable: String) {
             callback.invoke(null)
             return
         }
-        HTMLTagHandler.getImageGetter()?.let {
+        HTMLTagHandler.getResourcesProvider()?.let {
             val totalGetCount = map.keys.filter {  it != KEY_DRAWABLE_PADDING && it != KEY_LEFT_ACTION && it != KEY_TOP_ACTION && it != KEY_RIGHT_ACTION && it != KEY_BOTTOM_ACTION }.size
             var currentGetCount = 0
             val drawables = Drawables(null, null, null, null)
@@ -72,7 +72,7 @@ internal class CompoundDrawables private constructor(drawable: String) {
         when {
             src.isEmpty() -> callback.invoke(null)
             drawableCache[src] != null -> callback.invoke(drawableCache[src])
-            else -> HTMLTagHandler.getImageGetter()?.getImageDrawable(target, src) {
+            else -> HTMLTagHandler.getResourcesProvider()?.getImageDrawable(target, src) {
                 if (it != null) {
                     drawableCache[src] = it
                     it.setBounds(0, 0, it.intrinsicWidth, it.intrinsicHeight)
