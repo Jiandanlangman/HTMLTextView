@@ -24,8 +24,8 @@ internal class ImgTagHandler : TagHandler {
 
         private val action = attrs[Attribute.ACTION.value] ?: ""
         private val src = attrs[Attribute.SRC.value] ?: ""
-        private val padding = style.padding
-        private val margin = style.margin
+        private val padding = Util.toNaturalRect(style.padding)
+        private val margin = Util.toNaturalRect(style.margin)
         private val textAlign = style.textAlign
         private val drawRect = Rect()
         private val drawImageRect = Rect()
@@ -51,22 +51,6 @@ internal class ImgTagHandler : TagHandler {
         private var backgroundDrawable: Drawable? = null
 
         init {
-            if (padding.left < 0)
-                padding.left = 0
-            if (padding.top < 0)
-                padding.top = 0
-            if (padding.right < 0)
-                padding.right = 0
-            if (padding.bottom < 0)
-                padding.bottom = 0
-            if (margin.left < 0)
-                margin.left = 0
-            if (margin.top < 0)
-                margin.top = 0
-            if (margin.right < 0)
-                margin.right = 0
-            if (margin.bottom < 0)
-                margin.bottom = 0
             HTMLTagHandler.getResourcesProvider()?.let {
                 if (target.isAttachedToWindow)
                     targetAttachState = 1

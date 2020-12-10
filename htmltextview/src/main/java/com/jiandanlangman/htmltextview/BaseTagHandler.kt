@@ -79,9 +79,9 @@ internal class BaseTagHandler : TagHandler {
         }
         fun updateLayoutParams(v: View) {
             v.updateLayoutParams<ViewGroup.LayoutParams> {
-                if (style.width > Dimension.UNDEFINED)
+                if (style.width > Constant.DIMENSION_UNDEFINED)
                     width = style.width
-                if(style.height > Dimension.UNDEFINED)
+                if(style.height > Constant.DIMENSION_UNDEFINED)
                 height = style.height
                 setMargin(this, style)
             }

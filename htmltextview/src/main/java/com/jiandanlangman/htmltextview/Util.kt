@@ -1,6 +1,7 @@
 package com.jiandanlangman.htmltextview
 
 import android.content.Context
+import android.graphics.Rect
 import android.util.DisplayMetrics
 import android.util.TypedValue
 
@@ -61,6 +62,57 @@ internal object Util {
         val currentLineHeight = (bottom - top) / lineSpacingMultiplier + .5f
         val currentLineHeightInt = currentLineHeight.toInt()
         return if (currentLineHeight - currentLineHeightInt >= .5f) currentLineHeightInt + 1 else currentLineHeightInt
+    }
+
+    fun getPadding(attrs: Map<String, String>): Rect {
+        val paddingRect = Rect()
+        val padding = applyDimension(attrs[Constant.KEY_PADDING] ?: "-1", -1)
+        val paddingLeft = run {
+            val tmp = applyDimension(attrs[Constant.KEY_PADDING_LEFT] ?: "-1", -1)
+            if (tmp >= 0) tmp else padding
+        }
+        val paddingTop = run {
+            val tmp = applyDimension(attrs[Constant.KEY_PADDING_TOP] ?: "-1", -1)
+            if (tmp >= 0) tmp else padding
+        }
+        val paddingRight = run {
+            val tmp = applyDimension(attrs[Constant.KEY_PADDING_RIGHT] ?: "-1", -1)
+            if (tmp >= 0) tmp else padding
+        }
+        val paddingBottom = run {
+            val tmp = applyDimension(attrs[Constant.KEY_PADDING_BOTTOM] ?: "-1", -1)
+            if (tmp >= 0) tmp else padding
+        }
+        paddingRect.set(paddingLeft, paddingTop, paddingRight, paddingBottom)
+        return paddingRect
+    }
+
+    fun getMargin(attrs: Map<String, String>): Rect {
+        val marginRect = Rect()
+        val margin = applyDimension(attrs[Constant.KEY_MARGIN] ?: "-1", -1)
+        val marginLeft = run {
+            val tmp = applyDimension(attrs[Constant.KEY_MARGIN_LEFT] ?: "-1", -1)
+            if (tmp >= 0) tmp else margin
+        }
+        val marginTop = run {
+            val tmp = applyDimension(attrs[Constant.KEY_MARGIN_TOP] ?: "-1", -1)
+            if (tmp >= 0) tmp else margin
+        }
+        val marginRight = run {
+            val tmp = applyDimension(attrs[Constant.KEY_MARGIN_RIGHT] ?: "-1", -1)
+            if (tmp >= 0) tmp else margin
+        }
+        val marginBottom = run {
+            val tmp = applyDimension(attrs[Constant.KEY_MARGIN_BOTTOM] ?: "-1", -1)
+            if (tmp >= 0) tmp else margin
+        }
+        marginRect.set(marginLeft, marginTop, marginRight, marginBottom)
+        return marginRect
+    }
+
+    fun toNaturalRect(rect:Rect) : Rect {
+        rect.set(if(rect.left < 0) 0 else rect.left, if(rect.top < 0) 0 else rect.top, if(rect.right < 0) 0 else rect.right, if(rect.bottom < 0) 0 else rect.bottom)
+        return rect
     }
 
     private fun getUnit(value: String) = when {

@@ -70,22 +70,8 @@ internal class ATagHandler : TagHandler {
         private var backgroundDrawable: Drawable? = null
 
         init {
-            if (padding.left < 0)
-                padding.left = 0
-            if (padding.top < 0)
-                padding.top = 0
-            if (padding.right < 0)
-                padding.right = 0
-            if (padding.bottom < 0)
-                padding.bottom = 0
-            if (margin.left < 0)
-                margin.left = 0
-            if (margin.top < 0)
-                margin.top = 0
-            if (margin.right < 0)
-                margin.right = 0
-            if (margin.bottom < 0)
-                margin.bottom = 0
+            Util.toNaturalRect(padding)
+            Util.toNaturalRect(margin)
             if (target.isAttachedToWindow)
                 targetAttachState = 1
             target.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
