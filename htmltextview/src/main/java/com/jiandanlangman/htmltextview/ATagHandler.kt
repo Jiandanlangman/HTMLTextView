@@ -27,32 +27,34 @@ internal class ATagHandler : TagHandler {
             else -> target.paint.isFakeBoldText
         }
         val textSize: Float = if (style.fontSize >= 0) style.fontSize.toFloat() else target.textSize
-        val isUnderlineText = style.textDecoration.contains(Style.TextDecoration.UNDERLINE)
-        val isLineThrough = style.textDecoration.contains(Style.TextDecoration.LINE_THROUGH)
+        val textDecoration = style.textDecoration
         val pressedScale = style.pressedScale
         val pressedTintColor = Util.tryCatchInvoke({ Color.parseColor(style.pressedTint) }, Color.TRANSPARENT)
         val width = style.width
         val height = style.height
-        val span = if (textSize == target.textSize && style.padding.left < 0 && style.padding.top < 0 && style.padding.right < 0 && style.padding.bottom < 0 && style.margin.left < 0 && style.margin.top < 0 && style.margin.right < 0 && style.margin.bottom < 0 && pressedScale == 1f && pressedTintColor == Color.TRANSPARENT && background.isNotBackground() && width <= 0 && height <= 0)
-            ASpan(action, color, isFakeBoldText, isUnderlineText, isLineThrough)
+        val span = if (textSize == target.textSize && style.padding.left < 0 && style.padding.top < 0 && style.padding.right < 0 && style.padding.bottom < 0 && style.margin.left < 0 && style.margin.top < 0 && style.margin.right < 0 && style.margin.bottom < 0 && pressedScale == 1f && pressedTintColor == Color.TRANSPARENT && background.isNotBackground() && width <= 0 && height <= 0 && !textDecoration.contains(Style.TextDecoration.STROKE))
+            ASpan(action, color, isFakeBoldText, style.textDecoration.contains(Style.TextDecoration.UNDERLINE), style.textDecoration.contains(Style.TextDecoration.LINE_THROUGH))
         else
-            FontSizeASpan(target, action, width, height, textSize, color, isFakeBoldText, isUnderlineText, isLineThrough, style.padding, style.margin, pressedScale, pressedTintColor, style.textAlign, background)
+            FontSizeASpan(target, action, width, height, textSize, color, isFakeBoldText, textDecoration, style.padding, style.margin, pressedScale, pressedTintColor, style.textAlign, style.strokeWidth, Util.tryCatchInvoke({ Color.parseColor(style.stroke) }, Color.TRANSPARENT), background)
         output.setSpan(span, start, output.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
     }
 
     override fun isSingleTag() = false
 
-    private class FontSizeASpan(private val target: HTMLTextView, private val action: String, private val width: Int, private val height: Int, private val textSize: Float, private val color: Int, private val isFakeBoldText: Boolean, private val isUnderlineText: Boolean, private val isLineThrough: Boolean, private val padding: Rect, private val margin: Rect, private val pressedScale: Float, private val pressedTintColor: Int, private val textAlign: Array<Style.TextAlign>, background: Background) : ReplacementSpan(), ActionSpan, TargetInvalidWatcher {
+    private class FontSizeASpan(private val target: HTMLTextView, private val action: String, private val width: Int, private val height: Int, private val textSize: Float, private val color: Int, private val isFakeBoldText: Boolean, private val textDecoration: Array<Style.TextDecoration>, private val padding: Rect, private val margin: Rect, private val pressedScale: Float, private val pressedTintColor: Int, private val textAlign: Array<Style.TextAlign>, private val strokeWidth: Float, private val strokeColor: Int, background: Background) : ReplacementSpan(), ActionSpan, TargetInvalidWatcher {
 
         private val drawRect = Rect()
-        private val paintTextAlign:Paint.Align = when {
+        private val drawTextRect = Rect()
+        private val paintTextAlign: Paint.Align = when {
             textAlign.contains(Style.TextAlign.CENTER) || textAlign.contains(Style.TextAlign.CENTER_HORIZONTAL) -> Paint.Align.CENTER
             textAlign.contains(Style.TextAlign.LEFT) && textAlign.contains(Style.TextAlign.RIGHT) -> Paint.Align.CENTER
             textAlign.contains(Style.TextAlign.LEFT) -> Paint.Align.LEFT
             textAlign.contains(Style.TextAlign.RIGHT) -> Paint.Align.RIGHT
             else -> Paint.Align.CENTER
         }
-        private var drawTextRect = Rect()
+        private val isUnderlineText = textDecoration.contains(Style.TextDecoration.UNDERLINE)
+        private val isThrough = textDecoration.contains(Style.TextDecoration.LINE_THROUGH)
+        private val stroke = textDecoration.contains(Style.TextDecoration.STROKE)
         private val xferMode = PorterDuffXfermode(PorterDuff.Mode.MULTIPLY)
 
         private var canvasScale = 1f
@@ -115,9 +117,8 @@ internal class ATagHandler : TagHandler {
                     it.textAlign = paintTextAlign
                     it.isFakeBoldText = isFakeBoldText
                     it.textSize = textSize
-                    it.color = color
                     it.isUnderlineText = isUnderlineText
-                    it.flags = if (isLineThrough) it.flags or Paint.STRIKE_THRU_TEXT_FLAG else it.flags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
+                    it.flags = if (isThrough) it.flags or Paint.STRIKE_THRU_TEXT_FLAG else it.flags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
                     val fontMetrics = it.fontMetrics
                     drawTextYOffset = (fontMetrics.bottom - fontMetrics.top) / 2 - fontMetrics.bottom
                 }
@@ -174,11 +175,19 @@ internal class ATagHandler : TagHandler {
                 drawTextRect.right = drawRect.right - padding.right
                 drawTextRect.top = drawRect.top + padding.top
                 drawTextRect.bottom = drawRect.bottom - padding.bottom
-                val drawTextX = when(textPaint.textAlign) {
+                val drawTextX = when (textPaint.textAlign) {
                     Paint.Align.LEFT -> drawTextRect.left.toFloat()
                     Paint.Align.RIGHT -> drawTextRect.right.toFloat()
                     else -> drawTextRect.centerX().toFloat()
                 }
+                if (stroke) {
+                    textPaint.style = Paint.Style.STROKE
+                    textPaint.strokeWidth = strokeWidth
+                    textPaint.color = strokeColor
+                    canvas.drawText(it, start, end, drawTextX, drawTextRect.centerY().toFloat() + drawTextYOffset, textPaint)
+                }
+                textPaint.style = Paint.Style.FILL
+                textPaint.color = color
                 canvas.drawText(it, start, end, drawTextX, drawTextRect.centerY().toFloat() + drawTextYOffset, textPaint)
                 if (pressed && pressedTintColor != Color.TRANSPARENT) {
                     val prevColor = textPaint.color

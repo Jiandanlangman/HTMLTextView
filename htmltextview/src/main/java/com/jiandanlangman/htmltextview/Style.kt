@@ -14,9 +14,11 @@ data class Style(
     val textAlign: Array<TextAlign> = arrayOf(TextAlign.LEFT, TextAlign.CENTER_VERTICAL),
     val textDecoration: Array<TextDecoration> = arrayOf(TextDecoration.NONE),
     val fontWeight: FontWeight = FontWeight.NATIVE,
-    val pressedScale:Float = 1f,
-    val pressedTint:String = "",
-    val lineHeight: Float = -1f
+    val pressedScale: Float = 1f,
+    val pressedTint: String = "",
+    val lineHeight: Float = -1f,
+    val strokeWidth: Float = 0f,
+    val stroke: String = ""
 ) {
 
     companion object {
@@ -41,6 +43,8 @@ data class Style(
         private const val KEY_PRESSED_SCALE = "pressed-scale"           //按下后的缩放级别，默认1为不缩放
         private const val KEY_PRESSED_TINT = "pressed-tint"             //按下后的着色颜色，默认为透明
         private const val KEY_LINE_HEIGHT = "line-height"               //行间距
+        private const val KEY_STROKE_WIDTH = "stroke-width"             //文字描边大小
+        private const val KEY_STROKE = "stroke"                         //文字描边颜色
 
         private val locale = Locale.ENGLISH
 
@@ -95,7 +99,7 @@ data class Style(
                 if (align != null)
                     textAlignList.add(align)
             }
-            if(textAlignList.isEmpty()) {
+            if (textAlignList.isEmpty()) {
                 textAlignList.add(TextAlign.LEFT)
                 textAlignList.add(TextAlign.CENTER_VERTICAL)
             }
@@ -105,7 +109,7 @@ data class Style(
                 if (td != null)
                     tdList.add(td)
             }
-            if(tdList.isEmpty())
+            if (tdList.isEmpty())
                 tdList.add(TextDecoration.NONE)
             return Style(
                 Util.applyDimension(map[KEY_WIDTH] ?: "0", 0),
@@ -120,9 +124,11 @@ data class Style(
                     val value = map[KEY_FONT_WEIGHT] ?: ""
                     FontWeight.values().firstOrNull { it.value == value } ?: FontWeight.NATIVE
                 }, FontWeight.NATIVE),
-                Util.tryCatchInvoke ({ (map[KEY_PRESSED_SCALE] ?: "1").toFloat()  }, 1f),
+                Util.tryCatchInvoke({ (map[KEY_PRESSED_SCALE] ?: "1").toFloat() }, 1f),
                 map[KEY_PRESSED_TINT] ?: "",
-                Util.tryCatchInvoke({ (map[KEY_LINE_HEIGHT] ?: "-1").toFloat() }, -1f)
+                Util.tryCatchInvoke({ (map[KEY_LINE_HEIGHT] ?: "-1").toFloat() }, -1f),
+                Util.tryCatchInvoke({ (map[KEY_STROKE_WIDTH] ?: "0").toFloat() }, 0f),
+                map[KEY_STROKE] ?: ""
             )
 
         }
@@ -145,7 +151,8 @@ data class Style(
     enum class TextDecoration(val value: String) {
         NONE("none"),                               //默认值，无任何修饰
         UNDERLINE("underline"),                     //显示下划线
-        LINE_THROUGH("line-through")                //显示删除线
+        LINE_THROUGH("line-through"),                //显示删除线
+        STROKE("stroke")                            //描边
     }
 
 
