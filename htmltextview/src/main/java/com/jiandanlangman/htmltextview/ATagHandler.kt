@@ -45,7 +45,13 @@ internal class ATagHandler : TagHandler {
     private class FontSizeASpan(private val target: HTMLTextView, private val action: String, private val width: Int, private val height: Int, private val textSize: Float, private val color: Int, private val isFakeBoldText: Boolean, private val isUnderlineText: Boolean, private val isLineThrough: Boolean, private val padding: Rect, private val margin: Rect, private val pressedScale: Float, private val pressedTintColor: Int, private val textAlign: Array<Style.TextAlign>, background: Background) : ReplacementSpan(), ActionSpan, TargetInvalidWatcher {
 
         private val drawRect = Rect()
-        private val paintTextAlign:Paint.Align
+        private val paintTextAlign:Paint.Align = when {
+            textAlign.contains(Style.TextAlign.CENTER) || textAlign.contains(Style.TextAlign.CENTER_HORIZONTAL) -> Paint.Align.CENTER
+            textAlign.contains(Style.TextAlign.LEFT) && textAlign.contains(Style.TextAlign.RIGHT) -> Paint.Align.CENTER
+            textAlign.contains(Style.TextAlign.LEFT) -> Paint.Align.LEFT
+            textAlign.contains(Style.TextAlign.RIGHT) -> Paint.Align.RIGHT
+            else -> Paint.Align.CENTER
+        }
         private var drawTextRect = Rect()
         private val xferMode = PorterDuffXfermode(PorterDuff.Mode.MULTIPLY)
 
@@ -62,13 +68,6 @@ internal class ATagHandler : TagHandler {
         private var backgroundDrawable: Drawable? = null
 
         init {
-            paintTextAlign =  when {
-                textAlign.contains(Style.TextAlign.CENTER) || textAlign.contains(Style.TextAlign.CENTER_HORIZONTAL) -> Paint.Align.CENTER
-                textAlign.contains(Style.TextAlign.LEFT) && textAlign.contains(Style.TextAlign.RIGHT) -> Paint.Align.CENTER
-                textAlign.contains(Style.TextAlign.LEFT) -> Paint.Align.LEFT
-                textAlign.contains(Style.TextAlign.RIGHT) -> Paint.Align.RIGHT
-                else -> Paint.Align.CENTER
-            }
             if (padding.left < 0)
                 padding.left = 0
             if (padding.top < 0)
@@ -139,16 +138,12 @@ internal class ATagHandler : TagHandler {
                 val textPaint = getTextPaint(paint)
                 val currentLineHeight = Util.getCurrentLineHeight(target, top, bottom)
                 val verticalCenterLine = top + currentLineHeight / 2f
-                val rectHeight = (if (height > 0) height.toFloat() else textSize + padding.top + padding.bottom)
-                val rectWidth = if (width > 0) width else (textPaint.measureText(text, start, end) + .5f).toInt() + padding.left + padding.right
+                val rectHeight = if (height > 0) height.toFloat() else (textSize + padding.top + padding.bottom)
+                val rectWidth = if (width > 0) width else ((textPaint.measureText(text, start, end) + .5f).toInt() + padding.left + padding.right)
                 drawRect.left = x.toInt()
                 drawRect.right = drawRect.left + rectWidth
                 drawRect.top = (verticalCenterLine - rectHeight / 2f + .5f).toInt()
                 drawRect.bottom = (drawRect.top + rectHeight + .5f).toInt()
-
-                val marginOffset = (margin.top - margin.bottom) / 2
-                drawRect.top += marginOffset
-                drawRect.bottom += marginOffset
 
                 val verticalAlignOffset = when {
                     textAlign.contains(Style.TextAlign.CENTER_VERTICAL) || textAlign.contains(Style.TextAlign.CENTER) -> 0
@@ -168,7 +163,7 @@ internal class ATagHandler : TagHandler {
                         canvas.saveLayer(drawRect.toRectF(), textPaint, Canvas.ALL_SAVE_FLAG)
                 } else
                     0
-                canvas.translate(margin.left.toFloat(), (margin.top - margin.bottom) / 2f)
+                canvas.translate(margin.left.toFloat(), (margin.top - margin.bottom).toFloat())
                 if (canvasScale != 1f)
                     canvas.scale(canvasScale, canvasScale, x + drawRect.width() / 2f, y.toFloat() - drawRect.height() / 2f)
                 backgroundDrawable?.let { d ->
@@ -189,7 +184,7 @@ internal class ATagHandler : TagHandler {
                     val prevColor = textPaint.color
                     textPaint.color = pressedTintColor
                     textPaint.xfermode = xferMode
-                    canvas.drawRect(drawTextRect, textPaint)
+                    canvas.drawRect(drawRect, textPaint)
                     canvas.restoreToCount(saveCount)
                     textPaint.xfermode = null
                     textPaint.color = prevColor

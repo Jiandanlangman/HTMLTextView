@@ -10,6 +10,7 @@ import android.text.style.DynamicDrawableSpan
 import android.view.View
 import androidx.core.animation.doOnEnd
 import androidx.core.graphics.toRectF
+import kotlin.math.min
 
 internal class ImgTagHandler : TagHandler {
 
@@ -26,12 +27,16 @@ internal class ImgTagHandler : TagHandler {
         private val src = attrs[Attribute.SRC.value] ?: ""
         private val padding = style.padding
         private val margin = style.margin
-        private val invalidateRect = Rect()
+        private val textAlign = style.textAlign
+        private val drawRect = Rect()
+        private val drawImageRect = Rect()
         private val pressedTintColor = Util.tryCatchInvoke({ Color.parseColor(style.pressedTint) }, Color.TRANSPARENT)
         private val xferMode = PorterDuffXfermode(PorterDuff.Mode.MULTIPLY)
+        private val width = style.width
+        private val height = style.height
 
-        private var width = style.width
-        private var height = style.height
+        private var imageWidth = 0
+        private var imageHeight = 0
         private var scaleX = 1f
         private var scaleY = 1f
         private var canvasScale = 1f
@@ -82,12 +87,41 @@ internal class ImgTagHandler : TagHandler {
                     if (invalid || targetAttachState == 2)
                         return@getImageDrawable
                     d?.apply {
-                        if (width == 0)
-                            width = intrinsicWidth
-                        if (height == 0)
-                            height = intrinsicHeight
-                        scaleX = width / intrinsicWidth.toFloat()
-                        scaleY = height / intrinsicHeight.toFloat()
+                        val tw = if (width < 0) 0 else width
+                        val th = if (height < 0) 0 else height
+                        when (tw + th) {
+                            0 -> { //没有指定宽高
+                                imageWidth = intrinsicWidth
+                                imageHeight = intrinsicHeight
+                                scaleX = 1f
+                                scaleY = 1f
+                            }
+                            tw -> { //指定了宽度
+                                imageWidth = width - padding.left - padding.right
+                                imageHeight = (imageWidth * intrinsicHeight / intrinsicWidth.toFloat() + .5f).toInt()
+                                scaleX = intrinsicWidth / imageWidth.toFloat()
+                                scaleY = intrinsicHeight / imageHeight.toFloat()
+                            }
+                            th -> { //指定了高度
+                                imageHeight = height - padding.top - padding.bottom
+                                imageWidth = imageHeight * intrinsicWidth / intrinsicHeight
+                                scaleX = intrinsicWidth / imageWidth.toFloat()
+                                scaleY = intrinsicHeight / imageHeight.toFloat()
+                            }
+                            else -> { //都指定了
+                                if (width < height) {
+                                    imageWidth = width - padding.left - padding.right
+                                    imageHeight = (imageWidth * intrinsicHeight / intrinsicWidth.toFloat() + .5f).toInt()
+                                    scaleX = intrinsicWidth / imageWidth.toFloat()
+                                    scaleY = intrinsicHeight / imageHeight.toFloat()
+                                } else {
+                                    imageHeight = height - padding.top - padding.bottom
+                                    imageWidth = imageHeight * intrinsicWidth / intrinsicHeight
+                                    scaleX = intrinsicWidth / imageWidth.toFloat()
+                                    scaleY = intrinsicHeight / imageHeight.toFloat()
+                                }
+                            }
+                        }
                         drawable = this
                         if (targetAttachState == 1)
                             setCallback()
@@ -110,48 +144,55 @@ internal class ImgTagHandler : TagHandler {
         override fun draw(canvas: Canvas, text: CharSequence?, start: Int, end: Int, x: Float, top: Int, y: Int, bottom: Int, paint: Paint) {
             if (drawable == null && backgroundDrawable == null)
                 return
-            val totalHeight = padding.top + padding.bottom + height
-            val totalWidth = padding.left + padding.right + width
-            invalidateRect.left = x.toInt()
-            invalidateRect.top = top
-            invalidateRect.right = invalidateRect.left + totalWidth
-            invalidateRect.bottom = (top + Util.getCurrentLineHeight(target, top, bottom))
 
-            invalidateRect.top = (invalidateRect.top + (invalidateRect.height() - totalHeight) / 2f + .5f).toInt()
-            invalidateRect.bottom = invalidateRect.top + totalHeight
 
-            val horizontalMarginOffset = margin.left
-            invalidateRect.left += horizontalMarginOffset
-            invalidateRect.right += horizontalMarginOffset
-            val verticalMarginOffset = (margin.top - margin.bottom) / 2
-            invalidateRect.top += verticalMarginOffset
-            invalidateRect.bottom += verticalMarginOffset
+            val currentLineHeight = Util.getCurrentLineHeight(target, top, bottom)
+            val verticalCenterLine = top + currentLineHeight / 2f
+            val rectHeight = if(height > 0) height else (imageHeight + padding.top + padding.bottom)
+            val rectWidth = if(width > 0) width else (imageWidth + padding.left + padding.right)
+            drawRect.left = x.toInt()
+            drawRect.right = drawRect.left + rectWidth
+            drawRect.top = (verticalCenterLine - rectHeight / 2f + .5f).toInt()
+            drawRect.bottom = (drawRect.top + rectHeight + .5f).toInt()
+
+            val verticalAlignOffset = when {
+                textAlign.contains(Style.TextAlign.CENTER_VERTICAL) || textAlign.contains(Style.TextAlign.CENTER) -> 0
+                textAlign.contains(Style.TextAlign.TOP) && textAlign.contains(Style.TextAlign.BOTTOM) -> 0
+                textAlign.contains(Style.TextAlign.TOP) -> -((currentLineHeight - rectHeight) / 4).toInt()
+                textAlign.contains(Style.TextAlign.BOTTOM) -> ((currentLineHeight - rectHeight) / 4).toInt()
+                else -> 0
+            }
+            drawRect.top += verticalAlignOffset
+            drawRect.bottom += verticalAlignOffset
 
             canvas.save()
             val saveCount = if (pressed && pressedTintColor != Color.TRANSPARENT) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
-                    canvas.saveLayer(invalidateRect.toRectF(), paint)
+                    canvas.saveLayer(drawRect.toRectF(), paint)
                 else
-                    canvas.saveLayer(invalidateRect.toRectF(), paint, Canvas.ALL_SAVE_FLAG)
+                    canvas.saveLayer(drawRect.toRectF(), paint, Canvas.ALL_SAVE_FLAG)
             } else
                 0
+            canvas.translate(margin.left.toFloat(), (margin.top - margin.bottom) / 1f)
             if (canvasScale != 1f)
-                canvas.scale(canvasScale, canvasScale, x + width / 2f, y.toFloat() - height / 2f)
+                canvas.scale(canvasScale, canvasScale, x + rectWidth / 2f, drawRect.top + rectHeight / 2f)
             backgroundDrawable?.let {
-                it.setBounds(invalidateRect.left, invalidateRect.top, invalidateRect.right, invalidateRect.bottom)
+                it.setBounds(drawRect.left, drawRect.top, drawRect.right, drawRect.bottom)
                 it.draw(canvas)
             }
             drawable?.let {
-                val l = invalidateRect.left + padding.left
-                val t = invalidateRect.top + padding.top
-                it.setBounds(l, t, l + width, t + height)
+                drawImageRect.left = drawRect.left + (drawRect.width() - imageWidth) / 2
+                drawImageRect.right = drawImageRect.left + imageWidth
+                drawImageRect.top = drawRect.top + (drawRect.height() - imageHeight) / 2
+                drawImageRect.bottom = drawImageRect.top + imageHeight
+                it.setBounds(drawImageRect.left, drawImageRect.top, drawImageRect.right, drawImageRect.bottom)
                 it.draw(canvas)
             }
             if (pressed && pressedTintColor != Color.TRANSPARENT) {
                 val prevColor = paint.color
                 paint.color = pressedTintColor
                 paint.xfermode = xferMode
-                canvas.drawRect(invalidateRect, paint)
+                canvas.drawRect(drawRect, paint)
                 canvas.restoreToCount(saveCount)
                 paint.xfermode = null
                 paint.color = prevColor
@@ -161,7 +202,7 @@ internal class ImgTagHandler : TagHandler {
         }
 
 
-        override fun getSize(paint: Paint, text: CharSequence?, start: Int, end: Int, fm: Paint.FontMetricsInt?) = width + padding.left + padding.right + margin.left + margin.right
+        override fun getSize(paint: Paint, text: CharSequence?, start: Int, end: Int, fm: Paint.FontMetricsInt?) = (if (width > 0) width else (imageWidth + padding.left + padding.right)) + margin.left + margin.right
 
         override fun setOnClickListener(listener: (span: ActionSpan, action: String) -> Unit) {
             this.listener = listener
@@ -173,7 +214,7 @@ internal class ImgTagHandler : TagHandler {
                 if (style.pressedScale != 1f)
                     playScaleAnimator(1f, style.pressedScale)
                 else
-                    target.postInvalidate(invalidateRect.left, invalidateRect.top, invalidateRect.right, invalidateRect.bottom)
+                    target.postInvalidate(drawRect.left, drawRect.top, drawRect.right, drawRect.bottom)
             }
         }
 
@@ -183,7 +224,7 @@ internal class ImgTagHandler : TagHandler {
                 if (style.pressedScale != 1f)
                     playScaleAnimator(style.pressedScale, 1f)
                 else
-                    target.postInvalidate(invalidateRect.left, invalidateRect.top, invalidateRect.right, invalidateRect.bottom)
+                    target.postInvalidate(drawRect.left, drawRect.top, drawRect.right, drawRect.bottom)
                 listener.invoke(this, action)
             }
         }
@@ -198,7 +239,7 @@ internal class ImgTagHandler : TagHandler {
 
         override fun invalidateDrawable(who: Drawable) {
             if (target.isShown)
-                target.postInvalidate(invalidateRect.left, invalidateRect.top, invalidateRect.right, invalidateRect.bottom)
+                target.postInvalidate(drawRect.left, drawRect.top, drawRect.right, drawRect.bottom)
         }
 
         override fun scheduleDrawable(who: Drawable, what: Runnable, `when`: Long) = target.scheduleDrawable(who, what, `when`)
@@ -229,7 +270,7 @@ internal class ImgTagHandler : TagHandler {
                 it.duration = 64
                 it.addUpdateListener { _ ->
                     canvasScale = it.animatedValue as Float
-                    target.postInvalidate(invalidateRect.left, invalidateRect.top, invalidateRect.right, invalidateRect.bottom)
+                    target.postInvalidate(drawRect.left, drawRect.top, drawRect.right, drawRect.bottom)
                 }
                 it.doOnEnd { scaleAnimator = null }
                 it.start()
