@@ -42,11 +42,11 @@ internal class ATagHandler : TagHandler {
 
     override fun isSingleTag() = false
 
-    private class FontSizeASpan(private val target: HTMLTextView, private val action: String, private val width:Int, private val height:Int,private val textSize: Float, private val color: Int, private val isFakeBoldText: Boolean, private val isUnderlineText: Boolean, private val isLineThrough: Boolean, private val padding: Rect, private val margin: Rect, private val pressedScale: Float, private val pressedTintColor: Int, private val textAlign: Array<Style.TextAlign>, background: Background) : ReplacementSpan(), ActionSpan, TargetInvalidWatcher {
+    private class FontSizeASpan(private val target: HTMLTextView, private val action: String, private val width: Int, private val height: Int, private val textSize: Float, private val color: Int, private val isFakeBoldText: Boolean, private val isUnderlineText: Boolean, private val isLineThrough: Boolean, private val padding: Rect, private val margin: Rect, private val pressedScale: Float, private val pressedTintColor: Int, private val textAlign: Array<Style.TextAlign>, background: Background) : ReplacementSpan(), ActionSpan, TargetInvalidWatcher {
 
-        private val drawAlignCenterOffsetY = (target.lineSpacingMultiplier - 1) * textSize / 2
-        private val textAlignOffset = (textSize - target.textSize) / 2
-        private val invalidateRect = Rect()
+        private val drawRect = Rect()
+        private val paintTextAlign:Paint.Align
+        private var drawTextRect = Rect()
         private val xferMode = PorterDuffXfermode(PorterDuff.Mode.MULTIPLY)
 
         private var canvasScale = 1f
@@ -62,6 +62,13 @@ internal class ATagHandler : TagHandler {
         private var backgroundDrawable: Drawable? = null
 
         init {
+            paintTextAlign =  when {
+                textAlign.contains(Style.TextAlign.CENTER) || textAlign.contains(Style.TextAlign.CENTER_HORIZONTAL) -> Paint.Align.CENTER
+                textAlign.contains(Style.TextAlign.LEFT) && textAlign.contains(Style.TextAlign.RIGHT) -> Paint.Align.CENTER
+                textAlign.contains(Style.TextAlign.LEFT) -> Paint.Align.LEFT
+                textAlign.contains(Style.TextAlign.RIGHT) -> Paint.Align.RIGHT
+                else -> Paint.Align.CENTER
+            }
             if (padding.left < 0)
                 padding.left = 0
             if (padding.top < 0)
@@ -106,7 +113,7 @@ internal class ATagHandler : TagHandler {
             if (paint == null) {
                 paint = TextPaint(p)
                 paint!!.let {
-                    it.textAlign = Paint.Align.CENTER
+                    it.textAlign = paintTextAlign
                     it.isFakeBoldText = isFakeBoldText
                     it.textSize = textSize
                     it.color = color
@@ -120,64 +127,69 @@ internal class ATagHandler : TagHandler {
         }
 
         override fun getSize(paint: Paint, text: CharSequence?, start: Int, end: Int, fm: Paint.FontMetricsInt?): Int {
-            if(width > 0)
+            if (width > 0)
                 return width + margin.left + margin.right
             val width = text?.let { (getTextPaint(paint).measureText(text, start, end) + .5f).toInt() } ?: 0
-            return width  + margin.left + margin.right
+            return width + padding.left + padding.right + margin.left + margin.right
         }
 
 
         override fun draw(canvas: Canvas, text: CharSequence?, start: Int, end: Int, x: Float, top: Int, y: Int, bottom: Int, paint: Paint) {
             text?.let {
                 val textPaint = getTextPaint(paint)
-                val topBottomOffset = ((textSize - (bottom - top)) / 100f * 54f).toInt()
-                val baseHeight = (textSize + .5f).toInt()
-                val totalHeight = if(height> 0) height else baseHeight + padding.top + padding.bottom
-                val totalWidth = if(width > 0) width else (textPaint.measureText(text, start, end) + .5f).toInt() + padding.left + padding.right
-                invalidateRect.left = x.toInt()
-                invalidateRect.top = top + (baseHeight - totalHeight)  / 2 - topBottomOffset
-                invalidateRect.right = invalidateRect.left + totalWidth
-                invalidateRect.bottom = invalidateRect.top + totalHeight
-                val topBottomPaddingOffset = padding.top - padding.bottom
-                if (topBottomPaddingOffset > 0)
-                    invalidateRect.top -= topBottomPaddingOffset
-                else
-                    invalidateRect.bottom -= topBottomPaddingOffset
-                val tao = when {
-                    textAlign.contains(Style.TextAlign.TOP) -> -textAlignOffset
-                    textAlign.contains(Style.TextAlign.BOTTOM) -> textAlignOffset
-                    else -> 0f
+                val currentLineHeight = Util.getCurrentLineHeight(target, top, bottom)
+                val verticalCenterLine = top + currentLineHeight / 2f
+                val rectHeight = (if (height > 0) height.toFloat() else textSize + padding.top + padding.bottom)
+                val rectWidth = if (width > 0) width else (textPaint.measureText(text, start, end) + .5f).toInt() + padding.left + padding.right
+                drawRect.left = x.toInt()
+                drawRect.right = drawRect.left + rectWidth
+                drawRect.top = (verticalCenterLine - rectHeight / 2f + .5f).toInt()
+                drawRect.bottom = (drawRect.top + rectHeight + .5f).toInt()
+
+                val marginOffset = (margin.top - margin.bottom) / 2
+                drawRect.top += marginOffset
+                drawRect.bottom += marginOffset
+
+                val verticalAlignOffset = when {
+                    textAlign.contains(Style.TextAlign.CENTER_VERTICAL) || textAlign.contains(Style.TextAlign.CENTER) -> 0
+                    textAlign.contains(Style.TextAlign.TOP) && textAlign.contains(Style.TextAlign.BOTTOM) -> 0
+                    textAlign.contains(Style.TextAlign.TOP) -> -((currentLineHeight - rectHeight) / 4).toInt()
+                    textAlign.contains(Style.TextAlign.BOTTOM) -> ((currentLineHeight - rectHeight) / 4).toInt()
+                    else -> 0
                 }
-                invalidateRect.top += (tao + .5f).toInt()
-                invalidateRect.bottom += (tao + .5f).toInt()
-                if (top / target.lineHeight != target.lineCount - 1) {
-                    invalidateRect.top = (invalidateRect.top - drawAlignCenterOffsetY + .5f).toInt()
-                    invalidateRect.bottom = (invalidateRect.bottom - drawAlignCenterOffsetY + .5f).toInt()
-                }
+                drawRect.top += verticalAlignOffset
+                drawRect.bottom += verticalAlignOffset
+
                 canvas.save()
                 val saveCount = if (pressed && pressedTintColor != Color.TRANSPARENT) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
-                        canvas.saveLayer(invalidateRect.toRectF(), textPaint)
+                        canvas.saveLayer(drawRect.toRectF(), textPaint)
                     else
-                        canvas.saveLayer(invalidateRect.toRectF(), textPaint, Canvas.ALL_SAVE_FLAG)
+                        canvas.saveLayer(drawRect.toRectF(), textPaint, Canvas.ALL_SAVE_FLAG)
                 } else
                     0
                 canvas.translate(margin.left.toFloat(), (margin.top - margin.bottom) / 2f)
                 if (canvasScale != 1f)
-                    canvas.scale(canvasScale, canvasScale, x + invalidateRect.width() / 2f, y.toFloat() - invalidateRect.height() / 2f)
+                    canvas.scale(canvasScale, canvasScale, x + drawRect.width() / 2f, y.toFloat() - drawRect.height() / 2f)
                 backgroundDrawable?.let { d ->
-                    d.setBounds(invalidateRect.left, invalidateRect.top, invalidateRect.right, invalidateRect.bottom)
+                    d.setBounds(drawRect.left, drawRect.top, drawRect.right, drawRect.bottom)
                     d.draw(canvas)
                 }
-                //因为有文本对齐选项，所以纵向背景必须移动
-                val leftRightPaddingOffset = padding.left - padding.right
-                canvas.translate(leftRightPaddingOffset.toFloat(), topBottomPaddingOffset / 2f) //TODO 是否合适？
-                canvas.drawText(it, start, end, invalidateRect.centerX() - leftRightPaddingOffset / 2f, invalidateRect.centerY() + drawTextYOffset, textPaint)
+                drawTextRect.left = drawRect.left + padding.left
+                drawTextRect.right = drawRect.right - padding.right
+                drawTextRect.top = drawRect.top + padding.top
+                drawTextRect.bottom = drawRect.bottom - padding.bottom
+                val drawTextX = when(textPaint.textAlign) {
+                    Paint.Align.LEFT -> drawTextRect.left.toFloat()
+                    Paint.Align.RIGHT -> drawTextRect.right.toFloat()
+                    else -> drawTextRect.centerX().toFloat()
+                }
+                canvas.drawText(it, start, end, drawTextX, drawTextRect.centerY().toFloat() + drawTextYOffset, textPaint)
                 if (pressed && pressedTintColor != Color.TRANSPARENT) {
                     val prevColor = textPaint.color
                     textPaint.color = pressedTintColor
                     textPaint.xfermode = xferMode
-                    canvas.drawRect(invalidateRect, textPaint)
+                    canvas.drawRect(drawTextRect, textPaint)
                     canvas.restoreToCount(saveCount)
                     textPaint.xfermode = null
                     textPaint.color = prevColor
@@ -197,7 +209,7 @@ internal class ATagHandler : TagHandler {
                 if (pressedScale != 1f)
                     playScaleAnimator(1f, pressedScale)
                 else
-                    target.postInvalidate(invalidateRect.left, invalidateRect.top, invalidateRect.right, invalidateRect.bottom)
+                    target.postInvalidate(drawRect.left, drawRect.top, drawRect.right, drawRect.bottom)
             }
         }
 
@@ -207,7 +219,7 @@ internal class ATagHandler : TagHandler {
                 if (pressedScale != 1f)
                     playScaleAnimator(pressedScale, 1f)
                 else
-                    target.postInvalidate(invalidateRect.left, invalidateRect.top, invalidateRect.right, invalidateRect.bottom)
+                    target.postInvalidate(drawRect.left, drawRect.top, drawRect.right, drawRect.bottom)
                 listener.invoke(this, action)
             }
         }
@@ -226,7 +238,7 @@ internal class ATagHandler : TagHandler {
                 it.duration = 64
                 it.addUpdateListener { _ ->
                     canvasScale = it.animatedValue as Float
-                    target.postInvalidate(invalidateRect.left, invalidateRect.top, invalidateRect.right, invalidateRect.bottom)
+                    target.postInvalidate(drawRect.left, drawRect.top, drawRect.right, drawRect.bottom)
                 }
                 it.doOnEnd { scaleAnimator = null }
                 it.start()
