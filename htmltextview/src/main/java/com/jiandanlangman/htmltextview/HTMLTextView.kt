@@ -150,10 +150,10 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
         top?.let { drawableActions[it] = topAction ?: "" }
         right?.let { drawableActions[it] = rightAction ?: "" }
         bottom?.let { drawableActions[it] = bottomAction ?: "" }
-        left?.let { it.setBounds(0, 0, it.intrinsicWidth, it.intrinsicHeight) }
-        top?.let { it.setBounds(0, 0, it.intrinsicWidth, it.intrinsicHeight) }
-        right?.let { it.setBounds(0, 0, it.intrinsicWidth, it.intrinsicHeight) }
-        bottom?.let { it.setBounds(0, 0, it.intrinsicWidth, it.intrinsicHeight) }
+        left?.let { it.setBounds(0, 0, it.minimumWidth, it.minimumHeight) }
+        top?.let { it.setBounds(0, 0, it.minimumWidth, it.minimumHeight) }
+        right?.let { it.setBounds(0, 0, it.minimumWidth, it.minimumHeight) }
+        bottom?.let { it.setBounds(0, 0, it.minimumWidth, it.minimumHeight) }
         setCompoundDrawables(left, top, right, bottom)
     }
 
