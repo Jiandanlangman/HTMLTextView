@@ -150,11 +150,8 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
         top?.let { drawableActions[it] = topAction ?: "" }
         right?.let { drawableActions[it] = rightAction ?: "" }
         bottom?.let { drawableActions[it] = bottomAction ?: "" }
-        left?.let { it.setBounds(0, 0, it.minimumWidth, it.minimumHeight) }
-        top?.let { it.setBounds(0, 0, it.minimumWidth, it.minimumHeight) }
-        right?.let { it.setBounds(0, 0, it.minimumWidth, it.minimumHeight) }
-        bottom?.let { it.setBounds(0, 0, it.minimumWidth, it.minimumHeight) }
         setCompoundDrawables(left, top, right, bottom)
+        postInvalidate()
     }
 
     private fun replaceEmotionToDrawable(spannable: Spannable): Spannable {

@@ -25,7 +25,6 @@ internal class CompoundDrawables private constructor(drawable: String) {
         sp[0] to if (sp.size > 1) sp[1] else ""
     }.toMap()
     private val drawablePadding = Util.applyDimension(map[KEY_DRAWABLE_PADDING] ?: "-1", -1)
-    private val drawableCache = HashMap<String, android.graphics.drawable.Drawable>()
 
 
     fun getDrawPadding() = drawablePadding
@@ -36,33 +35,45 @@ internal class CompoundDrawables private constructor(drawable: String) {
             return
         }
         HTMLTagHandler.getResourcesProvider()?.let {
-            val totalGetCount = map.keys.filter {  it != KEY_DRAWABLE_PADDING && it != KEY_LEFT_ACTION && it != KEY_TOP_ACTION && it != KEY_RIGHT_ACTION && it != KEY_BOTTOM_ACTION }.size
+            var totalGetCount = 0
+            if(map.keys.contains(KEY_DRAWABLE_LEFT))
+                totalGetCount++
+            if(map.keys.contains(KEY_DRAWABLE_TOP))
+                totalGetCount++
+            if(map.keys.contains(KEY_DRAWABLE_RIGHT))
+                totalGetCount++
+            if(map.keys.contains(KEY_DRAWABLE_BOTTOM))
+                totalGetCount++
             var currentGetCount = 0
             val drawables = Drawables(null, null, null, null)
-            getDrawable(target,map[KEY_DRAWABLE_LEFT] ?: "") {
-                currentGetCount++
-                drawables.left = it
-                if (currentGetCount == totalGetCount)
-                    callback.invoke(drawables)
-            }
-            getDrawable(target,map[KEY_DRAWABLE_TOP] ?: "") {
-                currentGetCount++
-                drawables.top = it
-                if (currentGetCount == totalGetCount)
-                    callback.invoke(drawables)
-            }
-            getDrawable(target,map[KEY_DRAWABLE_RIGHT] ?: "") {
-                currentGetCount++
-                drawables.right = it
-                if (currentGetCount == totalGetCount)
-                    callback.invoke(drawables)
-            }
-            getDrawable(target,map[KEY_DRAWABLE_BOTTOM] ?: "") {
-                currentGetCount++
-                drawables.bottom = it
-                if (currentGetCount == totalGetCount)
-                    callback.invoke(drawables)
-            }
+            if(map.containsKey(KEY_DRAWABLE_LEFT))
+                getDrawable(target,map[KEY_DRAWABLE_LEFT] ?: "") {
+                    currentGetCount++
+                    drawables.left = it
+                    if (currentGetCount == totalGetCount)
+                        callback.invoke(drawables)
+                }
+            if(map.containsKey(KEY_DRAWABLE_TOP))
+                getDrawable(target,map[KEY_DRAWABLE_TOP] ?: "") {
+                    currentGetCount++
+                    drawables.top = it
+                    if (currentGetCount == totalGetCount)
+                        callback.invoke(drawables)
+                }
+            if(map.containsKey(KEY_DRAWABLE_RIGHT))
+                getDrawable(target,map[KEY_DRAWABLE_RIGHT] ?: "") {
+                    currentGetCount++
+                    drawables.right = it
+                    if (currentGetCount == totalGetCount)
+                        callback.invoke(drawables)
+                }
+            if(map.containsKey(KEY_DRAWABLE_BOTTOM))
+                getDrawable(target,map[KEY_DRAWABLE_BOTTOM] ?: "") {
+                    currentGetCount++
+                    drawables.bottom = it
+                    if (currentGetCount == totalGetCount)
+                        callback.invoke(drawables)
+                }
         } ?: callback.invoke(Drawables(null, null, null, null))
     }
 
@@ -71,12 +82,8 @@ internal class CompoundDrawables private constructor(drawable: String) {
     private fun getDrawable(target: HTMLTextView, src: String, callback: (drawable: android.graphics.drawable.Drawable?) -> Unit) {
         when {
             src.isEmpty() -> callback.invoke(null)
-            drawableCache[src] != null -> callback.invoke(drawableCache[src])
             else -> HTMLTagHandler.getResourcesProvider()?.getImageDrawable(target, src) {
-                if (it != null) {
-                    drawableCache[src] = it
-                    it.setBounds(0, 0, it.intrinsicWidth, it.intrinsicHeight)
-                }
+                it?.setBounds(0, 0, it.intrinsicWidth, it.intrinsicHeight)
                 callback.invoke(it)
             } ?: callback.invoke(null)
         }
