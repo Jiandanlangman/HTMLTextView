@@ -20,7 +20,8 @@ data class Style(
     val lineHeight: Float = -1f,
     val strokeWidth: Float = 0f,
     val stroke: String = "",
-    val typeface: Typeface? = null
+    val typeface: Typeface? = null,
+    val spanLine:Int = 0
 ) {
 
     companion object {
@@ -68,7 +69,8 @@ data class Style(
                 Util.tryCatchInvoke({ (map[Constant.KEY_LINE_HEIGHT] ?: "-1").toFloat() }, -1f),
                 Util.tryCatchInvoke({ (map[Constant.KEY_STROKE_WIDTH] ?: "0").toFloat() }, 0f),
                 map[Constant.KEY_STROKE] ?: "",
-                HTMLTagHandler.getResourcesProvider()?.getTypeface(map[Constant.KEY_FONT_FAMILY] ?: "")
+                HTMLTagHandler.getResourcesProvider()?.getTypeface(map[Constant.KEY_FONT_FAMILY] ?: ""),
+                Util.tryCatchInvoke({(map[Constant.KEY_SPAN_LINE]?: "0").toInt()  }, 0)
             )
 
         }

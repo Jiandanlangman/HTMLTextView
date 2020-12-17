@@ -10,4 +10,6 @@ interface ActionSpan {
 
     fun getAction():String?
 
+    fun getOffset() : Int
+
 }

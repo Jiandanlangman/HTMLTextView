@@ -162,6 +162,8 @@ internal class BaseTagHandler : TagHandler {
 
         override fun getAction() = action
 
+        override fun getOffset() = 0
+
     }
 
 }

@@ -216,6 +216,7 @@ internal class ATagHandler : TagHandler {
         }
 
         override fun getAction() = action
+        override fun getOffset() = 0
 
         override fun onInvalid() {
             invalid = true
@@ -266,6 +267,7 @@ internal class ATagHandler : TagHandler {
         override fun onUnPressed(isClick: Boolean) = Unit
 
         override fun getAction() = action
+        override fun getOffset() = 0
 
     }
 

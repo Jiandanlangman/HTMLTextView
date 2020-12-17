@@ -87,7 +87,7 @@ internal class ImgTagHandler : TagHandler {
                             }
                             th -> { //指定了高度
                                 imageHeight = height - padding.top - padding.bottom
-                                imageWidth = imageHeight * intrinsicWidth / intrinsicHeight
+                                imageWidth = (imageHeight * intrinsicWidth / intrinsicHeight.toFloat() + .5f).toInt()
                                 scaleX = intrinsicWidth / imageWidth.toFloat()
                                 scaleY = intrinsicHeight / imageHeight.toFloat()
                             }
@@ -99,7 +99,7 @@ internal class ImgTagHandler : TagHandler {
                                     scaleY = intrinsicHeight / imageHeight.toFloat()
                                 } else {
                                     imageHeight = height - padding.top - padding.bottom
-                                    imageWidth = imageHeight * intrinsicWidth / intrinsicHeight
+                                    imageWidth = (imageHeight * intrinsicWidth / intrinsicHeight.toFloat() + .5f).toInt()
                                     scaleX = intrinsicWidth / imageWidth.toFloat()
                                     scaleY = intrinsicHeight / imageHeight.toFloat()
                                 }
@@ -131,8 +131,8 @@ internal class ImgTagHandler : TagHandler {
 
             val currentLineHeight = Util.getCurrentLineHeight(target, top, bottom)
             val verticalCenterLine = top + currentLineHeight / 2f
-            val rectHeight = if(height > 0) height else (imageHeight + padding.top + padding.bottom)
-            val rectWidth = if(width > 0) width else (imageWidth + padding.left + padding.right)
+            val rectHeight = if (height > 0) height else (imageHeight + padding.top + padding.bottom)
+            val rectWidth = if (width > 0) width else (imageWidth + padding.left + padding.right)
             drawRect.left = x.toInt()
             drawRect.right = drawRect.left + rectWidth
             drawRect.top = (verticalCenterLine - rectHeight / 2f + .5f).toInt()
@@ -141,8 +141,8 @@ internal class ImgTagHandler : TagHandler {
             val verticalAlignOffset = when {
                 textAlign.contains(Style.TextAlign.CENTER_VERTICAL) || textAlign.contains(Style.TextAlign.CENTER) -> 0
                 textAlign.contains(Style.TextAlign.TOP) && textAlign.contains(Style.TextAlign.BOTTOM) -> 0
-                textAlign.contains(Style.TextAlign.TOP) -> -((currentLineHeight - rectHeight) / 4)
-                textAlign.contains(Style.TextAlign.BOTTOM) -> ((currentLineHeight - rectHeight) / 4)
+                textAlign.contains(Style.TextAlign.TOP) -> -((currentLineHeight - rectHeight) / 2)
+                textAlign.contains(Style.TextAlign.BOTTOM) -> ((currentLineHeight - rectHeight) / 2)
                 else -> 0
             }
             drawRect.top += verticalAlignOffset
@@ -156,7 +156,10 @@ internal class ImgTagHandler : TagHandler {
                     canvas.saveLayer(drawRect.toRectF(), paint, Canvas.ALL_SAVE_FLAG)
             } else
                 0
-            canvas.translate(margin.left.toFloat(), (margin.top - margin.bottom) / 1f)
+            if (style.spanLine != 0)
+                canvas.translate(margin.left.toFloat(), margin.top.toFloat())
+            else
+                canvas.translate(margin.left.toFloat(), (margin.top - margin.bottom) / 1f)
             if (canvasScale != 1f)
                 canvas.scale(canvasScale, canvasScale, x + rectWidth / 2f, drawRect.top + rectHeight / 2f)
             backgroundDrawable?.let {
@@ -182,6 +185,8 @@ internal class ImgTagHandler : TagHandler {
 
             }
             canvas.restore()
+            if (style.spanLine != 0)
+                canvas.translate(0f, style.height.toFloat() - target.lineHeight + margin.top + margin.bottom)
         }
 
 
@@ -213,6 +218,9 @@ internal class ImgTagHandler : TagHandler {
         }
 
         override fun getAction() = action
+
+
+        override fun getOffset() = if (style.spanLine == 0) 0 else (style.height - target.lineHeight) + margin.top + margin.bottom
 
         override fun onInvalid() {
             invalid = true

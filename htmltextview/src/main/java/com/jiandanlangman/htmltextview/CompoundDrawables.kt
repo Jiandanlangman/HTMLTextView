@@ -1,5 +1,7 @@
 package com.jiandanlangman.htmltextview
 
+import kotlin.math.max
+
 
 internal class CompoundDrawables private constructor(drawable: String) {
 
@@ -48,6 +50,13 @@ internal class CompoundDrawables private constructor(drawable: String) {
             val drawables = Drawables(null, null, null, null)
             if(map.containsKey(KEY_DRAWABLE_LEFT))
                 getDrawable(target,map[KEY_DRAWABLE_LEFT] ?: "") {
+                    it?.let {
+                        val maxHeight = max(target.height, Util.tryCatchInvoke({target.layoutParams.height}, 0))
+                        if(maxHeight > 0 && it.intrinsicHeight > maxHeight)
+                            it.setBounds(0, 0, maxHeight * it.intrinsicWidth / it.intrinsicHeight, maxHeight)
+                        else
+                            it.setBounds(0, 0, it.intrinsicWidth, it.intrinsicHeight)
+                    }
                     currentGetCount++
                     drawables.left = it
                     if (currentGetCount == totalGetCount)
@@ -55,6 +64,13 @@ internal class CompoundDrawables private constructor(drawable: String) {
                 }
             if(map.containsKey(KEY_DRAWABLE_TOP))
                 getDrawable(target,map[KEY_DRAWABLE_TOP] ?: "") {
+                    it?.let {
+                        val maxWidth = max(target.width, Util.tryCatchInvoke({target.layoutParams.width}, 0))
+                        if(maxWidth > 0 && it.intrinsicWidth > maxWidth)
+                            it.setBounds(0, 0, maxWidth, maxWidth * it.intrinsicHeight / it.intrinsicWidth)
+                        else
+                            it.setBounds(0, 0, it.intrinsicWidth, it.intrinsicHeight)
+                    }
                     currentGetCount++
                     drawables.top = it
                     if (currentGetCount == totalGetCount)
@@ -62,6 +78,13 @@ internal class CompoundDrawables private constructor(drawable: String) {
                 }
             if(map.containsKey(KEY_DRAWABLE_RIGHT))
                 getDrawable(target,map[KEY_DRAWABLE_RIGHT] ?: "") {
+                    it?.let {
+                        val maxHeight = max(target.height, Util.tryCatchInvoke({target.layoutParams.height}, 0))
+                        if(maxHeight > 0 && it.intrinsicHeight > maxHeight)
+                            it.setBounds(0, 0, maxHeight * it.intrinsicWidth / it.intrinsicHeight, maxHeight)
+                        else
+                            it.setBounds(0, 0, it.intrinsicWidth, it.intrinsicHeight)
+                    }
                     currentGetCount++
                     drawables.right = it
                     if (currentGetCount == totalGetCount)
@@ -69,6 +92,13 @@ internal class CompoundDrawables private constructor(drawable: String) {
                 }
             if(map.containsKey(KEY_DRAWABLE_BOTTOM))
                 getDrawable(target,map[KEY_DRAWABLE_BOTTOM] ?: "") {
+                    it?.let {
+                        val maxWidth = max(target.width, Util.tryCatchInvoke({target.layoutParams.width}, 0))
+                        if(maxWidth > 0 && it.intrinsicWidth > maxWidth)
+                            it.setBounds(0, 0, maxWidth, maxWidth * it.intrinsicHeight / it.intrinsicWidth)
+                        else
+                            it.setBounds(0, 0, it.intrinsicWidth, it.intrinsicHeight)
+                    }
                     currentGetCount++
                     drawables.bottom = it
                     if (currentGetCount == totalGetCount)
@@ -83,7 +113,6 @@ internal class CompoundDrawables private constructor(drawable: String) {
         when {
             src.isEmpty() -> callback.invoke(null)
             else -> HTMLTagHandler.getResourcesProvider()?.getImageDrawable(target, src) {
-                it?.setBounds(0, 0, it.intrinsicWidth, it.intrinsicHeight)
                 callback.invoke(it)
             } ?: callback.invoke(null)
         }

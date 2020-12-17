@@ -1,12 +1,14 @@
 package com.jiandanlangman.htmltextview
 
 import android.content.Context
+import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Rect
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.text.*
 import android.util.AttributeSet
+import android.util.Log
 import android.view.MotionEvent
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.text.getSpans
@@ -61,6 +63,18 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
         spans.forEach { it.setOnClickListener(onSpanClickListener) }
         super.setText(spannedText, type)
     }
+
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+        (text as? Spannable)?.let {
+            var height = 0
+            it.getSpans(0, it.length, ActionSpan::class.java)?.forEach {
+                height += it.getOffset()
+            }
+            setMeasuredDimension(measuredWidth, measuredHeight + height)
+        }
+    }
+
 
     @Deprecated("")
     override fun setOnClickListener(l: OnClickListener?) {

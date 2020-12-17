@@ -39,6 +39,7 @@ object Constant {
     const val KEY_GRADIENT_COLOR = "gradient-colors"        //渐变颜色
     const val KEY_GRADIENT_RADIUS = "gradient-radius"       //渐变半径，仅径向渐变有效
     const val KEY_FILL = "fill"                             //填充色
+    const val KEY_SPAN_LINE = "span-line"                   //跨行
 
 
 }
