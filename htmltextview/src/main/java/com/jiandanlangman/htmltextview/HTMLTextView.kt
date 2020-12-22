@@ -1,18 +1,17 @@
 package com.jiandanlangman.htmltextview
 
+import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.Rect
-import android.graphics.drawable.Drawable
 import android.os.Build
-import android.text.*
+import android.text.Html
+import android.text.Spannable
+import android.text.Spanned
 import android.util.AttributeSet
-import android.util.Log
 import android.view.MotionEvent
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.text.getSpans
-import java.util.*
+import androidx.core.text.toSpannable
 
 
 class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) : AppCompatTextView(context, attrs, defStyleAttr) {
@@ -35,12 +34,13 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
 
     private val onSpanClickListener: ((ActionSpan, String) -> Unit) = { _, action -> onClickListener?.invoke(this, action) }
 
+    private val pressedSpans = ArrayList<ActionSpan>()
+    private var pressedSpan = false
     private var sourceText: CharSequence = ""
     private var onClickListener: ((HTMLTextView, String) -> Unit)? = null
 
     init {
         Util.init(context)
-        movementMethod = LinkMovementMethod.getInstance()
         super.setHighlightColor(Color.TRANSPARENT)
     }
 
@@ -53,14 +53,21 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
         super.onDetachedFromWindow()
         (text as? Spannable)?.let { it.getSpans(0, it.length, TargetInvalidWatcher::class.java)?.forEach { a -> a.onInvalid() } }
         super.setText("", BufferType.NORMAL)
+        background = null
     }
 
     override fun setText(text: CharSequence?, type: BufferType?) {
-        (getText() as? Spannable)?.let { it.getSpans(0, it.length, TargetInvalidWatcher::class.java)?.forEach { a -> a.onInvalid() } }
         sourceText = text ?: ""
+        (getText().toSpannable()).let { it.getSpans(0, it.length, TargetInvalidWatcher::class.java)?.forEach { a -> a.onInvalid() } }
         val spannedText = replaceEmotionToDrawable((if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) Html.fromHtml(sourceText.toString(), Html.FROM_HTML_MODE_LEGACY, null, HTMLTagHandler(this)) else Html.fromHtml(sourceText.toString(), null, HTMLTagHandler(this))) as Spannable)
         val spans = spannedText.getSpans<ActionSpan>(0, spannedText.length)
         spans.forEach { it.setOnClickListener(onSpanClickListener) }
+        spannedText.getSpans<IBaseSpan>(0, spannedText.length).let {
+            if (!it.isNullOrEmpty())
+                it[0]
+            else
+                null
+        }?.bindAttrs(this)
         super.setText(spannedText, type)
     }
 
@@ -68,87 +75,46 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
         (text as? Spannable)?.let {
             var height = 0
-            it.getSpans(0, it.length, ActionSpan::class.java)?.forEach {
-                height += it.getOffset()
+            it.getSpans(0, it.length, ActionSpan::class.java)?.forEach { span ->
+                height += span.getOffset()
             }
             setMeasuredDimension(measuredWidth, measuredHeight + height)
         }
     }
 
 
-    @Deprecated("")
-    override fun setOnClickListener(l: OnClickListener?) {
-
+    @SuppressLint("ClickableViewAccessibility")
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        when(event.action) {
+            MotionEvent.ACTION_DOWN -> {
+                pressedSpans.clear()
+                pressedSpan = false
+                val actionSpans = Util.getEventSpan(this, text.toSpannable(), event, ActionSpan::class.java)
+                if (!actionSpans.isNullOrEmpty()) {
+                    pressedSpans.addAll(actionSpans)
+                    actionSpans.forEach {
+                        it.onPressed()
+                        if (!it.getAction().isNullOrEmpty())
+                            pressedSpan = true
+                    }
+                }
+            }
+            MotionEvent.ACTION_UP -> {
+                pressedSpans.forEach { it.onUnPressed(true) }
+                pressedSpans.clear()
+            }
+            MotionEvent.ACTION_CANCEL -> {
+                pressedSpans.forEach { it.onUnPressed(false) }
+                pressedSpans.clear()
+            }
+        }
+        return if(pressedSpan) pressedSpan else super.onTouchEvent(event)
     }
+
 
     @Deprecated("")
     override fun setHighlightColor(color: Int) {
 
-    }
-
-    private val location = IntArray(2)
-    private val rect = Rect()
-    private val drawableRect = Rect()
-    private var eventDrawable: Drawable? = null
-
-    override fun dispatchTouchEvent(event: MotionEvent): Boolean {
-        val action = event.action
-        if (action != MotionEvent.ACTION_DOWN && action != MotionEvent.ACTION_UP)
-            return super.dispatchTouchEvent(event)
-        val x = event.rawX.toInt()
-        val y = event.rawY.toInt()
-        if (action == MotionEvent.ACTION_DOWN) {
-            getLocationOnScreen(location)
-            rect.set(location[0], location[1], location[0] + width, location[1] + height)
-            eventDrawable = null
-            compoundDrawables[0]?.let {
-                val bounds = it.bounds
-                drawableRect.left = rect.left + paddingLeft
-                drawableRect.top = rect.top + paddingTop + (rect.height() - paddingTop - paddingBottom - bounds.height()) / 2
-                drawableRect.right = drawableRect.left + bounds.width()
-                drawableRect.bottom = drawableRect.top + bounds.height()
-                if (drawableRect.contains(x, y))
-                    eventDrawable = it
-            }
-            if (eventDrawable == null)
-                compoundDrawables[1]?.let {
-                    val bounds = it.bounds
-                    drawableRect.left = rect.left + paddingLeft + (rect.width() - paddingLeft - paddingRight - bounds.width()) / 2
-                    drawableRect.top = rect.top + paddingTop
-                    drawableRect.right = drawableRect.left + bounds.width()
-                    drawableRect.bottom = drawableRect.top + bounds.height()
-                    if (drawableRect.contains(x, y))
-                        eventDrawable = it
-                }
-            if (eventDrawable == null)
-                compoundDrawables[2]?.let {
-                    val bounds = it.bounds
-                    drawableRect.right = rect.right - paddingRight
-                    drawableRect.left = drawableRect.right - bounds.width()
-                    drawableRect.top = rect.top + paddingTop + (rect.height() - paddingTop - paddingBottom - bounds.height()) / 2
-                    drawableRect.bottom = drawableRect.top + bounds.height()
-                    if (drawableRect.contains(x, y))
-                        eventDrawable = it
-                }
-            if (eventDrawable == null)
-                compoundDrawables[3]?.let {
-                    val bounds = it.bounds
-                    drawableRect.left = rect.left + paddingLeft + (rect.width() - paddingLeft - paddingRight - bounds.width()) / 2
-                    drawableRect.right = drawableRect.left + bounds.width()
-                    drawableRect.bottom = rect.bottom - paddingBottom
-                    drawableRect.top = drawableRect.bottom - bounds.height()
-                    if (drawableRect.contains(x, y))
-                        eventDrawable = it
-                }
-        } else
-            if (eventDrawable != null && drawableRect.contains(x, y)) {
-                val act = drawableActions[eventDrawable]
-                if (!act.isNullOrEmpty())
-                    onClickListener?.invoke(this, act)
-            }
-        if (eventDrawable != null && !drawableActions[eventDrawable].isNullOrEmpty())
-            return true
-        return super.dispatchTouchEvent(event)
     }
 
 
@@ -156,17 +122,6 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
         this.onClickListener = onClickListener
     }
 
-
-    private val drawableActions = HashMap<Drawable, String>()
-
-    internal fun setCompoundDrawables(left: Drawable?, top: Drawable?, right: Drawable?, bottom: Drawable?, leftAction: String?, topAction: String?, rightAction: String?, bottomAction: String?) {
-        left?.let { drawableActions[it] = leftAction ?: "" }
-        top?.let { drawableActions[it] = topAction ?: "" }
-        right?.let { drawableActions[it] = rightAction ?: "" }
-        bottom?.let { drawableActions[it] = bottomAction ?: "" }
-        setCompoundDrawables(left, top, right, bottom)
-        postInvalidate()
-    }
 
     private fun replaceEmotionToDrawable(spannable: Spannable): Spannable {
         resourcesProvider?.let {

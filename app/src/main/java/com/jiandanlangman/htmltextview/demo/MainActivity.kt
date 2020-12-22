@@ -13,6 +13,8 @@ import android.os.Bundle
 import android.os.SystemClock
 import android.util.Log
 import android.view.ViewGroup
+import android.widget.FrameLayout
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -34,7 +36,21 @@ class MainActivity : AppCompatActivity() {
 //        "        <span>点击领取聊客速配速成培训文档</span>\n" +
 //        "        <span style=\"color:#999999;font-size:12\">坚持7天<space count=\"2\"></space>收入突破300元/天</span>\n" +
 //        "        </base>"
-    val text2 = "<base background=\"drawable:assets/api/girl_manager/training1215/qipaokuang.9.png\" style=\"width:228;color:#111111;font-size:14;text-align:left,top;line-height:1.1;padding-bottom:10\"><img src=\"assets/api/girl_manager/training1215/guanfangxiaoxi-banner.png\" style=\"width:228;height:120;text-align:top;margin-bottom:10;span-line:1\"></img><font style=\"margin-left:16;\">点击领取聊客速配速成培训文档</font><br count=\"1\"></br><span style=\"color:#999999;font-size:12;margin-left:16\">坚持7天 收入突破300元/天</span></base>"
+//    val text2 = "<base background=\"drawable:https%3a%2f%2fasset.liaoke.tv%2fassets%2fapi%2fgirl_manager%2ftraining1215%2fqipaokuang.9.png\" style=\"width:228;color:#111111;font-size:14;text-align:left,top;line-height:1.1;padding-bottom:10\"><img src=\"https%3a%2f%2fasset.liaoke.tv%2fassets%2fapi%2fgirl_manager%2ftraining1215%2fguanfangxiaoxi-banner.png\" style=\"width:228;height:120;text-align:top;margin-bottom:10;span-line:1\"></img><font style=\"margin-left:16;\">点击领取聊客速配速成培训文档</font><br count=\"1\"></br><span style=\"color:#999999;font-size:12;margin-left:16\">坚持7天 收入突破300元/天</span></base>"
+    val text2 = """
+        <base background="fill:#33000000;radius:9;font-size:16;drawable:https%3a%2f%2fasset.liaoke.tv%2fassets/api/user/rich/qipaokuang_shoufu.9.png" action="3333" style="pressed-scale:.8" >
+            <img src="https%3a%2f%2fasset.liaoke.tv%2fassets/api/pk/zbj_fy_df.png?v=20201217" style="width:14;height:14;margin-right:2"></img>
+            <img src="https%3a%2f%2fasset.liaoke.tv%2fassets/api/user/rich/level_1.webp" style="width:35;height:14;margin-right:2"></img>
+            <span background="drawable:https%3a%2f%2fasset.liaoke.tv%2fassets/api/role_ext/fuhaobang_bg.png?v=20201217" style="padding-left:31;padding-right:2;padding-top:2;padding-bottom:2;color:#FFFFFF;font-size:9;text-align:center;width:44;height:14;margin-right:2;font-family:century-gothic-bold">8</span>
+            <img src="https%3a%2f%2fasset.liaoke.tv%2fassets/api/wealth_level/caifu_level_84.png?v=20201217" style="width:32;height:14;margin-right:2"></img>
+            <img src="https%3a%2f%2fasset.liaoke.tv%2fassets/api/livel_level/zhibo_level_13.png?v=20201217" style="width:32;height:14;margin-right:2"></img>
+            <span background="drawable:https%3a%2f%2fasset.liaoke.tv%2fassets/api/fans_club/card/tab_fst_79.png?v=20201217" style="padding-left:19;padding-right:2;padding-top:2;padding-bottom:2;color:#FFFFFF;font-size:9;text-align:center;width:52;height:14;margin-right:2">本哈哈</span>
+            <img src="https%3a%2f%2fasset.liaoke.tv%2fassets/api/vip/icon_vip_1.png?v=20201217" style="width:16;height:16;margin-right:2"></img>
+            <font action='{"action":"user\/homepage","params":{"id":"14665"}}' style="color:#99D5FF">我应该从何说</font>
+            <space count="2"></space>
+            <font>pk发言消息</font>
+        </base>
+    """.trimIndent()
 
     @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -61,7 +77,7 @@ class MainActivity : AppCompatActivity() {
         val provider = object : ResourcesProvider {
             override fun getImageDrawable(target:HTMLTextView, src: String, callback: (result: Drawable?) -> Unit) {
 
-                ImageLoader.loadImage(this@MainActivity, URLDecoder.decode(src)) {
+                ImageLoader.loadImage(this@MainActivity, URLDecoder.decode(src, "UTF-8")) {
                     callback.invoke(BitmapDrawable(resources, it))
                 }
                 if("1234" == src) {
@@ -129,24 +145,35 @@ class MainActivity : AppCompatActivity() {
 //        textView.text = "<img src=\"1234\" action=\"1233\" style=\"width:32;height:32;pressed:scale\" />哈哈<a action=\"1233\" style=\"color:#FF4D81;font-weight:bold;pressed:scale;text-align:center;padding-left:16;padding-right:8;padding-top:0;padding-bottom:8;color:#FFA940;margin:0;font-size:24;text-align:top\" background=\"radius:8;fill:#FF4D81\">哈哈哈哈</a>哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈"
     }
 
-    private inner class ViewHolder(itemView:HTMLTextView):RecyclerView.ViewHolder(itemView) {
+    private inner class ViewHolder(itemView:FrameLayout):RecyclerView.ViewHolder(itemView) {
+
+        val textView = itemView.getChildAt(0) as HTMLTextView
+
         init {
-            itemView.setOnClickListener { v, action ->
-                Log.d("MainActivity", "onClick:$action")
+//            itemView.setOnClickListener { v, action ->
+//                Log.d("MainActivity", "onClick:$action")
+//            }
+            itemView.isFocusable = true
+            itemView.isClickable = true
+            itemView.setOnClickListener {
+                Toast.makeText(this@MainActivity, "onClick", Toast.LENGTH_LONG).show()
             }
+            itemView.layoutParams = RecyclerView.LayoutParams(RecyclerView.LayoutParams.MATCH_PARENT, RecyclerView.LayoutParams.WRAP_CONTENT)
         }
     }
 
     private inner class Adapter:RecyclerView.Adapter<ViewHolder>() {
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-            return ViewHolder(HTMLTextView(this@MainActivity))
+            val frameLayout = FrameLayout(this@MainActivity)
+            frameLayout.addView(HTMLTextView(this@MainActivity))
+            return ViewHolder(frameLayout)
         }
 
         override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-            (holder.itemView as HTMLTextView).text = text2
+           holder.textView.text = text2
         }
 
-        override fun getItemCount() = 1
+        override fun getItemCount() = 1000
 
     }
 

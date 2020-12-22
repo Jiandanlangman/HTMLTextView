@@ -10,6 +10,7 @@ import android.text.Spannable
 import android.text.TextPaint
 import android.text.style.ClickableSpan
 import android.text.style.ReplacementSpan
+import android.util.Log
 import android.view.View
 import androidx.core.animation.doOnEnd
 import androidx.core.graphics.toRectF
@@ -86,13 +87,17 @@ internal class ATagHandler : TagHandler {
 
             })
             background.getDrawable(target) {
-                if (invalid || targetAttachState == 2)
+                if (invalid || targetAttachState == 2) {
+                    Log.d("ATagHandler", "invalid:$invalid, targetAttachState:$targetAttachState")
                     return@getDrawable
+                }
                 it?.apply {
                     backgroundDrawable = this
                     if (targetAttachState == 1)
                         target.invalidate()
                 }
+                if(it == null)
+                    Log.d("ATagHandler", "invalid:$invalid, targetAttachState:$targetAttachState, drawable is null")
             }
         }
 
@@ -267,6 +272,7 @@ internal class ATagHandler : TagHandler {
         override fun onUnPressed(isClick: Boolean) = Unit
 
         override fun getAction() = action
+
         override fun getOffset() = 0
 
     }

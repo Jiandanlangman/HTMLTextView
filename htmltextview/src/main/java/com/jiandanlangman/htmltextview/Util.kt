@@ -2,8 +2,12 @@ package com.jiandanlangman.htmltextview
 
 import android.content.Context
 import android.graphics.Rect
+import android.graphics.RectF
+import android.text.Spannable
 import android.util.DisplayMetrics
 import android.util.TypedValue
+import android.view.MotionEvent
+import android.widget.TextView
 
 internal object Util {
 
@@ -113,6 +117,27 @@ internal object Util {
     fun toNaturalRect(rect:Rect) : Rect {
         rect.set(if(rect.left < 0) 0 else rect.left, if(rect.top < 0) 0 else rect.top, if(rect.right < 0) 0 else rect.right, if(rect.bottom < 0) 0 else rect.bottom)
         return rect
+    }
+
+
+    fun <T> getEventSpan(widget: TextView, spannable: Spannable, event: MotionEvent, clazz: Class<T>): Array<T>? {
+        val touchedLineBounds = RectF()
+        var x = event.x
+        var y = event.y
+        x -= widget.totalPaddingLeft
+        y -= widget.totalPaddingTop
+        x += widget.scrollX
+        y += widget.scrollY
+        val layout = widget.layout
+        val line = layout.getLineForVertical(y.toInt())
+        val off = layout.getOffsetForHorizontal(line, x)
+        touchedLineBounds.left = layout.getLineLeft(line)
+        touchedLineBounds.top = layout.getLineTop(line).toFloat()
+        touchedLineBounds.right = layout.getLineWidth(line) + touchedLineBounds.left
+        touchedLineBounds.bottom = layout.getLineBottom(line).toFloat()
+        if (touchedLineBounds.contains(x, y))
+            return spannable.getSpans(off, off, clazz)
+        return null
     }
 
     private fun getUnit(value: String) = when {

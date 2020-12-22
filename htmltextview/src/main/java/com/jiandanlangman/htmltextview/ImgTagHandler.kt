@@ -7,6 +7,7 @@ import android.os.Build
 import android.text.Editable
 import android.text.Spannable
 import android.text.style.DynamicDrawableSpan
+import android.util.Log
 import android.view.View
 import androidx.core.animation.doOnEnd
 import androidx.core.graphics.toRectF
@@ -67,8 +68,10 @@ internal class ImgTagHandler : TagHandler {
 
                 })
                 it.getImageDrawable(target, src) { d ->
-                    if (invalid || targetAttachState == 2)
+                    if (invalid || targetAttachState == 2) {
+                        Log.d("ImgTagHandler", "invalid:$invalid, targetAttachState:$targetAttachState")
                         return@getImageDrawable
+                    }
                     d?.apply {
                         val tw = if (width < 0) 0 else width
                         val th = if (height < 0) 0 else height
@@ -109,6 +112,8 @@ internal class ImgTagHandler : TagHandler {
                         if (targetAttachState == 1)
                             setCallback()
                     }
+                    if(d == null)
+                        Log.d("ImgTagHandler", "invalid:$invalid, targetAttachState:$targetAttachState, drawable is null")
                 }
             }
             background.getDrawable(target) {
@@ -127,8 +132,6 @@ internal class ImgTagHandler : TagHandler {
         override fun draw(canvas: Canvas, text: CharSequence?, start: Int, end: Int, x: Float, top: Int, y: Int, bottom: Int, paint: Paint) {
             if (drawable == null && backgroundDrawable == null)
                 return
-
-
             val currentLineHeight = Util.getCurrentLineHeight(target, top, bottom)
             val verticalCenterLine = top + currentLineHeight / 2f
             val rectHeight = if (height > 0) height else (imageHeight + padding.top + padding.bottom)
