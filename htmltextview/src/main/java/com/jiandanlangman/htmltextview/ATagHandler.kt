@@ -96,7 +96,7 @@ internal class ATagHandler : TagHandler {
                     if (targetAttachState == 1)
                         target.invalidate()
                 }
-                if(it == null)
+                if (it == null)
                     Log.d("ATagHandler", "invalid:$invalid, targetAttachState:$targetAttachState, drawable is null")
             }
         }
@@ -216,7 +216,8 @@ internal class ATagHandler : TagHandler {
                     playScaleAnimator(pressedScale, 1f)
                 else
                     target.postInvalidate(drawRect.left, drawRect.top, drawRect.right, drawRect.bottom)
-                listener.invoke(this, action)
+                if (isClick)
+                    listener.invoke(this, action)
             }
         }
 
@@ -245,7 +246,7 @@ internal class ATagHandler : TagHandler {
     }
 
 
-    private class ASpan(private val action: String, private val color: Int, private val isFakeBoldText: Boolean, private val isUnderlineText: Boolean, private val isLineThrough: Boolean ,private val typeface: Typeface?) : ClickableSpan(), ActionSpan {
+    private class ASpan(private val action: String, private val color: Int, private val isFakeBoldText: Boolean, private val isUnderlineText: Boolean, private val isLineThrough: Boolean, private val typeface: Typeface?) : ClickableSpan(), ActionSpan {
 
         private var listener: ((ActionSpan, String) -> Unit) = { _, _ -> }
 
@@ -258,10 +259,7 @@ internal class ATagHandler : TagHandler {
             ds.flags = if (isLineThrough) ds.flags or Paint.STRIKE_THRU_TEXT_FLAG else ds.flags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
         }
 
-        override fun onClick(widget: View) {
-            if (action.isNotEmpty())
-                listener.invoke(this, action)
-        }
+        override fun onClick(widget: View) = Unit
 
         override fun setOnClickListener(listener: (span: ActionSpan, action: String) -> Unit) {
             this.listener = listener
@@ -269,7 +267,10 @@ internal class ATagHandler : TagHandler {
 
         override fun onPressed() = Unit
 
-        override fun onUnPressed(isClick: Boolean) = Unit
+        override fun onUnPressed(isClick: Boolean) {
+            if (isClick && action.isNotEmpty())
+                listener.invoke(this, action)
+        }
 
         override fun getAction() = action
 

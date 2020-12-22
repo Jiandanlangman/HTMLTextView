@@ -112,7 +112,7 @@ internal class ImgTagHandler : TagHandler {
                         if (targetAttachState == 1)
                             setCallback()
                     }
-                    if(d == null)
+                    if (d == null)
                         Log.d("ImgTagHandler", "invalid:$invalid, targetAttachState:$targetAttachState, drawable is null")
                 }
             }
@@ -216,7 +216,8 @@ internal class ImgTagHandler : TagHandler {
                     playScaleAnimator(style.pressedScale, 1f)
                 else
                     target.postInvalidate(drawRect.left, drawRect.top, drawRect.right, drawRect.bottom)
-                listener.invoke(this, action)
+                if (isClick)
+                    listener.invoke(this, action)
             }
         }
 

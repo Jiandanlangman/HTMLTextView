@@ -46,7 +46,7 @@ class MainActivity : AppCompatActivity() {
             <img src="https%3a%2f%2fasset.liaoke.tv%2fassets/api/livel_level/zhibo_level_13.png?v=20201217" style="width:32;height:14;margin-right:2"></img>
             <span background="drawable:https%3a%2f%2fasset.liaoke.tv%2fassets/api/fans_club/card/tab_fst_79.png?v=20201217" style="padding-left:19;padding-right:2;padding-top:2;padding-bottom:2;color:#FFFFFF;font-size:9;text-align:center;width:52;height:14;margin-right:2">本哈哈</span>
             <img src="https%3a%2f%2fasset.liaoke.tv%2fassets/api/vip/icon_vip_1.png?v=20201217" style="width:16;height:16;margin-right:2"></img>
-            <font action='{"action":"user\/homepage","params":{"id":"14665"}}' style="color:#99D5FF">我应该从何说</font>
+            <font action='{"action":"user\/homepage","params":{"id":"14665"}}' style="color:#99D5FF;pressed-scale:.8">我应该从何说</font>
             <space count="2"></space>
             <font>pk发言消息</font>
         </base>
