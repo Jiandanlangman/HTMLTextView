@@ -46,7 +46,9 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        text = sourceText
+        val tempText = sourceText
+        sourceText = ""
+        text = tempText
     }
 
     override fun onDetachedFromWindow() {
@@ -57,7 +59,10 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
     }
 
     override fun setText(text: CharSequence?, type: BufferType?) {
-        sourceText = text ?: ""
+        val t = text ?: ""
+        if (t == sourceText)
+            return
+        sourceText = t
         (getText().toSpannable()).let { it.getSpans(0, it.length, TargetInvalidWatcher::class.java)?.forEach { a -> a.onInvalid() } }
         val spannedText = replaceEmotionToDrawable((if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) Html.fromHtml(sourceText.toString(), Html.FROM_HTML_MODE_LEGACY, null, HTMLTagHandler(this)) else Html.fromHtml(sourceText.toString(), null, HTMLTagHandler(this))) as Spannable)
         val spans = spannedText.getSpans<ActionSpan>(0, spannedText.length)
@@ -85,7 +90,7 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        when(event.action) {
+        when (event.action) {
             MotionEvent.ACTION_DOWN -> {
                 pressedSpans.clear()
                 pressedSpan = false
@@ -108,7 +113,7 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
                 pressedSpans.clear()
             }
         }
-        return if(pressedSpan) pressedSpan else super.onTouchEvent(event)
+        return if (pressedSpan) pressedSpan else super.onTouchEvent(event)
     }
 
 

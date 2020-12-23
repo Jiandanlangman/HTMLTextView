@@ -7,7 +7,6 @@ import android.os.Build
 import android.text.Editable
 import android.text.Spannable
 import android.text.style.DynamicDrawableSpan
-import android.util.Log
 import android.view.View
 import androidx.core.animation.doOnEnd
 import androidx.core.graphics.toRectF
@@ -68,10 +67,8 @@ internal class ImgTagHandler : TagHandler {
 
                 })
                 it.getImageDrawable(target, src) { d ->
-                    if (invalid || targetAttachState == 2) {
-                        Log.d("ImgTagHandler", "invalid:$invalid, targetAttachState:$targetAttachState")
+                    if (invalid || targetAttachState == 2)
                         return@getImageDrawable
-                    }
                     d?.apply {
                         val tw = if (width < 0) 0 else width
                         val th = if (height < 0) 0 else height
@@ -112,8 +109,6 @@ internal class ImgTagHandler : TagHandler {
                         if (targetAttachState == 1)
                             setCallback()
                     }
-                    if (d == null)
-                        Log.d("ImgTagHandler", "invalid:$invalid, targetAttachState:$targetAttachState, drawable is null")
                 }
             }
             background.getDrawable(target) {
