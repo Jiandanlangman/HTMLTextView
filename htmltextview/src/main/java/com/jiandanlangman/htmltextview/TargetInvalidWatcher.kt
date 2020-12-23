@@ -2,7 +2,8 @@ package com.jiandanlangman.htmltextview
 
 interface TargetInvalidWatcher {
 
-    fun onInvalid()
+    fun onValid()
 
+    fun onInvalid()
 
 }

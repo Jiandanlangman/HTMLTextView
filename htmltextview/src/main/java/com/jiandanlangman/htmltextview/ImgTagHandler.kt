@@ -7,7 +7,6 @@ import android.os.Build
 import android.text.Editable
 import android.text.Spannable
 import android.text.style.DynamicDrawableSpan
-import android.view.View
 import androidx.core.animation.doOnEnd
 import androidx.core.graphics.toRectF
 
@@ -20,7 +19,7 @@ internal class ImgTagHandler : TagHandler {
 
     override fun isSingleTag() = true
 
-    private class ImgSpan(val target: HTMLTextView, attrs: Map<String, String>, private val style: Style, background: Background) : DynamicDrawableSpan(ALIGN_BOTTOM), ActionSpan, TargetInvalidWatcher, Drawable.Callback {
+    private class ImgSpan(val target: HTMLTextView, attrs: Map<String, String>, private val style: Style, private val background: Background) : DynamicDrawableSpan(ALIGN_BOTTOM), ActionSpan, TargetInvalidWatcher, Drawable.Callback {
 
         private val action = attrs[Attribute.ACTION.value] ?: ""
         private val src = attrs[Attribute.SRC.value] ?: ""
@@ -40,7 +39,6 @@ internal class ImgTagHandler : TagHandler {
         private var scaleY = 1f
         private var canvasScale = 1f
         private var listener: ((ActionSpan, String) -> Unit) = { _, _ -> }
-        private var targetAttachState = 0
         private var pressed = false
         private var invalid = false
 
@@ -50,77 +48,6 @@ internal class ImgTagHandler : TagHandler {
 
         private var backgroundDrawable: Drawable? = null
 
-        init {
-            HTMLTagHandler.getResourcesProvider()?.let {
-                if (target.isAttachedToWindow)
-                    targetAttachState = 1
-                target.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
-                    override fun onViewAttachedToWindow(v: View) {
-                        targetAttachState = 1
-                        setCallback()
-                    }
-
-                    override fun onViewDetachedFromWindow(v: View) {
-                        targetAttachState = 2
-                        target.removeOnAttachStateChangeListener(this)
-                    }
-
-                })
-                it.getImageDrawable(target, src) { d ->
-                    if (invalid || targetAttachState == 2)
-                        return@getImageDrawable
-                    d?.apply {
-                        val tw = if (width < 0) 0 else width
-                        val th = if (height < 0) 0 else height
-                        when (tw + th) {
-                            0 -> { //没有指定宽高
-                                imageWidth = intrinsicWidth
-                                imageHeight = intrinsicHeight
-                                scaleX = 1f
-                                scaleY = 1f
-                            }
-                            tw -> { //指定了宽度
-                                imageWidth = width - padding.left - padding.right
-                                imageHeight = (imageWidth * intrinsicHeight / intrinsicWidth.toFloat() + .5f).toInt()
-                                scaleX = intrinsicWidth / imageWidth.toFloat()
-                                scaleY = intrinsicHeight / imageHeight.toFloat()
-                            }
-                            th -> { //指定了高度
-                                imageHeight = height - padding.top - padding.bottom
-                                imageWidth = (imageHeight * intrinsicWidth / intrinsicHeight.toFloat() + .5f).toInt()
-                                scaleX = intrinsicWidth / imageWidth.toFloat()
-                                scaleY = intrinsicHeight / imageHeight.toFloat()
-                            }
-                            else -> { //都指定了
-                                if (width < height) {
-                                    imageWidth = width - padding.left - padding.right
-                                    imageHeight = (imageWidth * intrinsicHeight / intrinsicWidth.toFloat() + .5f).toInt()
-                                    scaleX = intrinsicWidth / imageWidth.toFloat()
-                                    scaleY = intrinsicHeight / imageHeight.toFloat()
-                                } else {
-                                    imageHeight = height - padding.top - padding.bottom
-                                    imageWidth = (imageHeight * intrinsicWidth / intrinsicHeight.toFloat() + .5f).toInt()
-                                    scaleX = intrinsicWidth / imageWidth.toFloat()
-                                    scaleY = intrinsicHeight / imageHeight.toFloat()
-                                }
-                            }
-                        }
-                        drawable = this
-                        if (targetAttachState == 1)
-                            setCallback()
-                    }
-                }
-            }
-            background.getDrawable(target) {
-                if (invalid || targetAttachState == 2)
-                    return@getDrawable
-                it?.apply {
-                    backgroundDrawable = this
-                    if (targetAttachState == 1)
-                        target.invalidate()
-                }
-            }
-        }
 
         override fun getDrawable() = null
 
@@ -221,6 +148,13 @@ internal class ImgTagHandler : TagHandler {
 
         override fun getOffset() = if (style.spanLine == 0) 0 else (style.height - target.lineHeight) + margin.top + margin.bottom
 
+
+        override fun onValid() {
+            invalid = false
+            loadImage()
+            loadBackground()
+        }
+
         override fun onInvalid() {
             invalid = true
             removeCallbackAndRecycleRes()
@@ -235,6 +169,61 @@ internal class ImgTagHandler : TagHandler {
         override fun scheduleDrawable(who: Drawable, what: Runnable, `when`: Long) = target.scheduleDrawable(who, what, `when`)
 
         override fun unscheduleDrawable(who: Drawable, what: Runnable) = target.unscheduleDrawable(who, what)
+
+        private fun loadImage() = HTMLTagHandler.getResourcesProvider()?.let {
+            it.getImageDrawable(target, src) { d ->
+                if (invalid)
+                    return@getImageDrawable
+                d?.apply {
+                    val tw = if (width < 0) 0 else width
+                    val th = if (height < 0) 0 else height
+                    when (tw + th) {
+                        0 -> { //没有指定宽高
+                            imageWidth = intrinsicWidth
+                            imageHeight = intrinsicHeight
+                            scaleX = 1f
+                            scaleY = 1f
+                        }
+                        tw -> { //指定了宽度
+                            imageWidth = width - padding.left - padding.right
+                            imageHeight = (imageWidth * intrinsicHeight / intrinsicWidth.toFloat() + .5f).toInt()
+                            scaleX = intrinsicWidth / imageWidth.toFloat()
+                            scaleY = intrinsicHeight / imageHeight.toFloat()
+                        }
+                        th -> { //指定了高度
+                            imageHeight = height - padding.top - padding.bottom
+                            imageWidth = (imageHeight * intrinsicWidth / intrinsicHeight.toFloat() + .5f).toInt()
+                            scaleX = intrinsicWidth / imageWidth.toFloat()
+                            scaleY = intrinsicHeight / imageHeight.toFloat()
+                        }
+                        else -> { //都指定了
+                            if (width < height) {
+                                imageWidth = width - padding.left - padding.right
+                                imageHeight = (imageWidth * intrinsicHeight / intrinsicWidth.toFloat() + .5f).toInt()
+                                scaleX = intrinsicWidth / imageWidth.toFloat()
+                                scaleY = intrinsicHeight / imageHeight.toFloat()
+                            } else {
+                                imageHeight = height - padding.top - padding.bottom
+                                imageWidth = (imageHeight * intrinsicWidth / intrinsicHeight.toFloat() + .5f).toInt()
+                                scaleX = intrinsicWidth / imageWidth.toFloat()
+                                scaleY = intrinsicHeight / imageHeight.toFloat()
+                            }
+                        }
+                    }
+                    drawable = this
+                    setCallback()
+                }
+            }
+        }
+
+        private fun loadBackground() = background.getDrawable(target) {
+            if (invalid)
+                return@getDrawable
+            it?.apply {
+                backgroundDrawable = this
+                target.invalidate()
+            }
+        }
 
         private fun setCallback() {
             drawable?.let {

@@ -5,37 +5,15 @@ import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.drawable.Drawable
 import android.text.style.DynamicDrawableSpan
-import android.view.View
 
-internal class EmotionSpan(private val target: HTMLTextView, provider: ResourcesProvider, emotion: String) : DynamicDrawableSpan(ALIGN_BASELINE), TargetInvalidWatcher, Drawable.Callback {
+internal class EmotionSpan(private val target: HTMLTextView, private val provider: ResourcesProvider, private val emotion: String) : DynamicDrawableSpan(ALIGN_BASELINE), TargetInvalidWatcher, Drawable.Callback {
 
     private val invalidateRect = Rect()
     private val size = (target.textSize + .5f).toInt()
 
-    private var targetAttachState = if (target.isAttachedToWindow) 1 else 0
+    private var invalid = false
 
     private var emotionDrawable: Drawable? = null
-
-    init {
-        target.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
-            override fun onViewAttachedToWindow(v: View) {
-                targetAttachState = 1
-                setCallback()
-            }
-
-            override fun onViewDetachedFromWindow(v: View) {
-                targetAttachState = 2
-                target.removeOnAttachStateChangeListener(this)
-            }
-
-        })
-        provider.getEmotionDrawable(emotion) {
-            if (targetAttachState == 2)
-                return@getEmotionDrawable
-            emotionDrawable = it
-            setCallback()
-        }
-    }
 
     override fun getDrawable() = null
 
@@ -71,7 +49,20 @@ internal class EmotionSpan(private val target: HTMLTextView, provider: Resources
 
     override fun unscheduleDrawable(who: Drawable, what: Runnable) = target.unscheduleDrawable(who, what)
 
-    override fun onInvalid() = removeCallbackAndRecycleRes()
+    override fun onValid() {
+        invalid = false
+        provider.getEmotionDrawable(emotion) {
+            if (invalid)
+                return@getEmotionDrawable
+            emotionDrawable = it
+            setCallback()
+        }
+    }
+
+    override fun onInvalid() {
+        invalid = true
+        removeCallbackAndRecycleRes()
+    }
 
 
     private fun setCallback() {

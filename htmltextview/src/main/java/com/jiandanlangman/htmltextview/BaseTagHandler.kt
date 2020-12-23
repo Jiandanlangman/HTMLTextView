@@ -57,7 +57,7 @@ internal class BaseTagHandler : TagHandler {
 
     override fun isSingleTag() = true
 
-    internal class BaseSpan(private val attrs: Map<String, String>, private val style: Style, private val background: Background) : ForegroundColorSpan(Color.TRANSPARENT), IBaseSpan, ActionSpan {
+    internal class BaseSpan(attrs: Map<String, String>, private val style: Style, private val background: Background) : ForegroundColorSpan(Color.TRANSPARENT), IBaseSpan, ActionSpan {
 
         private val action = attrs[Attribute.ACTION.value] ?: ""
         private val drawable = CompoundDrawables.from(attrs[Attribute.DRAWABLE.value] ?: "")

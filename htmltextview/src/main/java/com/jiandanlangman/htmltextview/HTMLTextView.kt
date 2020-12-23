@@ -32,30 +32,29 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
 
     }
 
-    private val onSpanClickListener: ((ActionSpan, String) -> Unit) = { _, action -> onClickListener?.invoke(this, action) }
 
+    private val onSpanClickListener: ((ActionSpan, String) -> Unit) = { _, action -> onClickListener?.invoke(this, action) }
     private val pressedSpans = ArrayList<ActionSpan>()
+
     private var pressedSpan = false
     private var sourceText: CharSequence = ""
     private var onClickListener: ((HTMLTextView, String) -> Unit)? = null
+    private var targetInvalidWatchers : ArrayList<TargetInvalidWatcher> ?= null
 
     init {
         Util.init(context)
         super.setHighlightColor(Color.TRANSPARENT)
     }
 
+
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        val tempText = sourceText
-        sourceText = ""
-        text = tempText
+        targetInvalidWatchers?.forEach { it.onValid() }
     }
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
-        (text as? Spannable)?.let { it.getSpans(0, it.length, TargetInvalidWatcher::class.java)?.forEach { a -> a.onInvalid() } }
-        super.setText("", BufferType.NORMAL)
-        background = null
+        targetInvalidWatchers?.forEach { it.onInvalid() }
     }
 
     override fun setText(text: CharSequence?, type: BufferType?) {
@@ -63,7 +62,8 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
         if (t == sourceText)
             return
         sourceText = t
-        (getText().toSpannable()).let { it.getSpans(0, it.length, TargetInvalidWatcher::class.java)?.forEach { a -> a.onInvalid() } }
+        targetInvalidWatchers?.forEach { it.onInvalid() }
+        targetInvalidWatchers = null
         val spannedText = replaceEmotionToDrawable((if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) Html.fromHtml(sourceText.toString(), Html.FROM_HTML_MODE_LEGACY, null, HTMLTagHandler(this)) else Html.fromHtml(sourceText.toString(), null, HTMLTagHandler(this))) as Spannable)
         val spans = spannedText.getSpans<ActionSpan>(0, spannedText.length)
         spans.forEach { it.setOnClickListener(onSpanClickListener) }
@@ -74,6 +74,12 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
                 null
         }?.bindAttrs(this)
         super.setText(spannedText, type)
+        spannedText.getSpans(0, spannedText.length, TargetInvalidWatcher::class.java)?.let {
+            targetInvalidWatchers = ArrayList()
+            targetInvalidWatchers!!.addAll(it)
+        }
+        if(isAttachedToWindow)
+            targetInvalidWatchers?.forEach { it.onValid() }
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -86,7 +92,6 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
             setMeasuredDimension(measuredWidth, measuredHeight + height)
         }
     }
-
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {

@@ -41,7 +41,7 @@ internal class ATagHandler : TagHandler {
 
     override fun isSingleTag() = false
 
-    private class FontSizeASpan(private val target: HTMLTextView, private val action: String, private val width: Int, private val height: Int, private val textSize: Float, private val color: Int, private val isFakeBoldText: Boolean, textDecoration: Array<Style.TextDecoration>, private val padding: Rect, private val margin: Rect, private val pressedScale: Float, private val pressedTintColor: Int, private val textAlign: Array<Style.TextAlign>, private val strokeWidth: Float, private val strokeColor: Int, val typeface: Typeface?, background: Background) : ReplacementSpan(), ActionSpan, TargetInvalidWatcher {
+    private class FontSizeASpan(private val target: HTMLTextView, private val action: String, private val width: Int, private val height: Int, private val textSize: Float, private val color: Int, private val isFakeBoldText: Boolean, textDecoration: Array<Style.TextDecoration>, private val padding: Rect, private val margin: Rect, private val pressedScale: Float, private val pressedTintColor: Int, private val textAlign: Array<Style.TextAlign>, private val strokeWidth: Float, private val strokeColor: Int, val typeface: Typeface?, private val background: Background) : ReplacementSpan(), ActionSpan, TargetInvalidWatcher {
 
         private val drawRect = Rect()
         private val drawTextRect = Rect()
@@ -62,7 +62,6 @@ internal class ATagHandler : TagHandler {
         private var pressed = false
 
         private var listener: ((ActionSpan, String) -> Unit) = { _, _ -> }
-        private var targetAttachState = 0
         private var invalid = false
 
         private var paint: TextPaint? = null
@@ -72,28 +71,6 @@ internal class ATagHandler : TagHandler {
         init {
             Util.toNaturalRect(padding)
             Util.toNaturalRect(margin)
-            if (target.isAttachedToWindow)
-                targetAttachState = 1
-            target.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
-                override fun onViewAttachedToWindow(v: View?) {
-                    targetAttachState = 1
-                }
-
-                override fun onViewDetachedFromWindow(v: View?) {
-                    targetAttachState = 2
-                    target.removeOnAttachStateChangeListener(this)
-                }
-
-            })
-            background.getDrawable(target) {
-                if (invalid || targetAttachState == 2)
-                    return@getDrawable
-                it?.apply {
-                    backgroundDrawable = this
-                    if (targetAttachState == 1)
-                        target.invalidate()
-                }
-            }
         }
 
         private fun getTextPaint(p: Paint): TextPaint {
@@ -217,7 +194,20 @@ internal class ATagHandler : TagHandler {
         }
 
         override fun getAction() = action
+
         override fun getOffset() = 0
+
+        override fun onValid() {
+            invalid = false
+            background.getDrawable(target) {
+                if (invalid)
+                    return@getDrawable
+                it?.apply {
+                    backgroundDrawable = this
+                    target.invalidate()
+                }
+            }
+        }
 
         override fun onInvalid() {
             invalid = true
