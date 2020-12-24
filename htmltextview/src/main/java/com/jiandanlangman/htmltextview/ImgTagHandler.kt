@@ -119,26 +119,26 @@ internal class ImgTagHandler : TagHandler {
             this.listener = listener
         }
 
-        override fun onPressed() {
-            if (action.isNotEmpty()) {
+        override fun onPressed(x: Float, y: Float): Boolean {
+            if (action.isNotEmpty() && drawRect.contains(x.toInt(), y.toInt())) {
                 pressed = true
                 if (style.pressedScale != 1f)
                     playScaleAnimator(1f, style.pressedScale)
                 else
                     target?.postInvalidate(drawRect.left, drawRect.top, drawRect.right, drawRect.bottom)
+                return true
             }
+            return false
         }
 
-        override fun onUnPressed(isClick: Boolean) {
-            if (action.isNotEmpty()) {
-                pressed = false
-                if (style.pressedScale != 1f)
-                    playScaleAnimator(style.pressedScale, 1f)
-                else
-                    target?.postInvalidate(drawRect.left, drawRect.top, drawRect.right, drawRect.bottom)
-                if (isClick)
-                    listener.invoke(this, action)
-            }
+        override fun onUnPressed(x: Float, y: Float, cancel: Boolean) {
+            pressed = false
+            if (canvasScale != 1f)
+                playScaleAnimator(canvasScale, 1f)
+            else
+                target?.postInvalidate(drawRect.left, drawRect.top, drawRect.right, drawRect.bottom)
+            if (action.isNotEmpty() && drawRect.contains(x.toInt(), y.toInt()))
+                listener.invoke(this, action)
         }
 
         override fun getVerticalOffset() = if (style.spanLine == 0) 0 else (style.height - target!!.lineHeight) + margin.top + margin.bottom
@@ -243,7 +243,7 @@ internal class ImgTagHandler : TagHandler {
         }
 
         private fun playScaleAnimator(from: Float, to: Float) {
-            scaleAnimator?.cancel()
+            scaleAnimator?.end()
             scaleAnimator = ValueAnimator.ofFloat(from, to)
             scaleAnimator!!.let {
                 it.duration = 64

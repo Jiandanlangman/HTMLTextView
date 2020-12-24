@@ -71,9 +71,9 @@ internal class EmotionSpan(private val provider: ResourcesProvider, private val 
         removeCallbackAndRecycleRes()
     }
 
-    override fun onPressed() = Unit
+    override fun onPressed(x: Float, y:Float) = false
 
-    override fun onUnPressed(isClick: Boolean) = Unit
+    override fun onUnPressed(x: Float, y: Float, cancel:Boolean) = Unit
 
     override fun getVerticalOffset() = 0
 

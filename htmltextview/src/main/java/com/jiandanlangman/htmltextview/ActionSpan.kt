@@ -10,9 +10,9 @@ interface ActionSpan {
 
     fun onInvalid()
 
-    fun onPressed()
+    fun onPressed(x:Float, y:Float) : Boolean
 
-    fun onUnPressed(isClick: Boolean)
+    fun onUnPressed(x:Float, y:Float, cancel:Boolean)
 
     fun getVerticalOffset() : Int
 

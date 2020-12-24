@@ -11,12 +11,13 @@ import android.util.AttributeSet
 import android.view.MotionEvent
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.text.getSpans
-import androidx.core.text.toSpannable
 
 
 class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) : AppCompatTextView(context, attrs, defStyleAttr) {
 
     companion object {
+
+        const val VERSION = 1020
 
         private val replaceWith = Regex(">\\s*<")
         private val replaceTo = "><"
@@ -95,22 +96,16 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
             MotionEvent.ACTION_DOWN -> {
                 pressedSpans.clear()
                 pressedSpan = false
-                val actionSpans = Util.getEventSpan(this, text.toSpannable(), event, ActionSpan::class.java)
-                if (!actionSpans.isNullOrEmpty()) {
-                    pressedSpans.addAll(actionSpans)
-                    actionSpans.forEach {
-                        it.onPressed()
-                        if (!it.getAction().isEmpty())
-                            pressedSpan = true
+                actionSpans?.forEach {
+                    if (it.onPressed(event.x, event.y)) {
+                        pressedSpan = true
+                        pressedSpans.add(it)
                     }
                 }
             }
-            MotionEvent.ACTION_UP -> {
-                pressedSpans.forEach { it.onUnPressed(true) }
-                pressedSpans.clear()
-            }
-            MotionEvent.ACTION_CANCEL -> {
-                pressedSpans.forEach { it.onUnPressed(false) }
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                val cancel = event.action == MotionEvent.ACTION_CANCEL
+                pressedSpans.forEach { it.onUnPressed(event.x, event.y, cancel) }
                 pressedSpans.clear()
             }
         }

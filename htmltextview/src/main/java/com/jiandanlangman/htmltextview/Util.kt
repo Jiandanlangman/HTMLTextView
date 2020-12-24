@@ -120,10 +120,10 @@ internal object Util {
     }
 
 
-    fun <T> getEventSpan(widget: TextView, spannable: Spannable, event: MotionEvent, clazz: Class<T>): Array<T>? {
+    fun <T> getEventSpan(widget: TextView, spannable: Spannable, eventX:Float, eventY: Float, clazz: Class<T>): Array<T>? {
         val touchedLineBounds = RectF()
-        var x = event.x
-        var y = event.y
+        var x = eventX
+        var y = eventY
         x -= widget.totalPaddingLeft
         y -= widget.totalPaddingTop
         x += widget.scrollX
@@ -139,6 +139,7 @@ internal object Util {
             return spannable.getSpans(off, off, clazz)
         return null
     }
+
 
     private fun getUnit(value: String) = when {
         value.endsWith("dp") -> TypedValue.COMPLEX_UNIT_DIP

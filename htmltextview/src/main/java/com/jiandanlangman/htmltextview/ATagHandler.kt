@@ -19,7 +19,7 @@ internal class ATagHandler : TagHandler {
 
     @SuppressLint("Range")
     override fun handleTag(tag: String, output: Editable, start: Int, attrs: Map<String, String>, style: Style, background: Background) {
-        if(attrs.isEmpty() && style.isEmpty && background.isNotBackground())
+        if (attrs.isEmpty() && style.isEmpty && background.isNotBackground())
             return
         val action = attrs[Attribute.ACTION.value] ?: ""
         val pressedTintColor = Util.tryCatchInvoke({ Color.parseColor(style.pressedTint) }, Color.TRANSPARENT)
@@ -165,26 +165,26 @@ internal class ATagHandler : TagHandler {
             this.listener = listener
         }
 
-        override fun onPressed() {
-            if (action.isNotEmpty()) {
+        override fun onPressed(x: Float, y: Float): Boolean {
+            if (action.isNotEmpty() && drawRect.contains(x.toInt(), y.toInt())) {
                 pressed = true
                 if (style.pressedScale != 1f)
                     playScaleAnimator(1f, style.pressedScale)
                 else
                     target?.postInvalidate(drawRect.left, drawRect.top, drawRect.right, drawRect.bottom)
+                return true
             }
+            return false
         }
 
-        override fun onUnPressed(isClick: Boolean) {
-            if (action.isNotEmpty()) {
-                pressed = false
-                if (style.pressedScale != 1f)
-                    playScaleAnimator(style.pressedScale, 1f)
-                else
-                    target?.postInvalidate(drawRect.left, drawRect.top, drawRect.right, drawRect.bottom)
-                if (isClick)
-                    listener.invoke(this, action)
-            }
+        override fun onUnPressed(x: Float, y: Float, cancel:Boolean) {
+            pressed = false
+            if (canvasScale != 1f)
+                playScaleAnimator(canvasScale, 1f)
+            else
+                target?.postInvalidate(drawRect.left, drawRect.top, drawRect.right, drawRect.bottom)
+            if (action.isNotEmpty() && drawRect.contains(x.toInt(), y.toInt()))
+                listener.invoke(this, action)
         }
 
 
@@ -220,7 +220,7 @@ internal class ATagHandler : TagHandler {
         override fun getVerticalOffset() = 0
 
         private fun playScaleAnimator(from: Float, to: Float) {
-            scaleAnimator?.cancel()
+            scaleAnimator?.end()
             scaleAnimator = ValueAnimator.ofFloat(from, to)
             scaleAnimator!!.let {
                 it.duration = 64
@@ -283,10 +283,10 @@ internal class ATagHandler : TagHandler {
 
         override fun onInvalid() = Unit
 
-        override fun onPressed() = Unit
+        override fun onPressed(x: Float, y: Float) = action.isNotEmpty()
 
-        override fun onUnPressed(isClick: Boolean) {
-            if (isClick && action.isNotEmpty())
+        override fun onUnPressed(x: Float, y: Float, cancel: Boolean) {
+            if (action.isNotEmpty() && !cancel)
                 listener.invoke(this, action)
         }
 

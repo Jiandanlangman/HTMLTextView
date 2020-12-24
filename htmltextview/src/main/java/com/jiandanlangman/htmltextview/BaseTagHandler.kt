@@ -57,12 +57,14 @@ internal class BaseTagHandler : TagHandler {
 
     override fun isSingleTag() = true
 
-    internal class BaseSpan(attrs: Map<String, String>, private val style: Style, private val background: Background) : ForegroundColorSpan(Color.TRANSPARENT),  ActionSpan {
+    internal class BaseSpan(attrs: Map<String, String>, private val style: Style, private val background: Background) : ForegroundColorSpan(Color.TRANSPARENT), ActionSpan {
 
         private val action = attrs[Attribute.ACTION.value] ?: ""
         private val drawable = CompoundDrawables.from(attrs[Attribute.DRAWABLE.value] ?: "")
 
         private var listener: ((ActionSpan, String) -> Unit) = { _, _ -> }
+
+        private var target: HTMLTextView? = null
 
         override fun setOnClickListener(listener: (span: ActionSpan, action: String) -> Unit) {
             this.listener = listener
@@ -73,8 +75,7 @@ internal class BaseTagHandler : TagHandler {
 
         @SuppressLint("Range")
         override fun onValid(target: HTMLTextView) {
-            setOnTouchEvent(target)
-            target.apply {
+            this.target = target.apply {
                 if (style.fontSize >= 0)
                     setTextSize(TypedValue.COMPLEX_UNIT_PX, style.fontSize.toFloat())
                 Util.tryCatchInvoke { setTextColor(Color.parseColor(style.color)) }
@@ -119,6 +120,7 @@ internal class BaseTagHandler : TagHandler {
                         setMargin(this, style)
                     }
                 }
+
                 var targetAttachState = if (isAttachedToWindow) 1 else 0
                 if (targetAttachState == 1)
                     updateLayoutParams(this)
@@ -153,105 +155,101 @@ internal class BaseTagHandler : TagHandler {
         }
 
         override fun onInvalid() {
-
+            target = null
         }
 
-        override fun onPressed() = Unit
+        private val location = IntArray(2)
+        private val rect = Rect()
+        private val drawableRect = Rect()
+        private var eventDrawable: Drawable? = null
+        private var drawableAction: String? = null
+        private var pressedTarget = false
 
-        override fun onUnPressed(isClick: Boolean) = Unit
 
-        override fun getVerticalOffset() = 0
-
-        @SuppressLint("ClickableViewAccessibility")
-        private fun setOnTouchEvent(target: HTMLTextView) {
-            val location = IntArray(2)
-            val rect = Rect()
-            val drawableRect = Rect()
-            var eventDrawable: Drawable? = null
-            var drawableAction:String? = null
-            var pressedTarget = false
-            target.setOnTouchListener { _, event ->
-                val x = event.rawX.toInt()
-                val y = event.rawY.toInt()
-                when (event.action) {
-                    MotionEvent.ACTION_DOWN -> {
-                        eventDrawable = null
-                        drawableAction = null
-                        target.getLocationOnScreen(location)
-                        rect.set(location[0], location[1], location[0] + target.width, location[1] + target.height)
-                        target.compoundDrawables[0]?.let {
-                            val bounds = it.bounds
-                            drawableRect.left = rect.left + target.paddingLeft
-                            drawableRect.top = rect.top + target.paddingTop + (rect.height() - target.paddingTop - target.paddingBottom - bounds.height()) / 2
-                            drawableRect.right = drawableRect.left + bounds.width()
-                            drawableRect.bottom = drawableRect.top + bounds.height()
-                            if (drawableRect.contains(x, y)) {
-                                eventDrawable = it
-                                drawableAction = drawable.getDrawableActions().left
-                            }
-                        }
-                        if (eventDrawable == null)
-                            target.compoundDrawables[1]?.let {
-                                val bounds = it.bounds
-                                drawableRect.left = rect.left + target.paddingLeft + (rect.width() - target.paddingLeft - target.paddingRight - bounds.width()) / 2
-                                drawableRect.top = rect.top + target.paddingTop
-                                drawableRect.right = drawableRect.left + bounds.width()
-                                drawableRect.bottom = drawableRect.top + bounds.height()
-                                if (drawableRect.contains(x, y)) {
-                                    eventDrawable = it
-                                    drawableAction = drawable.getDrawableActions().top
-                                }
-                            }
-                        if (eventDrawable == null)
-                            target.compoundDrawables[2]?.let {
-                                val bounds = it.bounds
-                                drawableRect.right = rect.right - target.paddingRight
-                                drawableRect.left = drawableRect.right - bounds.width()
-                                drawableRect.top = rect.top + target.paddingTop + (rect.height() - target.paddingTop - target.paddingBottom - bounds.height()) / 2
-                                drawableRect.bottom = drawableRect.top + bounds.height()
-                                if (drawableRect.contains(x, y)) {
-                                    eventDrawable = it
-                                    drawableAction = drawable.getDrawableActions().right
-                                }
-                            }
-                        if (eventDrawable == null)
-                            target.compoundDrawables[3]?.let {
-                                val bounds = it.bounds
-                                drawableRect.left = rect.left + target.paddingLeft + (rect.width() - target.paddingLeft - target.paddingRight - bounds.width()) / 2
-                                drawableRect.right = drawableRect.left + bounds.width()
-                                drawableRect.bottom = rect.bottom - target.paddingBottom
-                                drawableRect.top = drawableRect.bottom - bounds.height()
-                                if (drawableRect.contains(x, y)) {
-                                    eventDrawable = it
-                                    drawableAction = drawable.getDrawableActions().bottom
-                                }
-                            }
-                        if ((eventDrawable == null || drawableAction.isNullOrEmpty()) && action.isNotEmpty()) {
-                            val actionSpans = Util.getEventSpan(target, target.text.toSpannable(), event, ActionSpan::class.java)
-                            pressedTarget = actionSpans?.let { it.firstOrNull { s -> s.getAction().isNotEmpty() } == null } ?: true
-                            if (pressedTarget && style.pressedScale != 1f)
-                                playScaleAnimator(target, style.pressedScale)
-                        }
+        override fun onPressed(x: Float, y: Float): Boolean {
+            target?.let {
+                eventDrawable = null
+                drawableAction = null
+                it.getLocationInWindow(location)
+                rect.set(location[0], location[1], location[0] + it.width, location[1] + it.height)
+                val xInt = x.toInt()
+                val yInt = y.toInt()
+                it.compoundDrawables[0]?.let { d ->
+                    val bounds = d.bounds
+                    drawableRect.left = rect.left + it.paddingLeft
+                    drawableRect.top = rect.top + it.paddingTop + (rect.height() - it.paddingTop - it.paddingBottom - bounds.height()) / 2
+                    drawableRect.right = drawableRect.left + bounds.width()
+                    drawableRect.bottom = drawableRect.top + bounds.height()
+                    if (drawableRect.contains(xInt, yInt)) {
+                        eventDrawable = d
+                        drawableAction = drawable.getDrawableActions().left
                     }
-                    MotionEvent.ACTION_UP -> {
-                        if (eventDrawable != null && drawableRect.contains(x, y) && !drawableAction.isNullOrEmpty()) {
-                            listener.invoke(this,drawableAction!!)
-                            return@setOnTouchListener true
-                        }
-                        if (action.isNotEmpty() && pressedTarget) {
-                            if (style.pressedScale != 1f)
-                                playScaleAnimator(target, 1f)
-                            listener.invoke(this, getAction())
-                            return@setOnTouchListener true
-                        }
-                    }
-                    MotionEvent.ACTION_CANCEL -> if (action.isNotEmpty() && pressedTarget && style.pressedScale != 1f)
-                        playScaleAnimator(target, 1f)
                 }
-                return@setOnTouchListener pressedTarget || (eventDrawable != null && !drawableAction.isNullOrEmpty())
+                if (eventDrawable == null)
+                    it.compoundDrawables[1]?.let { d ->
+                        val bounds = d.bounds
+                        drawableRect.left = rect.left + it.paddingLeft + (rect.width() - it.paddingLeft - it.paddingRight - bounds.width()) / 2
+                        drawableRect.top = rect.top + it.paddingTop
+                        drawableRect.right = drawableRect.left + bounds.width()
+                        drawableRect.bottom = drawableRect.top + bounds.height()
+                        if (drawableRect.contains(xInt, yInt)) {
+                            eventDrawable = d
+                            drawableAction = drawable.getDrawableActions().top
+                        }
+                    }
+                if (eventDrawable == null)
+                    it.compoundDrawables[2]?.let { d ->
+                        val bounds = d.bounds
+                        drawableRect.right = rect.right - it.paddingRight
+                        drawableRect.left = drawableRect.right - bounds.width()
+                        drawableRect.top = rect.top + it.paddingTop + (rect.height() - it.paddingTop - it.paddingBottom - bounds.height()) / 2
+                        drawableRect.bottom = drawableRect.top + bounds.height()
+                        if (drawableRect.contains(xInt, yInt)) {
+                            eventDrawable = d
+                            drawableAction = drawable.getDrawableActions().right
+                        }
+                    }
+                if (eventDrawable == null)
+                    it.compoundDrawables[3]?.let { d ->
+                        val bounds = d.bounds
+                        drawableRect.left = rect.left + it.paddingLeft + (rect.width() - it.paddingLeft - it.paddingRight - bounds.width()) / 2
+                        drawableRect.right = drawableRect.left + bounds.width()
+                        drawableRect.bottom = rect.bottom - it.paddingBottom
+                        drawableRect.top = drawableRect.bottom - bounds.height()
+                        if (drawableRect.contains(xInt, yInt)) {
+                            eventDrawable = d
+                            drawableAction = drawable.getDrawableActions().bottom
+                        }
+                    }
+                if ((eventDrawable == null || drawableAction.isNullOrEmpty()) && action.isNotEmpty()) {
+                    val actionSpans = Util.getEventSpan(it, it.text.toSpannable(), x, y, ActionSpan::class.java)
+                    pressedTarget = actionSpans?.let { sp -> sp.firstOrNull { s -> s.getAction().isNotEmpty() } == null } ?: true
+                    if (pressedTarget && style.pressedScale != 1f)
+                        playScaleAnimator(it, style.pressedScale)
+                }
+                return pressedTarget || (eventDrawable != null && !drawableAction.isNullOrEmpty())
+            }
+            return false
+        }
+
+        override fun onUnPressed(x: Float, y: Float, cancel: Boolean) {
+            target?.let {
+                if (cancel) {
+                    if (action.isNotEmpty() && pressedTarget && style.pressedScale != 1f)
+                        playScaleAnimator(it, 1f)
+                } else {
+                    if (eventDrawable != null && drawableRect.contains(x.toInt(), y.toInt()) && !drawableAction.isNullOrEmpty())
+                        listener.invoke(this, drawableAction!!)
+                    else if (action.isNotEmpty() && pressedTarget) {
+                        if (style.pressedScale != 1f)
+                            playScaleAnimator(it, 1f)
+                        listener.invoke(this, getAction())
+                    }
+                }
             }
         }
 
+        override fun getVerticalOffset() = 0
 
     }
 
