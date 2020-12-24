@@ -48,7 +48,8 @@ class MainActivity : AppCompatActivity() {
             <img src="https%3a%2f%2fasset.liaoke.tv%2fassets/api/vip/icon_vip_1.png?v=20201217" style="width:16;height:16;margin-right:2"></img>
             <font action='{"action":"user\/homepage","params":{"id":"14665"}}' style="color:#99D5FF;pressed-scale:.8">我应该从何说</font>
             <space count="2"></space>
-            <font>pk发言消息</font>
+            <font>发言消息发言消息发言消息发言消息</font>
+            <font>你没得哦你没得哦你没得哦你没得哦你没得哦你没得哦你没得哦你没得哦你没得哦你没得哦你没得哦你没得哦你没得哦你没得哦你没得哦你没得哦</font>
         </base>
     """.trimIndent()
 
@@ -165,7 +166,7 @@ class MainActivity : AppCompatActivity() {
     private inner class Adapter:RecyclerView.Adapter<ViewHolder>() {
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
             val frameLayout = FrameLayout(this@MainActivity)
-            frameLayout.addView(HTMLTextView(this@MainActivity))
+            frameLayout.addView(HTMLTextView(this@MainActivity), FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT))
             return ViewHolder(frameLayout)
         }
 

@@ -18,6 +18,9 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
 
     companion object {
 
+        private val replaceWith = Regex(">\\s*<")
+        private val replaceTo = "><"
+
         private var resourcesProvider: ResourcesProvider? = null
 
         fun registerTagHandler(tag: String, handler: TagHandler) = HTMLTagHandler.registerTagHandler(tag, handler)
@@ -29,9 +32,10 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
             HTMLTagHandler.setResourcesProvider(provider)
         }
 
-        fun fromHTML(context: Context, text:String) : Spannable {
+        fun fromHTML(context: Context, text: String): Spannable {
             Util.init(context)
-            return (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) Html.fromHtml(text, Html.FROM_HTML_MODE_LEGACY, null, HTMLTagHandler()) else Html.fromHtml(text, null, HTMLTagHandler())) as Spannable
+            val formattedText = text.replace(replaceWith, replaceTo)
+            return (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) Html.fromHtml(formattedText, Html.FROM_HTML_MODE_LEGACY, null, HTMLTagHandler()) else Html.fromHtml(formattedText, null, HTMLTagHandler())) as Spannable
         }
 
     }
@@ -43,7 +47,7 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
     private var pressedSpan = false
     private var sourceText: CharSequence = ""
     private var onClickListener: ((HTMLTextView, String) -> Unit)? = null
-    private var actionSpans : ArrayList<ActionSpan> ?= null
+    private var actionSpans: ArrayList<ActionSpan>? = null
 
     init {
         super.setHighlightColor(Color.TRANSPARENT)
@@ -68,13 +72,13 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
         actionSpans = null
         super.setText("", type)
         sourceText = t
-        val spannedText = replaceEmotionToDrawable(sourceText as? Spannable ?: fromHTML(context, sourceText.toString()) )
+        val spannedText = replaceEmotionToDrawable(sourceText as? Spannable ?: fromHTML(context, sourceText.toString()))
         val spans = spannedText.getSpans<ActionSpan>(0, spannedText.length)
         spans.forEach { it.setOnClickListener(onSpanClickListener) }
         actionSpans = ArrayList()
         actionSpans!!.addAll(spans)
         super.setText(spannedText, type)
-        if(isAttachedToWindow)
+        if (isAttachedToWindow)
             actionSpans?.forEach { it.onValid(this) }
     }
 
@@ -137,7 +141,7 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
                 if (pointCount != prevPointCount) {
                     val ch = text.substring(startIndex, i)
                     if (it.isEmotionDrawable(ch))
-                        spannable.setSpan(EmotionSpan( it, ch, textSize), startIndex, i, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                        spannable.setSpan(EmotionSpan(it, ch, textSize), startIndex, i, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
                     startIndex = i
                     prevPointCount = pointCount
                 }

@@ -23,7 +23,7 @@ internal class ATagHandler : TagHandler {
             return
         val action = attrs[Attribute.ACTION.value] ?: ""
         val pressedTintColor = Util.tryCatchInvoke({ Color.parseColor(style.pressedTint) }, Color.TRANSPARENT)
-        val span = if (style.padding.left < 0 && style.padding.top < 0 && style.padding.right < 0 && style.padding.bottom < 0 && style.margin.left < 0 && style.margin.top < 0 && style.margin.right < 0 && style.margin.bottom < 0 && style.pressedScale == 1f && pressedTintColor == Color.TRANSPARENT && background.isNotBackground() && style.width <= 0 && style.height <= 0 && !style.textDecoration.contains(Style.TextDecoration.STROKE))
+        val span = if (style.fontSize <= 0 && style.padding.left < 0 && style.padding.top < 0 && style.padding.right < 0 && style.padding.bottom < 0 && style.margin.left < 0 && style.margin.top < 0 && style.margin.right < 0 && style.margin.bottom < 0 && style.pressedScale == 1f && pressedTintColor == Color.TRANSPARENT && background.isNotBackground() && style.width <= 0 && style.height <= 0 && !style.textDecoration.contains(Style.TextDecoration.STROKE))
             ASpan(action, style)
         else
             FontSizeASpan(action, style, background)
@@ -248,7 +248,6 @@ internal class ATagHandler : TagHandler {
         private val isLineThrough = style.textDecoration.contains(Style.TextDecoration.LINE_THROUGH)
 
         private var color = Color.TRANSPARENT
-        private var textSize = 0f
         private var isFakeBoldText = false
 
         private var listener: ((ActionSpan, String) -> Unit) = { _, _ -> }
@@ -258,7 +257,6 @@ internal class ATagHandler : TagHandler {
             super.updateDrawState(ds)
             style.typeface?.apply { ds.typeface = this }
             ds.color = color
-            ds.textSize = textSize
             ds.isFakeBoldText = isFakeBoldText
             ds.isUnderlineText = isUnderlineText
             ds.flags = if (isLineThrough) ds.flags or Paint.STRIKE_THRU_TEXT_FLAG else ds.flags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
@@ -276,7 +274,6 @@ internal class ATagHandler : TagHandler {
         @SuppressLint("Range")
         override fun onValid(target: HTMLTextView) {
             color = Util.tryCatchInvoke({ Color.parseColor(style.color) }, target.textColors.defaultColor)
-            textSize = if (style.fontSize >= 0) style.fontSize.toFloat() else target.textSize
             isFakeBoldText = when (style.fontWeight) {
                 Style.FontWeight.NORMAL -> false
                 Style.FontWeight.BOLD -> true
