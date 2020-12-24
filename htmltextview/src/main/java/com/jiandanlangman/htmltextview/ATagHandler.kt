@@ -13,6 +13,7 @@ import android.text.style.ReplacementSpan
 import android.view.View
 import androidx.core.animation.doOnEnd
 import androidx.core.graphics.toRectF
+import androidx.core.text.toSpannable
 
 
 internal class ATagHandler : TagHandler {
@@ -177,7 +178,7 @@ internal class ATagHandler : TagHandler {
             return false
         }
 
-        override fun onUnPressed(x: Float, y: Float, cancel:Boolean) {
+        override fun onUnPressed(x: Float, y: Float, cancel: Boolean) {
             pressed = false
             if (canvasScale != 1f)
                 playScaleAnimator(canvasScale, 1f)
@@ -252,6 +253,8 @@ internal class ATagHandler : TagHandler {
 
         private var listener: ((ActionSpan, String) -> Unit) = { _, _ -> }
 
+        private var target: HTMLTextView? = null
+
 
         override fun updateDrawState(ds: TextPaint) {
             super.updateDrawState(ds)
@@ -273,6 +276,7 @@ internal class ATagHandler : TagHandler {
 
         @SuppressLint("Range")
         override fun onValid(target: HTMLTextView) {
+            this.target = target
             color = Util.tryCatchInvoke({ Color.parseColor(style.color) }, target.textColors.defaultColor)
             isFakeBoldText = when (style.fontWeight) {
                 Style.FontWeight.NORMAL -> false
@@ -281,9 +285,16 @@ internal class ATagHandler : TagHandler {
             }
         }
 
-        override fun onInvalid() = Unit
+        override fun onInvalid() {
+            target = null
+        }
 
-        override fun onPressed(x: Float, y: Float) = action.isNotEmpty()
+        override fun onPressed(x: Float, y: Float): Boolean {
+            target?.let {
+                return action.isNotEmpty() && Util.getEventSpan(it, it.text.toSpannable(), x, y, ASpan::class.java)?.contains(this) ?: false
+            }
+            return false
+        }
 
         override fun onUnPressed(x: Float, y: Float, cancel: Boolean) {
             if (action.isNotEmpty() && !cancel)

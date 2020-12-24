@@ -243,7 +243,7 @@ internal class BaseTagHandler : TagHandler {
                     else if (action.isNotEmpty() && pressedTarget) {
                         if (style.pressedScale != 1f)
                             playScaleAnimator(it, 1f)
-                        listener.invoke(this, getAction())
+                        listener.invoke(this, action)
                     }
                 }
             }
