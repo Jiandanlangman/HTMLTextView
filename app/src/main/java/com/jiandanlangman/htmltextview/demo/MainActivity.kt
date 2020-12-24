@@ -170,7 +170,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-           holder.textView.text = text2
+           holder.textView.text = HTMLTextView.fromHTML(this@MainActivity, "$text2$position")
         }
 
         override fun getItemCount() = 1000

@@ -6,6 +6,7 @@ import java.util.*
 import kotlin.collections.ArrayList
 
 data class Style(
+    val isEmpty: Boolean = true,
     val width: Int = 0,
     val height: Int = 0,
     val color: String = "",
@@ -21,7 +22,7 @@ data class Style(
     val strokeWidth: Float = 0f,
     val stroke: String = "",
     val typeface: Typeface? = null,
-    val spanLine:Int = 0
+    val spanLine: Int = 0
 ) {
 
     companion object {
@@ -33,6 +34,8 @@ data class Style(
                 val keyValue = it.split(":")
                 keyValue[0] to if (keyValue.size > 1) keyValue[1] else ""
             }.toMap()
+            if (map.isEmpty())
+                return Style()
             val textAlignList = ArrayList<TextAlign>()
             (map[Constant.KEY_TEXT_ALIGN] ?: "").split(",").forEach {
                 val align = TextAlign.values().firstOrNull { e -> e.value == it }
@@ -52,6 +55,7 @@ data class Style(
             if (tdList.isEmpty())
                 tdList.add(TextDecoration.NONE)
             return Style(
+                false,
                 Util.applyDimension(map[Constant.KEY_WIDTH] ?: Constant.DIMENSION_UNDEFINED.toString(), Constant.DIMENSION_UNDEFINED),
                 Util.applyDimension(map[Constant.KEY_HEIGHT] ?: Constant.DIMENSION_UNDEFINED.toString(), Constant.DIMENSION_UNDEFINED),
                 map[Constant.KEY_COLOR] ?: "",
@@ -70,7 +74,7 @@ data class Style(
                 Util.tryCatchInvoke({ (map[Constant.KEY_STROKE_WIDTH] ?: "0").toFloat() }, 0f),
                 map[Constant.KEY_STROKE] ?: "",
                 HTMLTagHandler.getResourcesProvider()?.getTypeface(map[Constant.KEY_FONT_FAMILY] ?: ""),
-                Util.tryCatchInvoke({(map[Constant.KEY_SPAN_LINE]?: "0").toInt()  }, 0)
+                Util.tryCatchInvoke({ (map[Constant.KEY_SPAN_LINE] ?: "0").toInt() }, 0)
             )
 
         }

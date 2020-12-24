@@ -4,12 +4,17 @@ interface ActionSpan {
 
     fun setOnClickListener(listener:(span:ActionSpan, action:String) -> Unit)
 
+    fun getAction():String
+
+    fun onValid(target:HTMLTextView)
+
+    fun onInvalid()
+
     fun onPressed()
 
     fun onUnPressed(isClick: Boolean)
 
-    fun getAction():String?
+    fun getVerticalOffset() : Int
 
-    fun getOffset() : Int
 
 }

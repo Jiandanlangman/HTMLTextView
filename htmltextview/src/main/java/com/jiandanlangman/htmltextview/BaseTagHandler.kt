@@ -49,7 +49,7 @@ internal class BaseTagHandler : TagHandler {
 
 
     @SuppressLint("Range", "ClickableViewAccessibility")
-    override fun handleTag(target: HTMLTextView, tag: String, output: Editable, start: Int, attrs: Map<String, String>, style: Style, background: Background) {
+    override fun handleTag(tag: String, output: Editable, start: Int, attrs: Map<String, String>, style: Style, background: Background) {
         val baseSpan = BaseSpan(attrs, style, background)
         output.append("\u200B")
         output.setSpan(baseSpan, start, output.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
@@ -57,7 +57,7 @@ internal class BaseTagHandler : TagHandler {
 
     override fun isSingleTag() = true
 
-    internal class BaseSpan(attrs: Map<String, String>, private val style: Style, private val background: Background) : ForegroundColorSpan(Color.TRANSPARENT), IBaseSpan, ActionSpan {
+    internal class BaseSpan(attrs: Map<String, String>, private val style: Style, private val background: Background) : ForegroundColorSpan(Color.TRANSPARENT),  ActionSpan {
 
         private val action = attrs[Attribute.ACTION.value] ?: ""
         private val drawable = CompoundDrawables.from(attrs[Attribute.DRAWABLE.value] ?: "")
@@ -68,17 +68,11 @@ internal class BaseTagHandler : TagHandler {
             this.listener = listener
         }
 
-        override fun onPressed() = Unit
-
-        override fun onUnPressed(isClick: Boolean) = Unit
 
         override fun getAction() = action
 
-        override fun getOffset() = 0
-
-
         @SuppressLint("Range")
-        override fun bindAttrs(target: HTMLTextView) {
+        override fun onValid(target: HTMLTextView) {
             setOnTouchEvent(target)
             target.apply {
                 if (style.fontSize >= 0)
@@ -158,6 +152,16 @@ internal class BaseTagHandler : TagHandler {
             }
         }
 
+        override fun onInvalid() {
+
+        }
+
+        override fun onPressed() = Unit
+
+        override fun onUnPressed(isClick: Boolean) = Unit
+
+        override fun getVerticalOffset() = 0
+
         @SuppressLint("ClickableViewAccessibility")
         private fun setOnTouchEvent(target: HTMLTextView) {
             val location = IntArray(2)
@@ -224,7 +228,7 @@ internal class BaseTagHandler : TagHandler {
                             }
                         if ((eventDrawable == null || drawableAction.isNullOrEmpty()) && action.isNotEmpty()) {
                             val actionSpans = Util.getEventSpan(target, target.text.toSpannable(), event, ActionSpan::class.java)
-                            pressedTarget = actionSpans?.let { it.firstOrNull { s -> !s.getAction().isNullOrEmpty() } == null } ?: true
+                            pressedTarget = actionSpans?.let { it.firstOrNull { s -> s.getAction().isNotEmpty() } == null } ?: true
                             if (pressedTarget && style.pressedScale != 1f)
                                 playScaleAnimator(target, style.pressedScale)
                         }

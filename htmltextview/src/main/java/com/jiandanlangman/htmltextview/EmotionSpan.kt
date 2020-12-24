@@ -6,13 +6,11 @@ import android.graphics.Rect
 import android.graphics.drawable.Drawable
 import android.text.style.DynamicDrawableSpan
 
-internal class EmotionSpan(private val target: HTMLTextView, private val provider: ResourcesProvider, private val emotion: String) : DynamicDrawableSpan(ALIGN_BASELINE), TargetInvalidWatcher, Drawable.Callback {
+internal class EmotionSpan(private val provider: ResourcesProvider, private val emotion: String, private val size: Int) : DynamicDrawableSpan(ALIGN_BASELINE), ActionSpan, Drawable.Callback {
 
     private val invalidateRect = Rect()
-    private val size = (target.textSize + .5f).toInt()
 
-    private var invalid = false
-
+    private var target: HTMLTextView? = null
     private var emotionDrawable: Drawable? = null
 
     override fun getDrawable() = null
@@ -20,7 +18,7 @@ internal class EmotionSpan(private val target: HTMLTextView, private val provide
     override fun getSize(paint: Paint, text: CharSequence?, start: Int, end: Int, fm: Paint.FontMetricsInt?) = size
 
     override fun draw(canvas: Canvas, text: CharSequence?, start: Int, end: Int, x: Float, top: Int, y: Int, bottom: Int, paint: Paint) {
-        if (emotionDrawable == null)
+        if (target == null || emotionDrawable == null)
             return
         val totalHeight = emotionDrawable!!.bounds.height()
         val totalWidth = emotionDrawable!!.bounds.width()
@@ -28,7 +26,7 @@ internal class EmotionSpan(private val target: HTMLTextView, private val provide
         invalidateRect.left = x.toInt()
         invalidateRect.top = top
         invalidateRect.right = invalidateRect.left + totalWidth
-        invalidateRect.bottom = (top + Util.getCurrentLineHeight(target, top, bottom))
+        invalidateRect.bottom = (top + Util.getCurrentLineHeight(target!!, top, bottom))
 
         invalidateRect.top = (invalidateRect.top + (invalidateRect.height() - totalHeight) / 2f + .5f).toInt()
         invalidateRect.bottom = invalidateRect.top + totalHeight
@@ -41,18 +39,27 @@ internal class EmotionSpan(private val target: HTMLTextView, private val provide
     }
 
     override fun invalidateDrawable(who: Drawable) {
-        if (target.isShown)
-            target.postInvalidate(invalidateRect.left, invalidateRect.top, invalidateRect.right, invalidateRect.bottom)
+        if (target?.isShown == true)
+            target!!.postInvalidate(invalidateRect.left, invalidateRect.top, invalidateRect.right, invalidateRect.bottom)
     }
 
-    override fun scheduleDrawable(who: Drawable, what: Runnable, `when`: Long) = target.scheduleDrawable(who, what, `when`)
+    override fun scheduleDrawable(who: Drawable, what: Runnable, `when`: Long) {
+        target?.scheduleDrawable(who, what, `when`)
+    }
 
-    override fun unscheduleDrawable(who: Drawable, what: Runnable) = target.unscheduleDrawable(who, what)
+    override fun unscheduleDrawable(who: Drawable, what: Runnable) {
+        target?.unscheduleDrawable(who, what)
+    }
 
-    override fun onValid() {
-        invalid = false
+
+    override fun setOnClickListener(listener: (span: ActionSpan, action: String) -> Unit) = Unit
+
+    override fun getAction() = ""
+
+    override fun onValid(target: HTMLTextView) {
+        this.target = target
         provider.getEmotionDrawable(emotion) {
-            if (invalid)
+            if (this.target == null)
                 return@getEmotionDrawable
             emotionDrawable = it
             setCallback()
@@ -60,16 +67,22 @@ internal class EmotionSpan(private val target: HTMLTextView, private val provide
     }
 
     override fun onInvalid() {
-        invalid = true
+        target = null
         removeCallbackAndRecycleRes()
     }
+
+    override fun onPressed() = Unit
+
+    override fun onUnPressed(isClick: Boolean) = Unit
+
+    override fun getVerticalOffset() = 0
 
 
     private fun setCallback() {
         emotionDrawable?.let {
             it.callback = this
             Util.tryCatchInvoke { it::class.java.getMethod("start").invoke(it) }
-            target.invalidate()
+            target!!.invalidate()
         }
     }
 

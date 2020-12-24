@@ -29,6 +29,10 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
             HTMLTagHandler.setResourcesProvider(provider)
         }
 
+        fun fromHTML(context: Context, text:String) : Spannable {
+            Util.init(context)
+            return (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) Html.fromHtml(text, Html.FROM_HTML_MODE_LEGACY, null, HTMLTagHandler()) else Html.fromHtml(text, null, HTMLTagHandler())) as Spannable
+        }
 
     }
 
@@ -39,58 +43,46 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
     private var pressedSpan = false
     private var sourceText: CharSequence = ""
     private var onClickListener: ((HTMLTextView, String) -> Unit)? = null
-    private var targetInvalidWatchers : ArrayList<TargetInvalidWatcher> ?= null
+    private var actionSpans : ArrayList<ActionSpan> ?= null
 
     init {
-        Util.init(context)
         super.setHighlightColor(Color.TRANSPARENT)
     }
 
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        targetInvalidWatchers?.forEach { it.onValid() }
+        actionSpans?.forEach { it.onValid(this) }
     }
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
-        targetInvalidWatchers?.forEach { it.onInvalid() }
+        actionSpans?.forEach { it.onInvalid() }
     }
 
     override fun setText(text: CharSequence?, type: BufferType?) {
         val t = text ?: ""
         if (t == sourceText)
             return
+        actionSpans?.forEach { it.onInvalid() }
+        actionSpans = null
+        super.setText("", type)
         sourceText = t
-        targetInvalidWatchers?.forEach { it.onInvalid() }
-        targetInvalidWatchers = null
-        val spannedText = replaceEmotionToDrawable((if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) Html.fromHtml(sourceText.toString(), Html.FROM_HTML_MODE_LEGACY, null, HTMLTagHandler(this)) else Html.fromHtml(sourceText.toString(), null, HTMLTagHandler(this))) as Spannable)
+        val spannedText = replaceEmotionToDrawable(sourceText as? Spannable ?: fromHTML(context, sourceText.toString()) )
         val spans = spannedText.getSpans<ActionSpan>(0, spannedText.length)
         spans.forEach { it.setOnClickListener(onSpanClickListener) }
-        spannedText.getSpans<IBaseSpan>(0, spannedText.length).let {
-            if (!it.isNullOrEmpty())
-                it[0]
-            else
-                null
-        }?.bindAttrs(this)
+        actionSpans = ArrayList()
+        actionSpans!!.addAll(spans)
         super.setText(spannedText, type)
-        spannedText.getSpans(0, spannedText.length, TargetInvalidWatcher::class.java)?.let {
-            targetInvalidWatchers = ArrayList()
-            targetInvalidWatchers!!.addAll(it)
-        }
         if(isAttachedToWindow)
-            targetInvalidWatchers?.forEach { it.onValid() }
+            actionSpans?.forEach { it.onValid(this) }
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
-        (text as? Spannable)?.let {
-            var height = 0
-            it.getSpans(0, it.length, ActionSpan::class.java)?.forEach { span ->
-                height += span.getOffset()
-            }
-            setMeasuredDimension(measuredWidth, measuredHeight + height)
-        }
+        var height = 0
+        actionSpans?.forEach { height += it.getVerticalOffset() }
+        setMeasuredDimension(measuredWidth, measuredHeight + height)
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -104,7 +96,7 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
                     pressedSpans.addAll(actionSpans)
                     actionSpans.forEach {
                         it.onPressed()
-                        if (!it.getAction().isNullOrEmpty())
+                        if (!it.getAction().isEmpty())
                             pressedSpan = true
                     }
                 }
@@ -135,6 +127,7 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
 
     private fun replaceEmotionToDrawable(spannable: Spannable): Spannable {
         resourcesProvider?.let {
+            val textSize = (textSize + .5f).toInt()
             val text = spannable.toString()
             val textLength = text.length
             var startIndex = 0
@@ -144,7 +137,7 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
                 if (pointCount != prevPointCount) {
                     val ch = text.substring(startIndex, i)
                     if (it.isEmotionDrawable(ch))
-                        spannable.setSpan(EmotionSpan(this, it, ch), startIndex, i, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                        spannable.setSpan(EmotionSpan( it, ch, textSize), startIndex, i, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
                     startIndex = i
                     prevPointCount = pointCount
                 }

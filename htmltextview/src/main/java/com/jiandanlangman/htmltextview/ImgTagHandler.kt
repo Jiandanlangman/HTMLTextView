@@ -12,14 +12,14 @@ import androidx.core.graphics.toRectF
 
 internal class ImgTagHandler : TagHandler {
 
-    override fun handleTag(target: HTMLTextView, tag: String, output: Editable, start: Int, attrs: Map<String, String>, style: Style, background: Background) {
+    override fun handleTag(tag: String, output: Editable, start: Int, attrs: Map<String, String>, style: Style, background: Background) {
         output.append("\u200B")
-        output.setSpan(ImgSpan(target, attrs, style, background), start, output.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+        output.setSpan(ImgSpan(attrs, style, background), start, output.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
     }
 
     override fun isSingleTag() = true
 
-    private class ImgSpan(val target: HTMLTextView, attrs: Map<String, String>, private val style: Style, private val background: Background) : DynamicDrawableSpan(ALIGN_BOTTOM), ActionSpan, TargetInvalidWatcher, Drawable.Callback {
+    private class ImgSpan(attrs: Map<String, String>, private val style: Style, private val background: Background) : DynamicDrawableSpan(ALIGN_BOTTOM), ActionSpan, Drawable.Callback {
 
         private val action = attrs[Attribute.ACTION.value] ?: ""
         private val src = attrs[Attribute.SRC.value] ?: ""
@@ -40,21 +40,19 @@ internal class ImgTagHandler : TagHandler {
         private var canvasScale = 1f
         private var listener: ((ActionSpan, String) -> Unit) = { _, _ -> }
         private var pressed = false
-        private var invalid = false
 
+        private var target: HTMLTextView? = null
         private var scaleAnimator: ValueAnimator? = null
-
         private var drawable: Drawable? = null
-
         private var backgroundDrawable: Drawable? = null
 
 
         override fun getDrawable() = null
 
         override fun draw(canvas: Canvas, text: CharSequence?, start: Int, end: Int, x: Float, top: Int, y: Int, bottom: Int, paint: Paint) {
-            if (drawable == null && backgroundDrawable == null)
+            if (target == null || drawable == null && backgroundDrawable == null)
                 return
-            val currentLineHeight = Util.getCurrentLineHeight(target, top, bottom)
+            val currentLineHeight = Util.getCurrentLineHeight(target!!, top, bottom)
             val verticalCenterLine = top + currentLineHeight / 2f
             val rectHeight = if (height > 0) height else (imageHeight + padding.top + padding.bottom)
             val rectWidth = if (width > 0) width else (imageWidth + padding.left + padding.right)
@@ -111,7 +109,7 @@ internal class ImgTagHandler : TagHandler {
             }
             canvas.restore()
             if (style.spanLine != 0)
-                canvas.translate(0f, style.height.toFloat() - target.lineHeight + margin.top + margin.bottom)
+                canvas.translate(0f, style.height.toFloat() - target!!.lineHeight + margin.top + margin.bottom)
         }
 
 
@@ -127,7 +125,7 @@ internal class ImgTagHandler : TagHandler {
                 if (style.pressedScale != 1f)
                     playScaleAnimator(1f, style.pressedScale)
                 else
-                    target.postInvalidate(drawRect.left, drawRect.top, drawRect.right, drawRect.bottom)
+                    target?.postInvalidate(drawRect.left, drawRect.top, drawRect.right, drawRect.bottom)
             }
         }
 
@@ -137,42 +135,44 @@ internal class ImgTagHandler : TagHandler {
                 if (style.pressedScale != 1f)
                     playScaleAnimator(style.pressedScale, 1f)
                 else
-                    target.postInvalidate(drawRect.left, drawRect.top, drawRect.right, drawRect.bottom)
+                    target?.postInvalidate(drawRect.left, drawRect.top, drawRect.right, drawRect.bottom)
                 if (isClick)
                     listener.invoke(this, action)
             }
         }
 
+        override fun getVerticalOffset() = if (style.spanLine == 0) 0 else (style.height - target!!.lineHeight) + margin.top + margin.bottom
+
         override fun getAction() = action
 
-
-        override fun getOffset() = if (style.spanLine == 0) 0 else (style.height - target.lineHeight) + margin.top + margin.bottom
-
-
-        override fun onValid() {
-            invalid = false
+        override fun onValid(target: HTMLTextView) {
+            this.target = target
             loadImage()
             loadBackground()
         }
 
         override fun onInvalid() {
-            invalid = true
+            target = null
             removeCallbackAndRecycleRes()
         }
 
 
         override fun invalidateDrawable(who: Drawable) {
-            if (target.isShown)
-                target.postInvalidate(drawRect.left, drawRect.top, drawRect.right, drawRect.bottom)
+            if (target?.isShown == true)
+                target?.postInvalidate(drawRect.left, drawRect.top, drawRect.right, drawRect.bottom)
         }
 
-        override fun scheduleDrawable(who: Drawable, what: Runnable, `when`: Long) = target.scheduleDrawable(who, what, `when`)
+        override fun scheduleDrawable(who: Drawable, what: Runnable, `when`: Long) {
+            target?.scheduleDrawable(who, what, `when`)
+        }
 
-        override fun unscheduleDrawable(who: Drawable, what: Runnable) = target.unscheduleDrawable(who, what)
+        override fun unscheduleDrawable(who: Drawable, what: Runnable) {
+            target?.unscheduleDrawable(who, what)
+        }
 
         private fun loadImage() = HTMLTagHandler.getResourcesProvider()?.let {
-            it.getImageDrawable(target, src) { d ->
-                if (invalid)
+            it.getImageDrawable(target!!, src) { d ->
+                if (target == null)
                     return@getImageDrawable
                 d?.apply {
                     val tw = if (width < 0) 0 else width
@@ -216,12 +216,12 @@ internal class ImgTagHandler : TagHandler {
             }
         }
 
-        private fun loadBackground() = background.getDrawable(target) {
-            if (invalid)
+        private fun loadBackground() = background.getDrawable(target!!) {
+            if (target == null)
                 return@getDrawable
             it?.apply {
                 backgroundDrawable = this
-                target.invalidate()
+                target!!.invalidate()
             }
         }
 
@@ -230,7 +230,7 @@ internal class ImgTagHandler : TagHandler {
                 it.callback = this
                 Util.tryCatchInvoke { it::class.java.getMethod("start").invoke(it) }
             }
-            target.invalidate()
+            target!!.invalidate()
         }
 
         private fun removeCallbackAndRecycleRes() {
@@ -249,7 +249,13 @@ internal class ImgTagHandler : TagHandler {
                 it.duration = 64
                 it.addUpdateListener { _ ->
                     canvasScale = it.animatedValue as Float
-                    target.postInvalidate(drawRect.left, drawRect.top, drawRect.right, drawRect.bottom)
+                    if (target != null)
+                        target!!.postInvalidate(drawRect.left, drawRect.top, drawRect.right, drawRect.bottom)
+                    else {
+                        it.cancel()
+                        scaleAnimator = null
+                        canvasScale = to
+                    }
                 }
                 it.doOnEnd { scaleAnimator = null }
                 it.start()

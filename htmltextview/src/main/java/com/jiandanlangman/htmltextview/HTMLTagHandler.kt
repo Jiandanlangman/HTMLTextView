@@ -10,7 +10,7 @@ import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 
-internal class HTMLTagHandler(private val target: HTMLTextView) : Html.TagHandler, ContentHandler {
+internal class HTMLTagHandler : Html.TagHandler, ContentHandler {
 
     internal companion object {
 
@@ -96,7 +96,7 @@ internal class HTMLTagHandler(private val target: HTMLTextView) : Html.TagHandle
             val style = Style.from(attrs.remove(Attribute.STYLE.value) ?: "")
             val background = Background.from(attrs.remove(Attribute.BACKGROUND.value) ?: "")
             if (it.isSingleTag())
-                it.handleTag(target, tag, originalOutput!!, originalOutput!!.length, attrs, style, background)
+                it.handleTag(tag, originalOutput!!, originalOutput!!.length, attrs, style, background)
             else
                 tagRecorderList.add(TagRecorder(attrs, style, background, originalOutput!!.length))
         } ?: originalContentHandler?.startElement(uri, localName, qName, atts)
@@ -108,7 +108,7 @@ internal class HTMLTagHandler(private val target: HTMLTextView) : Html.TagHandle
             if(it.isSingleTag())
                 return
             val tagRecorder = tagRecorderList.removeLast()
-            it.handleTag(target, tag, originalOutput!!, tagRecorder.start, tagRecorder.attrs, tagRecorder.style, tagRecorder.background)
+            it.handleTag(tag, originalOutput!!, tagRecorder.start, tagRecorder.attrs, tagRecorder.style, tagRecorder.background)
         } ?: originalContentHandler?.endElement(uri, localName, qName)
     }
 
