@@ -17,10 +17,11 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
 
     companion object {
 
-        const val VERSION = 1022
+        const val VERSION = 1023
 
         private val replaceWith = Regex(">\\s*<")
-        private val replaceTo = "><"
+        private const val replaceTo = "><"
+        private const val zeroWidthChar = "\u202a"
 
         private var resourcesProvider: ResourcesProvider? = null
 
@@ -35,7 +36,7 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
 
         fun fromHTML(context: Context, text: String): Spannable {
             Util.init(context)
-            val formattedText = text.replace(replaceWith, replaceTo)
+            val formattedText = text.replace(zeroWidthChar, "").replace(replaceWith, replaceTo)
             return (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) Html.fromHtml(formattedText, Html.FROM_HTML_MODE_LEGACY, null, HTMLTagHandler()) else Html.fromHtml(formattedText, null, HTMLTagHandler())) as Spannable
         }
 

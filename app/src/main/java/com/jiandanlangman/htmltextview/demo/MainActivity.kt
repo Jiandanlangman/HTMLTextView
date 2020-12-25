@@ -40,8 +40,8 @@ class MainActivity : AppCompatActivity() {
 //        <base action='{"action":"url","params":{"link":"http:\/\/test-m.liaoke.tv\/h5\/new_training?title=%E6%96%B0%E4%BA%BA%E4%B8%BB%E6%92%AD%20%E5%9F%B9%E8%AE%AD%E8%AE%A1%E5%88%92\u0026timeout=5000\u0026transparent=0\u0026show_progress=1\u0026show_title_bar=1\u0026error_close_page=1\u0026enable_pull_to_refresh=0\u0026wx=sijiawe0909\u0026wx_qrcode=girl_manager%2Fwx_qrcode%2F1eecb00a-47e1-419a-9f71-d5c4198625a7%21300x300\u0026app_name=%E8%81%8A%E5%AE%A2\u0026uid=12616\u0026manager_nickname=%E5%A5%94%E6%B3%A2%E5%84%BF%E7%81%9E"}}' background="fill:#33FF0000;radius:16" style="width:228;color:#111111;font-size:14;text-align:left,top;line-height:1.1;padding-bottom:10"><img src="https%3a%2f%2fasset.liaoke.tv%2fassets%2fapi%2fgirl_manager%2ftraining1215%2fguanfangxiaoxi-banner.png" style="width:228;height:120;text-align:top;margin-bottom:10;span-line:1"></img><font style="margin-left:16;font-size:14">点击领取聊客速配速成培训文档</font><br count="1"></br><span style="color:#999999;font-size:12;margin-left:16">坚持7天 收入突破300元/天</span></base>
 //    """.trimIndent()
 
-    val text2 = "<base background=\"fill:#33FF0000;radius:8\" style=\"width:228;color:#111111;font-size:14;text-align:left,top;line-height:1.1;padding-bottom:10\"><img src=\"https%3a%2f%2fasset.liaoke.tv%2fassets%2fapi%2fgirl_manager%2ftraining1215%2fguanfangxiaoxi-banner.png\" style=\"width:228;height:120;text-align:top;margin-bottom:10\"></img><font style=\"margin-left:16;\">点击领取聊客速配速成培训文档</font><br count=\"1\"></br><span style=\"color:#999999;font-size:12;margin-left:16\">坚持7天 收入突破300元/天</span><br></br><font style=\"color:#999999;line-height:1\">群公告</font>" +
-            "<font>内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容</font></base>"
+//    val text2 = "<base background=\"fill:#33FF0000;radius:8\" style=\"width:228;color:#111111;font-size:14;text-align:left,top;line-height:1.1;padding-bottom:10\"><img src=\"https%3a%2f%2fasset.liaoke.tv%2fassets%2fapi%2fgirl_manager%2ftraining1215%2fguanfangxiaoxi-banner.png\" style=\"width:228;height:120;text-align:top;margin-bottom:10\"></img><font style=\"margin-left:16;\">点击领取聊客速配速成培训文档</font><br count=\"1\"></br><span style=\"color:#999999;font-size:12;margin-left:16\">坚持7天 收入突破300元/天</span><br></br><font style=\"color:#999999;line-height:1\">群公告</font>" +
+//            "<font>内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容</font></base>"
 //    val text2 = """
 //        <base background="fill:#33000000;radius:9;font-size:16;drawable:https%3a%2f%2fasset.liaoke.tv%2fassets/api/user/rich/qipaokuang_shoufu.9.png" action="3333" style="pressed-scale:.8" >
 //            <img src="https%3a%2f%2fasset.liaoke.tv%2fassets/api/pk/zbj_fy_df.png?v=20201217" action="1" style="width:14;height:14;margin-right:2;pressed-scale:0.8"></img>
@@ -57,6 +57,11 @@ class MainActivity : AppCompatActivity() {
 //            <font>你没得哦你没得哦你没得哦你没得哦你没得哦你没得哦你没得哦你没得哦你没得哦你没得哦你没得哦你没得哦你没得哦你没得哦你没得哦你没得哦</font>
 //        </base>
 //    """.trimIndent()
+
+
+    val text2 = """
+        <base background="fill:#FFFFFF;radius:16" style="color:#111111;font-size:14;padding-left:16;padding-right:16;padding-top:10;padding-bottom:10;line-height:1.1"><img src="https%3a%2f%2fasset.liaoke.tv%2fassets/api/group/laba.png?v=20201217" style="width:15;height:15;margin-right:4"></img><font style="color:#999999;line-height:1.3">群公告</font><br count="1"></br><font style="color:#111111">qwerqwerwer</font></base>
+    """.trimIndent()
 
     @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {

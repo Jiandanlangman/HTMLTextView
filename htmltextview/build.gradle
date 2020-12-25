@@ -11,8 +11,8 @@ android {
     defaultConfig {
         minSdkVersion 19
         targetSdkVersion 30
-        versionCode 1022
-        versionName "1.2.2"
+        versionCode 1023
+        versionName "1.2.3"
         consumerProguardFiles "consumer-rules.pro"
     }
 

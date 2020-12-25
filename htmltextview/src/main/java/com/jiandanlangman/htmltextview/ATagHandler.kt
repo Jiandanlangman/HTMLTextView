@@ -30,7 +30,7 @@ internal class ATagHandler : TagHandler {
             FontSizeASpan(action, style, background)
         output.setSpan(span, start, output.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
         if (style.lineHeight >= 0)
-            output.append("\n")
+            output.append("\u200B\n")
     }
 
     override fun isSingleTag() = false
