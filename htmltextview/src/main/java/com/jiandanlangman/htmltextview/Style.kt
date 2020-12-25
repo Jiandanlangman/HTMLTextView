@@ -22,6 +22,9 @@ data class Style(
     val strokeWidth: Float = 0f,
     val stroke: String = "",
     val typeface: Typeface? = null,
+    val minLines: Int = 0,
+    val maxLines: Int = 0,
+    @Deprecated("replaced by lineHeight")
     val spanLine: Int = 0
 ) {
 
@@ -74,6 +77,8 @@ data class Style(
                 Util.tryCatchInvoke({ (map[Constant.KEY_STROKE_WIDTH] ?: "0").toFloat() }, 0f),
                 map[Constant.KEY_STROKE] ?: "",
                 HTMLTagHandler.getResourcesProvider()?.getTypeface(map[Constant.KEY_FONT_FAMILY] ?: ""),
+                Util.tryCatchInvoke({ (map[Constant.KEY_MIN_LINES] ?: "0").toInt() }, 0),
+                Util.tryCatchInvoke({ (map[Constant.KEY_MAX_LINES] ?: "0").toInt() }, 0),
                 Util.tryCatchInvoke({ (map[Constant.KEY_SPAN_LINE] ?: "0").toInt() }, 0)
             )
 

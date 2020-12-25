@@ -26,7 +26,7 @@ object Constant {
      const val KEY_FONT_WEIGHT = "font-weight"               //字重
      const val KEY_PRESSED_SCALE = "pressed-scale"           //按下后的缩放级别，默认1为不缩放
      const val KEY_PRESSED_TINT = "pressed-tint"             //按下后的着色颜色，默认为透明
-     const val KEY_LINE_HEIGHT = "line-height"               //行间距
+     const val KEY_LINE_HEIGHT = "line-height"               //行间距，当取值>=0且用在除base标签之外的标签上时，此标签将自动换行
      const val KEY_STROKE_WIDTH = "stroke-width"             //文字描边大小
      const val KEY_STROKE = "stroke"                         //文字描边颜色
      const val KEY_FONT_FAMILY = "font-family"               //字体
@@ -39,7 +39,10 @@ object Constant {
     const val KEY_GRADIENT_COLOR = "gradient-colors"        //渐变颜色
     const val KEY_GRADIENT_RADIUS = "gradient-radius"       //渐变半径，仅径向渐变有效
     const val KEY_FILL = "fill"                             //填充色
-    const val KEY_SPAN_LINE = "span-line"                   //跨行
+    @Deprecated("replaced by line-height")
+    const val KEY_SPAN_LINE = "span-line"                   //跨行，已被line-height替代
+    const val KEY_MIN_LINES = "min-lines"                   //最低显示的行数，仅base标签有效
+    const val KEY_MAX_LINES = "max-lines"                   //最高显示的行数, 仅base标签有效，超过行数将以...省略显示
 
 
 }

@@ -17,7 +17,7 @@ class HTMLTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
 
     companion object {
 
-        const val VERSION = 1021
+        const val VERSION = 1022
 
         private val replaceWith = Regex(">\\s*<")
         private val replaceTo = "><"

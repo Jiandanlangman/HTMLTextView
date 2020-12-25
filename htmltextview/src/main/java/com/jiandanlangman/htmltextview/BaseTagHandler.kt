@@ -7,10 +7,10 @@ import android.graphics.Rect
 import android.graphics.drawable.Drawable
 import android.text.Editable
 import android.text.Spannable
+import android.text.TextUtils
 import android.text.style.ForegroundColorSpan
 import android.util.TypedValue
 import android.view.Gravity
-import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.text.toSpannable
@@ -111,6 +111,12 @@ internal class BaseTagHandler : TagHandler {
                     paint.flags = if (style.textDecoration.contains(Style.TextDecoration.LINE_THROUGH)) paint.flags or Paint.STRIKE_THRU_TEXT_FLAG else paint.flags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
                 }
                 style.typeface?.let { typeface = it }
+                if (style.minLines > 0)
+                    minLines = style.minLines
+                if (style.maxLines > 0) {
+                    maxLines = style.maxLines
+                    ellipsize = TextUtils.TruncateAt.END
+                }
                 fun updateLayoutParams(v: View) {
                     v.updateLayoutParams<ViewGroup.LayoutParams> {
                         if (style.width > Constant.DIMENSION_UNDEFINED)

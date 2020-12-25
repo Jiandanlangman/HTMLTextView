@@ -7,6 +7,7 @@ import android.os.Build
 import android.text.Editable
 import android.text.Spannable
 import android.text.style.DynamicDrawableSpan
+import android.util.Log
 import androidx.core.animation.doOnEnd
 import androidx.core.graphics.toRectF
 
@@ -79,7 +80,8 @@ internal class ImgTagHandler : TagHandler {
                     canvas.saveLayer(drawRect.toRectF(), paint, Canvas.ALL_SAVE_FLAG)
             } else
                 0
-            if (style.spanLine != 0)
+            val verticalOffset = getVerticalOffset()
+            if (verticalOffset != 0)
                 canvas.translate(margin.left.toFloat(), margin.top.toFloat())
             else
                 canvas.translate(margin.left.toFloat(), (margin.top - margin.bottom) / 1f)
@@ -108,8 +110,7 @@ internal class ImgTagHandler : TagHandler {
 
             }
             canvas.restore()
-            if (style.spanLine != 0)
-                canvas.translate(0f, style.height.toFloat() - target!!.lineHeight + margin.top + margin.bottom)
+            canvas.translate(0f, verticalOffset.toFloat())
         }
 
 
@@ -141,7 +142,20 @@ internal class ImgTagHandler : TagHandler {
                 listener.invoke(this, action)
         }
 
-        override fun getVerticalOffset() = if (style.spanLine == 0) 0 else (style.height - target!!.lineHeight) + margin.top + margin.bottom
+        override fun getVerticalOffset() :Int {
+            val h =  if (height > 0) height else (imageHeight + padding.top + padding.bottom)
+                if(style.lineHeight >= 0) {
+                    return ((h - target!!.lineHeight) * style.lineHeight + .5f).toInt()  + margin.top + margin.bottom
+                } else if(style.spanLine > 0)
+                    return (h - target!!.lineHeight)  + margin.top + margin.bottom
+            val targetWidth = target?.let { if(it.width > 0) it.width else if(it.measuredWidth > 0) it.measuredWidth else it.layoutParams?.width ?: -1 } ?: -1
+            if(targetWidth > 0) {
+                val w = if (width > 0) width else (imageWidth + padding.left + padding.right)
+                    if(w >= targetWidth)
+                        return (h - target!!.lineHeight)  + margin.top + margin.bottom
+            }
+            return 0
+        }
 
         override fun getAction() = action
 

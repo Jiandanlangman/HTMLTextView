@@ -24,11 +24,13 @@ internal class ATagHandler : TagHandler {
             return
         val action = attrs[Attribute.ACTION.value] ?: ""
         val pressedTintColor = Util.tryCatchInvoke({ Color.parseColor(style.pressedTint) }, Color.TRANSPARENT)
-        val span = if (style.fontSize <= 0 && style.padding.left < 0 && style.padding.top < 0 && style.padding.right < 0 && style.padding.bottom < 0 && style.margin.left < 0 && style.margin.top < 0 && style.margin.right < 0 && style.margin.bottom < 0 && style.pressedScale == 1f && pressedTintColor == Color.TRANSPARENT && background.isNotBackground() && style.width <= 0 && style.height <= 0 && !style.textDecoration.contains(Style.TextDecoration.STROKE))
+        val span = if (style.fontSize <= 0 && style.padding.left < 0 && style.padding.top < 0 && style.padding.right < 0 && style.padding.bottom < 0 && style.margin.left < 0 && style.margin.top < 0 && style.margin.right < 0 && style.margin.bottom < 0 && style.pressedScale == 1f && pressedTintColor == Color.TRANSPARENT && background.isNotBackground() && style.width <= 0 && style.height <= 0 && !style.textDecoration.contains(Style.TextDecoration.STROKE) && style.lineHeight < 0)
             ASpan(action, style)
         else
             FontSizeASpan(action, style, background)
         output.setSpan(span, start, output.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+        if (style.lineHeight >= 0)
+            output.append("\n")
     }
 
     override fun isSingleTag() = false
@@ -159,6 +161,7 @@ internal class ATagHandler : TagHandler {
                 textPaint.color = prevColor
             }
             canvas.restore()
+            canvas.translate(0f, getVerticalOffset().toFloat())
         }
 
 
@@ -218,7 +221,11 @@ internal class ATagHandler : TagHandler {
             backgroundDrawable = null
         }
 
-        override fun getVerticalOffset() = 0
+        override fun getVerticalOffset(): Int {
+            if (style.lineHeight >= 0)
+               return (target!!.lineHeight * (style.lineHeight - 1) + .5f).toInt()
+            return 0
+        }
 
         private fun playScaleAnimator(from: Float, to: Float) {
             scaleAnimator?.end()
